@@ -13,6 +13,6 @@ export default defineConfig({
         target: "esnext",
     },
     optimizeDeps: {
-        exclude: ["publicodes-evenements"],
+        exclude: ["publicodes-voiture"],
     },
 })

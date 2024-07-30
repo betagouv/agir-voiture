@@ -11,35 +11,29 @@ import Regex
 
 
 -- RESULT RULE HELPERS
---  TODO: should be defined in ui.yaml?
 
 
 resultNamespace : P.RuleName
 resultNamespace =
-    "resultats"
+    "empreinte"
 
 
-totalRuleName : P.RuleName
-totalRuleName =
-    "resultats . bilan total"
+
+--  TODO: should be defined in ui.yaml
+
+
+totalRuleNames : List P.RuleName
+totalRuleNames =
+    [ "empreinte" ]
 
 
 getResultRules : P.RawRules -> List ( P.RuleName, P.RawRule )
 getResultRules rules =
-    rules
-        |> Dict.toList
+    totalRuleNames
         |> List.filterMap
-            (\( name, rule ) ->
-                case P.splitRuleName name of
-                    [ namespace, _ ] ->
-                        if namespace == resultNamespace then
-                            Just ( name, rule )
-
-                        else
-                            Nothing
-
-                    _ ->
-                        Nothing
+            (\name ->
+                Dict.get name rules
+                    |> Maybe.map (\rule -> ( name, rule ))
             )
 
 

@@ -26,7 +26,7 @@ export default function ({ engine, rulePath, documentationPath }: Props) {
             documentationPath={documentationPath}
             searchBar={true}
             language="fr"
-            npmPackage="publicodes-evenements"
+            npmPackage="publicodes-voiture"
             renderers={{
                 Text: ({ children }) => (
                     <Markdown

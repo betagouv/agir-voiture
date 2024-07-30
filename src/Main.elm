@@ -132,7 +132,7 @@ router url model =
 
         [ "documentation" ] ->
             -- NOTE: we may want to redirect to the corresponding rule to have a correct URL
-            Documentation.init session H.totalRuleName
+            Documentation.init session (List.head H.totalRuleNames |> Maybe.withDefault "")
                 |> gotoDocumentation model
 
         "documentation" :: rulePath ->

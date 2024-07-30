@@ -7,7 +7,7 @@ import Helpers as H
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Html.Lazy exposing (lazy, lazy2)
+import Html.Lazy exposing (lazy, lazy2, lazy3)
 import Json.Decode as Decode
 import Json.Decode.Pipeline as Decode
 import Json.Encode
@@ -26,11 +26,13 @@ import Views.Icons as Icons
 type alias Model =
     { session : S.Data
     , resultRules : List ( P.RuleName, P.RawRule )
+    , evaluations : Dict P.RuleName Evaluation
+    , currentTab : Maybe UI.Category
+
+    -- TODO: could be removed?
     , orderedCategories : List UI.Category
     , allCategorieAndSubcategorieNames : List P.RuleName
     , openedCategories : Dict P.RuleName Bool
-    , evaluations : Dict P.RuleName Evaluation
-    , currentTab : Maybe UI.Category
     }
 
 
@@ -194,7 +196,7 @@ view model =
 
           else
             div [ class "md:mb-16" ]
-                [ lazy2 viewCategoriesTabs model.orderedCategories model.currentTab
+                [ lazy3 viewCategoriesTabs model.session.rawRules model.orderedCategories model.currentTab
                 , div
                     [ class "flex flex-col-reverse lg:grid lg:grid-cols-3" ]
                     [ div [ class "p-4 lg:pl-8 lg:pr-4 lg:col-span-2" ]
@@ -209,7 +211,8 @@ view model =
                         div [ class "flex flex-col p-4 lg:pl-4 lg:col-span-1 lg:pr-8" ]
                             [ div [ class "lg:sticky lg:top-4" ]
                                 [ lazy viewResults model
-                                , lazy viewGraph model
+
+                                -- , lazy viewGraph model
                                 ]
                             ]
                     ]
@@ -217,8 +220,8 @@ view model =
         ]
 
 
-viewCategoriesTabs : List UI.Category -> Maybe P.RuleName -> Html Msg
-viewCategoriesTabs categories currentTab =
+viewCategoriesTabs : P.RawRules -> List UI.Category -> Maybe P.RuleName -> Html Msg
+viewCategoriesTabs rules categories currentTab =
     div [ class "flex bg-neutral rounded-md border-b border-base-200 mb-4 px-6 overflow-x-auto" ]
         (categories
             |> List.indexedMap
@@ -226,6 +229,9 @@ viewCategoriesTabs categories currentTab =
                     let
                         isActive =
                             currentTab == Just category
+
+                        title =
+                            H.getTitle rules category
                     in
                     button
                         [ class
@@ -251,7 +257,7 @@ viewCategoriesTabs categories currentTab =
                                 )
                             ]
                             [ text (String.fromInt (i + 1)) ]
-                        , text (String.toUpper category)
+                        , text title
                         ]
                 )
         )
@@ -326,7 +332,8 @@ viewCategoriesNavigation orderedCategories category =
                     [ class "btn btn-sm btn-primary btn-outline self-end"
                     , onClick (ChangeTab prevCategory)
                     ]
-                    [ Icons.chevronLeft, text (String.toUpper prevCategory) ]
+                    -- [ Icons.chevronLeft, text (String.toUpper prevCategory) ]
+                    [ Icons.chevronLeft, text "Retour" ]
 
             _ ->
                 div [] []
@@ -336,7 +343,8 @@ viewCategoriesNavigation orderedCategories category =
                     [ class "btn btn-sm btn-primary self-end text-white"
                     , onClick (ChangeTab nextCategory)
                     ]
-                    [ text (String.toUpper nextCategory), Icons.chevronRight ]
+                    -- [ text (H.getTitle rules nextCategory), Icons.chevronRight ]
+                    [ text "Suivant", Icons.chevronRight ]
 
             _ ->
                 div [] []
@@ -365,7 +373,7 @@ viewQuestions : Model -> Maybe (List (List P.RuleName)) -> Html Msg
 viewQuestions model maybeQuestions =
     case maybeQuestions of
         Just questions ->
-            div [ class "grid grid-cols-1 lg:grid-cols-2 gap-6 px-6" ]
+            div [ class "grid grid-cols-1 gap-6" ]
                 (List.map (viewSubQuestions model) questions)
 
         Nothing ->
@@ -374,7 +382,8 @@ viewQuestions model maybeQuestions =
 
 viewSubQuestions : Model -> List P.RuleName -> Html Msg
 viewSubQuestions model subquestions =
-    div [ class "bg-neutral rounded p-4 border border-base-200" ]
+    -- div [ class "bg-neutral rounded p-4 border border-base-200" ]
+    div [ class "px-6 max-w-xl flex flex-col gap-3" ]
         (subquestions
             |> List.map
                 (\name ->
@@ -390,43 +399,27 @@ viewSubQuestions model subquestions =
 
 viewQuestion : Model -> ( P.RuleName, P.RawRule ) -> Bool -> Html Msg
 viewQuestion model ( name, rule ) isApplicable =
-    rule.title
+    rule.question
         |> Maybe.map
-            (\title ->
+            (\question ->
                 div []
-                    [ label [ class "form-control mb-1" ]
+                    [ label [ class "form-control mb-1 h-full" ]
                         [ div [ class "label" ]
-                            [ span [ class "label-text text-md font-semibold" ] [ text title ]
-                            , span [ class "label-text-alt text-md" ] [ viewUnit rule ]
-                            ]
-                        , if name == "transport . public . parts totales" then
-                            viewCustomTransportTotal model name
+                            [ span
+                                [ if isApplicable then
+                                    class "label-text text-md font-semibold"
 
-                          else
-                            viewInput model ( name, rule ) isApplicable
+                                  else
+                                    class "label-text text-md font-semibold text-slate-500 blur-sm"
+                                ]
+                                [ text question ]
+                            , span [ class "label-text-alt text-md min-w-fit" ] [ viewUnit rule ]
+                            ]
+                        , viewInput model ( name, rule ) isApplicable
                         ]
                     ]
             )
         |> Maybe.withDefault (text "")
-
-
-viewCustomTransportTotal : Model -> P.RuleName -> Html Msg
-viewCustomTransportTotal model name =
-    let
-        maybeNodeValue =
-            Dict.get name model.evaluations
-                |> Maybe.map (\{ nodeValue } -> nodeValue)
-    in
-    case maybeNodeValue of
-        Just (P.Num num) ->
-            if num == 100 then
-                div [ class "text-end text-success" ] [ text "100 % ✅" ]
-
-            else
-                div [ class "text-end text-error" ] [ text (H.formatPercent num) ]
-
-        _ ->
-            text ""
 
 
 viewInput : Model -> ( P.RuleName, P.RawRule ) -> Bool -> Html Msg
@@ -567,7 +560,7 @@ viewRangeInput num newAnswer =
 
 viewDisabledInput : Html Msg
 viewDisabledInput =
-    input [ class "input", disabled True ] []
+    input [ class "input blur-sm", disabled True ] []
 
 
 
@@ -588,11 +581,7 @@ viewResults model =
                         Just { nodeValue } ->
                             case nodeValue of
                                 P.Num value ->
-                                    if unit == Just "kgCO2e" || unit == Nothing then
-                                        viewResult title value
-
-                                    else
-                                        viewResultError title
+                                    viewResult title value unit
 
                                 _ ->
                                     viewResultError title
@@ -617,20 +606,25 @@ viewResultError title =
         ]
 
 
-viewResult : String -> Float -> Html Msg
-viewResult title value =
-    let
-        ( formatedValue, formatedUnit ) =
-            H.formatCarbonResult value
-    in
-    div [ class "stat" ]
+viewResult : String -> Float -> Maybe String -> Html Msg
+viewResult title value unit =
+    div
+        [ class "stat" ]
         [ div [ class "stat-title" ]
             [ text title ]
         , div [ class "flex items-baseline" ]
             [ div [ class "stat-value text-primary" ]
-                [ text formatedValue ]
+                [ text
+                    (H.formatFloatToFrenchLocale (Max 0) value)
+                ]
             , div [ class "stat-desc text-primary ml-2 text-lg font-semibold" ]
-                [ text formatedUnit ]
+                [ case unit of
+                    Just u ->
+                        text u
+
+                    _ ->
+                        text ""
+                ]
             ]
         ]
 
@@ -646,159 +640,6 @@ viewUnit rawRule =
 
         Nothing ->
             text ""
-
-
-getInfos : Model -> P.RuleName -> Float -> Maybe { title : String, percent : Float, result : Float }
-getInfos model rule total =
-    Dict.get rule model.evaluations
-        |> Maybe.andThen
-            (\{ nodeValue } ->
-                case nodeValue of
-                    P.Num value ->
-                        Just
-                            { title = H.getTitle model.session.rawRules rule
-                            , percent = (value / total) * 100
-                            , result = value
-                            }
-
-                    _ ->
-                        Nothing
-            )
-
-
-viewGraph : Model -> Html Msg
-viewGraph model =
-    let
-        total =
-            Dict.get H.totalRuleName model.evaluations
-                |> Maybe.andThen (\{ nodeValue } -> P.nodeValueToFloat nodeValue)
-                |> Maybe.withDefault 0
-
-        categoryInfos =
-            model.session.ui.categories
-                |> Dict.toList
-                |> List.filterMap
-                    (\( category, { subs } ) ->
-                        getInfos model category total
-                            |> Maybe.andThen
-                                (\{ title, percent, result } ->
-                                    Just
-                                        { category = title
-                                        , percent = percent
-                                        , result = result
-                                        , subCatInfos =
-                                            List.filterMap
-                                                (\sub -> getInfos model sub result)
-                                                subs
-                                        }
-                                )
-                    )
-    in
-    div [ class "border border-base-200 w-full rounded-md bg-neutral mt-4" ]
-        (categoryInfos
-            |> List.sortBy .percent
-            |> List.reverse
-            |> List.indexedMap
-                (\i { category, percent, result, subCatInfos } ->
-                    let
-                        containerClass =
-                            if i == 0 then
-                                " rounded-t-md"
-
-                            else
-                                " border-t border-base-200"
-
-                        isHidden =
-                            Dict.get category model.openedCategories
-                                |> Maybe.withDefault True
-                    in
-                    details [ class ("collapse rounded-none" ++ containerClass) ]
-                        [ summary
-                            [ class "collapse-title cursor-pointer hover:bg-base-200 rounded-none pr-4"
-
-                            -- TODO: learn about local state component in elm
-                            , onClick (SetSubCategoryGraphStatus category (not isHidden))
-                            ]
-                            [ viewGraphStat category percent result (Just isHidden) ]
-                        , div [ class "collapse-content p-0 m-0 bg-base-100" ]
-                            [ viewSubCategoryGraph subCatInfos
-                            ]
-                        ]
-                )
-        )
-
-
-viewGraphStat : String -> Float -> Float -> Maybe Bool -> Html Msg
-viewGraphStat title percent result isHidden =
-    div []
-        [ div [ class "stat-title flex w-full justify-between" ]
-            [ span []
-                [ span [] [ text (String.toUpper title) ]
-                , span [ class "ml-2 font-bold text-primary" ]
-                    [ text (H.formatPercent percent)
-                    ]
-                ]
-            , viewCategoryArrow isHidden
-            ]
-        , div [ class "flex items-center" ]
-            [ div [ class "flex justify-start min-w-24 items-baseline text-accent mr-2" ]
-                [ div [ class "stat-value text-2xl" ] [ text (H.formatFloatToFrenchLocale (Exact 0) (result / 1000)) ]
-                , div [ class "stats-desc ml-2" ] [ text " tCO2e" ]
-                ]
-            , div [ class "flex-1" ]
-                [ progress
-                    [ class "progress progress-primary h-3"
-                    , value (String.fromFloat percent)
-                    , Html.Attributes.max "100"
-                    ]
-                    []
-                ]
-            ]
-        ]
-
-
-viewCategoryArrow : Maybe Bool -> Html Msg
-viewCategoryArrow isHidable =
-    span [ class "mr-2 text-xs" ]
-        [ if isHidable == Just True then
-            Icons.chevronDown
-
-          else
-            Icons.chevronUp
-        ]
-
-
-viewSubCategoryGraph : List { title : String, percent : Float, result : Float } -> Html Msg
-viewSubCategoryGraph subCatInfos =
-    div [ class "p-4 border-t border-base-200 bg-base-100" ]
-        (subCatInfos
-            |> List.sortBy .percent
-            |> List.reverse
-            |> List.map
-                (\{ title, percent, result } ->
-                    viewSubCatGraphStat title percent result
-                )
-        )
-
-
-viewSubCatGraphStat : String -> Float -> Float -> Html Msg
-viewSubCatGraphStat title percent result =
-    div [ class "mb-0" ]
-        [ div [ class "flex justify-between stat-title text-md" ]
-            [ span [] [ text (String.toUpper title) ]
-            , span [ class "ml-2 font-bold" ]
-                [ text (H.formatPercent percent)
-                ]
-            ]
-        , div [ class "flex items-center" ]
-            [ div
-                [ class "flex justify-start min-w-20 items-baseline text-accent mr-2" ]
-                [ div [ class "stat-value text-lg" ] [ text (H.formatFloatToFrenchLocale (Exact 0) (result / 1000)) ]
-                , div [ class "stats-desc text-sm ml-1" ] [ text " tCO2e" ]
-                ]
-            , progress [ class "progress progress-accent h-2", value (String.fromFloat percent), Html.Attributes.max "100" ] []
-            ]
-        ]
 
 
 

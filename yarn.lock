@@ -139,6 +139,11 @@
   resolved "https://registry.yarnpkg.com/@esbuild/win32-x64/-/win32-x64-0.19.12.tgz#c57c8afbb4054a3ab8317591a0b7320360b444ae"
   integrity sha512-T1QyPSDCyMXaO3pzBkF96E8xMkiRYbUEZADd29SyPGabqxMViNoii+NcK7eWJAEoU6RZyEm5lVSIjTmcdoB9HA==
 
+"@incubateur-ademe/nosgestesclimat@^2.5.6":
+  version "2.5.6"
+  resolved "https://registry.yarnpkg.com/@incubateur-ademe/nosgestesclimat/-/nosgestesclimat-2.5.6.tgz#30c45bf00cbf9e92acb959f385d42bb431f691bd"
+  integrity sha512-wVN4J2rSl6/lbsIdQq8gMP0IfsYiqINzgNAshAWfKPkYlg2kOttOm76biI5LaHG9XV6fF3Y1tsK8qLQSz/nW+g==
+
 "@isaacs/cliui@^8.0.2":
   version "8.0.2"
   resolved "https://registry.yarnpkg.com/@isaacs/cliui/-/cliui-8.0.2.tgz#b37667b7bc181c168782259bab42474fbf52b550"
@@ -2389,10 +2394,10 @@ property-information@^6.0.0:
   resolved "https://registry.yarnpkg.com/property-information/-/property-information-6.4.1.tgz#de8b79a7415fd2107dfbe65758bb2cc9dfcf60ac"
   integrity sha512-OHYtXfu5aI2sS2LWFSN5rgJjrQ4pCy8i1jubJLe2QvMF8JJ++HXTUIVWFLfXJoaOfvYYjk2SN8J2wFUWIGXT4w==
 
-publicodes-evenements@^0.6.0:
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/publicodes-evenements/-/publicodes-evenements-0.6.0.tgz#08b14fad6d7f7f7398b6a37225dfbbfc658168f7"
-  integrity sha512-qMfvGGHArBS5nv7YxoofXSjgkr4Qw/apDKPu0MLlTCElOnIvgr6XmOwVUrnxomteXRSz5xC8Q0k8zCuOgwgjOw==
+"publicodes-voiture@file:../publicodes-voiture":
+  version "1.0.3"
+  dependencies:
+    "@incubateur-ademe/nosgestesclimat" "^2.5.6"
 
 publicodes@^1.5.0:
   version "1.5.0"

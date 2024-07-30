@@ -2,7 +2,7 @@
 import { Elm } from "./Main.elm"
 import CustomEngine, { PublicodeValue, RuleName } from "./CustomEngine"
 
-import rules, { ui, personas } from "publicodes-evenements"
+import rules, { ui, personas } from "publicodes-voiture"
 import { defineCustomElementWith } from "./RulePageCustomElement"
 import { Situation } from "publicodes"
 

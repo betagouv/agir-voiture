@@ -179,6 +179,7 @@ type Mecanism
     | ToutesCesConditions (List Clause)
     | UneDeCesConditions (List Clause)
     | Recalcul RecalculNode
+    | EstDefini String
 
 
 mecanismDecoder : Decoder Mecanism
@@ -192,6 +193,7 @@ mecanismDecoder =
         , map ToutesCesConditions (field "toutes ces conditions" (list (lazy (\_ -> clauseDecoder))))
         , map UneDeCesConditions (field "une de ces conditions" (list (lazy (\_ -> clauseDecoder))))
         , map Recalcul (field "recalcul" recalculNodeDecoder)
+        , map EstDefini (field "est défini" string)
         ]
 
 
