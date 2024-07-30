@@ -27,13 +27,22 @@ totalRuleNames =
     [ "empreinte" ]
 
 
-getResultRules : P.RawRules -> List ( P.RuleName, P.RawRule )
+getResultRules : P.RawRules -> List P.RuleName
 getResultRules rules =
-    totalRuleNames
+    rules
+        |> Dict.keys
         |> List.filterMap
             (\name ->
-                Dict.get name rules
-                    |> Maybe.map (\rule -> ( name, rule ))
+                case P.splitRuleName name of
+                    namespace :: _ ->
+                        if namespace == resultNamespace then
+                            Just name
+
+                        else
+                            Nothing
+
+                    _ ->
+                        Nothing
             )
 
 
@@ -91,6 +100,12 @@ getTitle rules name =
 
         Nothing ->
             name
+
+
+getUnit : P.RawRules -> P.RuleName -> Maybe String
+getUnit rules name =
+    Dict.get name rules
+        |> Maybe.andThen .unit
 
 
 getStringFromSituation : P.NodeValue -> String

@@ -7,7 +7,7 @@ import Helpers as H
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Html.Lazy exposing (lazy, lazy2, lazy3)
+import Html.Lazy exposing (lazy, lazy3)
 import Json.Decode as Decode
 import Json.Decode.Pipeline as Decode
 import Json.Encode
@@ -25,7 +25,7 @@ import Views.Icons as Icons
 
 type alias Model =
     { session : S.Data
-    , resultRules : List ( P.RuleName, P.RawRule )
+    , resultRules : List P.RuleName
     , evaluations : Dict P.RuleName Evaluation
     , currentTab : Maybe UI.Category
 
@@ -108,7 +108,6 @@ evaluate model =
         in
         ( model
         , model.resultRules
-            |> List.map Tuple.first
             |> List.append currentCategoryQuestions
             |> List.append model.orderedCategories
             |> List.append model.allCategorieAndSubcategorieNames
@@ -210,9 +209,8 @@ view model =
                       else
                         div [ class "flex flex-col p-4 lg:pl-4 lg:col-span-1 lg:pr-8" ]
                             [ div [ class "lg:sticky lg:top-4" ]
-                                [ lazy viewResults model
-
-                                -- , lazy viewGraph model
+                                [ lazy viewTotal model
+                                , lazy viewResults model
                                 ]
                             ]
                     ]
@@ -567,27 +565,25 @@ viewDisabledInput =
 -- Results
 
 
+viewTotal : Model -> Html Msg
+viewTotal model =
+    div []
+        (H.totalRuleNames
+            |> List.map (\name -> viewResult model name)
+        )
+
+
 viewResults : Model -> Html Msg
 viewResults model =
     div [ class "stats stats-vertical border w-full rounded-md bg-neutral border-base-200" ]
         (model.resultRules
             |> List.map
-                (\( name, { unit } ) ->
-                    let
-                        title =
-                            H.getTitle model.session.rawRules name
-                    in
-                    case Dict.get name model.evaluations of
-                        Just { nodeValue } ->
-                            case nodeValue of
-                                P.Num value ->
-                                    viewResult title value unit
+                (\name ->
+                    if List.any ((==) name) H.totalRuleNames then
+                        text ""
 
-                                _ ->
-                                    viewResultError title
-
-                        _ ->
-                            viewResultError title
+                    else
+                        viewResult model name
                 )
         )
 
@@ -606,27 +602,47 @@ viewResultError title =
         ]
 
 
-viewResult : String -> Float -> Maybe String -> Html Msg
-viewResult title value unit =
-    div
-        [ class "stat" ]
-        [ div [ class "stat-title" ]
-            [ text title ]
-        , div [ class "flex items-baseline" ]
-            [ div [ class "stat-value text-primary" ]
-                [ text
-                    (H.formatFloatToFrenchLocale (Max 0) value)
-                ]
-            , div [ class "stat-desc text-primary ml-2 text-lg font-semibold" ]
-                [ case unit of
-                    Just u ->
-                        text u
+viewResult : Model -> P.RuleName -> Html Msg
+viewResult model name =
+    let
+        unit =
+            H.getUnit model.session.rawRules name
 
-                    _ ->
-                        text ""
-                ]
-            ]
-        ]
+        title =
+            H.getTitle model.session.rawRules name
+
+        _ =
+            Debug.log "get" (Dict.get name model.evaluations)
+    in
+    case Dict.get name model.evaluations of
+        Just { nodeValue } ->
+            case nodeValue of
+                P.Num value ->
+                    div
+                        [ class "stat" ]
+                        [ div [ class "stat-title" ]
+                            [ text title ]
+                        , div [ class "flex items-baseline" ]
+                            [ div [ class "stat-value text-primary" ]
+                                [ text
+                                    (H.formatFloatToFrenchLocale (Max 0) value)
+                                ]
+                            , div [ class "stat-desc text-primary ml-2 text-lg font-semibold" ]
+                                [ case unit of
+                                    Just u ->
+                                        text u
+
+                                    _ ->
+                                        text ""
+                                ]
+                            ]
+                        ]
+
+                _ ->
+                    viewResultError title
+
+        _ ->
+            viewResultError title
 
 
 viewUnit : P.RawRule -> Html Msg
@@ -640,6 +656,26 @@ viewUnit rawRule =
 
         Nothing ->
             text ""
+
+
+viewComparison : Model -> Html Msg
+viewComparison model =
+    div [ class "bg-neutral border border-base-200 rounded-md p-4" ]
+        [ p [ class "text-lg font-semibold" ]
+            [ text "Comparaison avec les différentes alternatives" ]
+        , viewComparisonTable model
+        ]
+
+
+viewComparisonTable : Model -> Html Msg
+viewComparisonTable model =
+    Html.ul []
+        (model.resultRules
+            |> List.map
+                (\name ->
+                    viewResult model name
+                )
+        )
 
 
 
