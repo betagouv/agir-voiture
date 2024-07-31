@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr" data-fr-scheme="system">
     <head>
         <meta charset="UTF-8" />
         <link rel="icon" type="image/svg+xml" href="/assets/icon.svg" />
@@ -12,7 +12,21 @@
         <link rel="stylesheet" href="./index.css" />
     </head>
     <body>
-        <div id="elm-app"></div>
+        <noscript>
+            <h1>Ce site nécessite Javascript</h1>
+            <p>
+                Pour fonctionner correctement, ce site a besoin de Javascript.
+            </p>
+        </noscript>
+        <script type="module" src="./dsfr.js"></script>
+        <script>
+            window.dsfr = {
+                verbose: true,
+                production: true,
+                mode: "auto",
+            }
+        </script>
         <script type="module" src="./src/main.ts"></script>
+        <div id="elm-app"></div>
     </body>
 </html>

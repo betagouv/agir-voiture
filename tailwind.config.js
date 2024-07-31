@@ -48,24 +48,5 @@ export default {
             },
         },
     },
-    plugins: [require("@tailwindcss/typography"), require("daisyui")],
-    daisyui: {
-        themes: [
-            {
-                cutsomTheme: {
-                    primary: "#EF5F06",
-                    // accent: "#CA5002",
-                    secondary: "#AFD5AA",
-                    // accent: "#ffc070",
-                    accent: "#5C5346",
-                    neutral: "#ffffff",
-                    "base-100": "#F0F2EF",
-                    info: "#ffffff",
-                    success: "#2dd4bf",
-                    warning: "#ffffff",
-                    error: "#ff5861",
-                },
-            },
-        ],
-    },
+    plugins: [require("@tailwindcss/typography")],
 }
