@@ -445,7 +445,7 @@ viewInput model question ( name, rule ) isApplicable =
                 |> Maybe.map .nodeValue
     in
     if not isApplicable then
-        viewDisabledInput
+        viewDisabledInput question name
 
     else
         case ( ( rule.formula, rule.unit ), maybeNodeValue ) of
@@ -462,7 +462,7 @@ viewInput model question ( name, rule ) isApplicable =
                 viewBooleanRadioInput name bool
 
             _ ->
-                viewDisabledInput
+                viewDisabledInput question name
 
 
 viewNumericInput : (String -> Msg) -> P.Situation -> String -> P.RawRule -> P.RuleName -> Float -> Html Msg
@@ -515,6 +515,13 @@ viewSelectInput question rules ruleName possibilites nodeValue =
         ]
 
 
+viewDisabledInput : String -> P.RuleName -> Html Msg
+viewDisabledInput question name =
+    Input.new { onInput = \_ -> NoOp, label = text question, id = name, value = "" }
+        |> Input.withDisabled True
+        |> Input.view
+
+
 viewBooleanRadioInput : P.RuleName -> Bool -> Html Msg
 viewBooleanRadioInput name bool =
     div [ class "form-control" ]
@@ -559,11 +566,6 @@ viewRangeInput newAnswer num =
             [ class "ml-4" ]
             [ text (String.fromFloat num) ]
         ]
-
-
-viewDisabledInput : Html Msg
-viewDisabledInput =
-    input [ class "input blur-sm", disabled True ] []
 
 
 
