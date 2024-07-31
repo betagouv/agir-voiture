@@ -4,6 +4,7 @@ import Browser exposing (Document)
 import Dict
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Attributes.Extra exposing (role)
 import Html.Events exposing (..)
 import Personas exposing (Personas)
 import Publicodes as P
@@ -62,37 +63,72 @@ viewHeader { resetSituation, exportSituation, importSituation, openPersonasModal
         btnClass =
             "inline-flex items-center bg-base-100 border border-base-200 hover:bg-base-200"
     in
-    header []
-        [ div [ class "flex items-center md:flex-row justify-between flex-col w-full px-4 lg:px-8 border-b border-base-200 bg-neutral" ]
-            [ div [ class "flex flex-col items-center gap-4 mb-4 sm:mb-0 sm:items-center sm:justify-center sm:flex-row" ]
-                [ span [ class "py-4" ]
-                    [ text "Agir - Simulateur voiture"
-                    ]
-                , span [ class "relative inline-flex" ]
-                    [ button [ class (btnClass ++ " rounded-md"), onClick openPersonasModal ]
-                        [ text "Commencer avec un profil type"
+    header [ role "banner", class "fr-header" ]
+        [ div [ class "fr-header__body" ]
+            [ div [ class "fr-container" ]
+                [ div [ class "fr-header__body-row" ]
+                    [ div [ class "fr-header__brand fr-enlarge-link" ]
+                        [ div [ class "fr-header__brand-top" ]
+                            [ div [ class "fr-header__operator" ]
+                                [ a [ href "/" ]
+                                    [ img
+                                        [ class "fr-responsive-img"
+                                        , style "max-width" "9.0625rem;"
+                                        , src "/logo.svg"
+                                        , alt "Revenir à la page d'accueil"
+                                        ]
+                                        []
+                                    ]
+                                ]
+                            ]
+                        , div [ class "fr-header__service" ]
+                            [ a [ href "/", title "Accueil - Comparateur Voiture - Agir" ]
+                                [ p [ class "fr-header__service-title" ]
+                                    [ text "Comparateur Voiture"
+                                    ]
+                                ]
+                            , p [ class "fr-header__service-description" ]
+                                [ text "Estimez les coûts de votre voiture"
+                                ]
+                            ]
                         ]
-                    ]
-                ]
-            , div [ class "join my-4 md:my-0 md:mb-0 rounded-md" ]
-                [ button [ class btnClass, onClick resetSituation ]
-                    [ span [ class "invisible hidden xsm:visible xsm:block" ] [ text "Recommencer" ]
-                    ]
-                , button [ class btnClass, onClick exportSituation ]
-                    [ span [ class "invisible hidden xsm:visible xsm:block" ] [ text "Télécharger" ]
-                    ]
-                , button
-                    [ class btnClass
-                    , type_ "file"
-                    , multiple False
-                    , accept ".json"
-                    , onClick importSituation
-                    ]
-                    [ span [ class "invisible hidden xsm:visible xsm:block" ] [ text "Importer" ]
                     ]
                 ]
             ]
         ]
+
+
+
+-- [ div [ class "flex items-center md:flex-row justify-between flex-col w-full px-4 lg:px-8 border-b border-base-200 bg-neutral" ]
+--     [ div [ class "flex flex-col items-center gap-4 mb-4 sm:mb-0 sm:items-center sm:justify-center sm:flex-row" ]
+--         [ span [ class "py-4" ]
+--             [ text "Agir - Simulateur voiture"
+--             ]
+--         , span [ class "relative inline-flex" ]
+--             [ button [ class (btnClass ++ " rounded-md"), onClick openPersonasModal ]
+--                 [ text "Commencer avec un profil type"
+--                 ]
+--             ]
+--         ]
+--     , div [ class "join my-4 md:my-0 md:mb-0 rounded-md" ]
+--         [ button [ class btnClass, onClick resetSituation ]
+--             [ span [ class "invisible hidden xsm:visible xsm:block" ] [ text "Recommencer" ]
+--             ]
+--         , button [ class btnClass, onClick exportSituation ]
+--             [ span [ class "invisible hidden xsm:visible xsm:block" ] [ text "Télécharger" ]
+--             ]
+--         , button
+--             [ class btnClass
+--             , type_ "file"
+--             , multiple False
+--             , accept ".json"
+--             , onClick importSituation
+--             ]
+--             [ span [ class "invisible hidden xsm:visible xsm:block" ] [ text "Importer" ]
+--             ]
+--         ]
+--     ]
+-- ]
 
 
 {-| TODO: abstract this into a reusable component

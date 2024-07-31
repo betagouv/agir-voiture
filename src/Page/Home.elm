@@ -382,7 +382,7 @@ viewMarkdownCategoryDescription rawRules currentCategory =
 
         Just desc ->
             CallOut.callout ""
-                (div [ class "prose max-w-full" ]
+                (div []
                     (Markdown.toHtml Nothing desc)
                 )
 
