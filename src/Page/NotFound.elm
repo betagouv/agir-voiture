@@ -2,7 +2,6 @@ module Page.NotFound exposing (view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Views.Icons as Icons
 
 
 view : Html msg
@@ -12,6 +11,6 @@ view =
             [ h1 [ class "text-5xl" ] [ text "404 - Page not found" ]
             , p [] [ text "La page que vous cherchez n'existe pas ou a été déplacée." ]
             , a [ class "btn btn-primary text-white mt-8", href "/" ]
-                [ Icons.home, text "Retourner à l'accueil" ]
+                [ text "Retourner à l'accueil" ]
             ]
         ]

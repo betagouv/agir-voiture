@@ -1,23 +1,30 @@
 module Page.Home exposing (Model, Msg(..), init, subscriptions, update, view)
 
+{- TODO: use Html.Extra instead of Html -}
+
+import BetaGouv.DSFR.Button as Button
+import BetaGouv.DSFR.CallOut as CallOut
+import BetaGouv.DSFR.Icons as Icons
 import BetaGouv.DSFR.Input as Input
+import BetaGouv.DSFR.Typography as Typo
 import Dict exposing (Dict)
 import Effect
 import FormatNumber.Locales exposing (Decimals(..))
 import Helpers as H
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Attributes.Extra as Attr
 import Html.Events exposing (..)
+import Html.Extra exposing (nothing, viewIf)
 import Html.Lazy exposing (lazy, lazy3)
 import Json.Decode as Decode
 import Json.Decode.Pipeline as Decode
-import Json.Encode
+import Json.Encode as Encode
 import Markdown
 import Platform.Cmd as Cmd
 import Publicodes as P exposing (Mecanism(..), NodeValue(..))
 import Session as S
 import UI
-import Views.Icons as Icons
 
 
 
@@ -128,8 +135,8 @@ type Msg
     | ChangeTab P.RuleName
     | SetSubCategoryGraphStatus P.RuleName Bool
     | Evaluate
-    | UpdateEvaluation ( P.RuleName, Json.Encode.Value )
-    | UpdateAllEvaluation (List ( P.RuleName, Json.Encode.Value ))
+    | UpdateEvaluation ( P.RuleName, Encode.Value )
+    | UpdateAllEvaluation (List ( P.RuleName, Encode.Value ))
     | NoOp
 
 
@@ -168,7 +175,7 @@ update msg model =
             ( model, Cmd.none )
 
 
-updateEvaluation : ( P.RuleName, Json.Encode.Value ) -> Model -> Model
+updateEvaluation : ( P.RuleName, Encode.Value ) -> Model -> Model
 updateEvaluation ( name, encodedEvaluation ) model =
     case Decode.decodeValue evaluationDecoder encodedEvaluation of
         Ok eval ->
@@ -195,12 +202,12 @@ view model =
                 ]
 
           else
-            div [ class "md:mb-16" ]
-                [ lazy3 viewCategoriesTabs model.session.rawRules model.orderedCategories model.currentTab
-                , div
+            div [ class "fr-container md:my-16" ]
+                [ div
                     [ class "flex flex-col-reverse lg:grid lg:grid-cols-3" ]
                     [ div [ class "p-4 lg:pl-8 lg:pr-4 lg:col-span-2" ]
-                        [ lazy viewCategoryQuestions model
+                        [ lazy3 viewCategoriesStepper model.session.rawRules model.orderedCategories model.currentTab
+                        , lazy viewCategoryQuestions model
                         ]
                     , if not session.engineInitialized then
                         div [ class "flex flex-col w-full h-full items-center" ]
@@ -219,47 +226,64 @@ view model =
         ]
 
 
-viewCategoriesTabs : P.RawRules -> List UI.Category -> Maybe P.RuleName -> Html Msg
-viewCategoriesTabs rules categories currentTab =
-    div [ class "flex bg-neutral rounded-md border-b border-base-200 mb-4 px-6 overflow-x-auto" ]
-        (categories
-            |> List.indexedMap
-                (\i category ->
-                    let
-                        isActive =
-                            currentTab == Just category
 
-                        title =
-                            H.getTitle rules category
-                    in
-                    button
-                        [ class
-                            ("flex items-center rounded-none cursor-pointer border-b p-4 tracking-wide text-xs hover:bg-base-100 "
-                                ++ (if isActive then
-                                        " border-primary font-semibold"
+{- TODO: factorize this with the one in UI.elm -}
 
-                                    else
-                                        " border-transparent font-medium"
-                                   )
-                            )
-                        , onClick (ChangeTab category)
-                        ]
-                        [ span
-                            [ class
-                                ("rounded-full inline-flex justify-center items-center w-5 h-5 mr-2 font-normal"
-                                    ++ (if isActive then
-                                            " text-white bg-primary"
 
-                                        else
-                                            " bg-gray-300"
-                                       )
-                                )
-                            ]
-                            [ text (String.fromInt (i + 1)) ]
-                        , text title
-                        ]
-                )
-        )
+viewCategoriesStepper : P.RawRules -> List UI.Category -> Maybe UI.Category -> Html Msg
+viewCategoriesStepper rules categories maybeCurrentTab =
+    let
+        currentTab =
+            Maybe.withDefault (List.head categories |> Maybe.withDefault "") maybeCurrentTab
+
+        ( nextIndex, maybeCurrentTitle, maybeNextTitle ) =
+            categories
+                |> List.foldl
+                    (\category ( idx, currentTitle, nextTitle ) ->
+                        if category == currentTab then
+                            ( idx + 1, Just (H.getTitle rules category), nextTitle )
+
+                        else
+                            case ( currentTitle, nextTitle ) of
+                                ( Just _, Nothing ) ->
+                                    ( idx, currentTitle, Just (H.getTitle rules category) )
+
+                                ( Nothing, Nothing ) ->
+                                    ( idx + 1, currentTitle, nextTitle )
+
+                                _ ->
+                                    ( idx, currentTitle, nextTitle )
+                    )
+                    ( 0, Nothing, Nothing )
+
+        currentNumStep =
+            String.fromInt nextIndex
+
+        totalNumStep =
+            String.fromInt (List.length categories)
+    in
+    div [ class "fr-stepper" ]
+        [ h2 [ class "fr-stepper__title" ]
+            [ text (Maybe.withDefault "" maybeCurrentTitle) ]
+        , span [ class "fr-stepper__state" ]
+            [ text (String.join " " [ "Étape", currentNumStep, "sur", totalNumStep ])
+            ]
+        , div
+            [ class "fr-stepper__steps"
+            , attribute "data-fr-current-step" currentNumStep
+            , attribute "data-fr-steps" totalNumStep
+            ]
+            []
+        , case maybeNextTitle of
+            Just title ->
+                p [ class "fr-stepper__details" ]
+                    [ span [ class "fr-text--bold" ] [ text "Étape suivante : " ]
+                    , text title
+                    ]
+
+            Nothing ->
+                nothing
+        ]
 
 
 viewCategoryQuestions : Model -> Html Msg
@@ -271,7 +295,7 @@ viewCategoryQuestions model =
         currentCategory =
             Maybe.withDefault "" model.currentTab
     in
-    div [ class "bg-neutral border border-base-200 rounded-md" ]
+    div [ class "" ]
         (session.ui.categories
             |> Dict.toList
             |> List.map
@@ -282,11 +306,9 @@ viewCategoryQuestions model =
                     in
                     div
                         [ class
-                            -- Add duration to trigger transition
-                            -- TODO: better transition
-                            ("flex flex-col transition-opacity ease-in duration-0"
+                            ("flex flex-col"
                                 ++ (if isVisible then
-                                        "  mb-6 opacity-100"
+                                        " mb-6 opacity-100"
 
                                     else
                                         " opacity-50"
@@ -324,26 +346,23 @@ viewCategoriesNavigation orderedCategories category =
                 |> List.drop 2
                 |> List.head
     in
-    div [ class "flex justify-between mt-6 mx-6" ]
+    div [ class "flex justify-between mt-6" ]
         [ case maybePrevCategory of
             Just prevCategory ->
-                button
-                    [ class "btn btn-sm btn-primary btn-outline self-end"
-                    , onClick (ChangeTab prevCategory)
-                    ]
-                    -- [ Icons.chevronLeft, text (String.toUpper prevCategory) ]
-                    [ Icons.chevronLeft, text "Retour" ]
+                Button.new { onClick = Just (ChangeTab prevCategory), label = "Retour" }
+                    |> Button.leftIcon Icons.system.arrowLeftSFill
+                    |> Button.medium
+                    |> Button.secondary
+                    |> Button.view
 
             _ ->
                 div [] []
         , case maybeNextCategory of
             Just nextCategory ->
-                button
-                    [ class "btn btn-sm btn-primary self-end text-white"
-                    , onClick (ChangeTab nextCategory)
-                    ]
-                    -- [ text (H.getTitle rules nextCategory), Icons.chevronRight ]
-                    [ text "Suivant", Icons.chevronRight ]
+                Button.new { onClick = Just (ChangeTab nextCategory), label = "Suivant" }
+                    |> Button.rightIcon Icons.system.arrowRightSFill
+                    |> Button.medium
+                    |> Button.view
 
             _ ->
                 div [] []
@@ -362,10 +381,10 @@ viewMarkdownCategoryDescription rawRules currentCategory =
             text ""
 
         Just desc ->
-            div [ class "px-6 py-3 mb-6 border-b rounded-t-md bg-orange-50" ]
-                [ div [ class "prose max-w-full" ] <|
-                    Markdown.toHtml Nothing desc
-                ]
+            CallOut.callout ""
+                (div [ class "prose max-w-full" ]
+                    (Markdown.toHtml Nothing desc)
+                )
 
 
 viewQuestions : Model -> Maybe (List (List P.RuleName)) -> Html Msg
@@ -381,8 +400,7 @@ viewQuestions model maybeQuestions =
 
 viewSubQuestions : Model -> List P.RuleName -> Html Msg
 viewSubQuestions model subquestions =
-    -- div [ class "bg-neutral rounded p-4 border border-base-200" ]
-    div [ class "px-6 max-w-xl flex flex-col gap-3" ]
+    div [ class "max-w-md flex flex-col gap-3" ]
         (subquestions
             |> List.map
                 (\name ->
@@ -581,9 +599,7 @@ viewResultError title =
         [ div [ class "stat-title" ]
             [ text title ]
         , div [ class "flex items-baseline" ]
-            [ div [ class "stat-value text-error" ]
-                [ Icons.circleSlash2 ]
-            , div [ class "stat-desc text-error text-xl ml-2" ]
+            [ div [ class "stat-desc text-error text-xl ml-2" ]
                 [ text "une erreur est survenue" ]
             ]
         ]

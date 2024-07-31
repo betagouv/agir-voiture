@@ -8,8 +8,6 @@ import Html.Events exposing (..)
 import Personas exposing (Personas)
 import Publicodes as P
 import Session as S
-import Views.Icons as Icons
-import Views.Link as Link
 
 
 type alias Config msg =
@@ -62,7 +60,7 @@ viewHeader : Config msg -> Html msg
 viewHeader { resetSituation, exportSituation, importSituation, openPersonasModal, session } =
     let
         btnClass =
-            "join-item inline-flex items-center btn-sm bg-base-100 border border-base-200 hover:bg-base-200"
+            "inline-flex items-center bg-base-100 border border-base-200 hover:bg-base-200"
     in
     header []
         [ div [ class "flex items-center md:flex-row justify-between flex-col w-full px-4 lg:px-8 border-b border-base-200 bg-neutral" ]
@@ -78,12 +76,10 @@ viewHeader { resetSituation, exportSituation, importSituation, openPersonasModal
                 ]
             , div [ class "join my-4 md:my-0 md:mb-0 rounded-md" ]
                 [ button [ class btnClass, onClick resetSituation ]
-                    [ span [ class "mx-2 xsm:mr-2" ] [ Icons.refresh ]
-                    , span [ class "invisible hidden xsm:visible xsm:block" ] [ text "Recommencer" ]
+                    [ span [ class "invisible hidden xsm:visible xsm:block" ] [ text "Recommencer" ]
                     ]
                 , button [ class btnClass, onClick exportSituation ]
-                    [ span [ class "mx-2 xsm:mr-2" ] [ Icons.download ]
-                    , span [ class "invisible hidden xsm:visible xsm:block" ] [ text "Télécharger" ]
+                    [ span [ class "invisible hidden xsm:visible xsm:block" ] [ text "Télécharger" ]
                     ]
                 , button
                     [ class btnClass
@@ -92,8 +88,7 @@ viewHeader { resetSituation, exportSituation, importSituation, openPersonasModal
                     , accept ".json"
                     , onClick importSituation
                     ]
-                    [ span [ class "mx-2 xsm:mr-2" ] [ Icons.upload ]
-                    , span [ class "invisible hidden xsm:visible xsm:block" ] [ text "Importer" ]
+                    [ span [ class "invisible hidden xsm:visible xsm:block" ] [ text "Importer" ]
                     ]
                 ]
             ]

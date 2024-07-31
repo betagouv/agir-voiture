@@ -8,7 +8,6 @@ import Json.Decode.Pipeline as Decode
 import Personas exposing (Personas)
 import Publicodes as P
 import UI
-import Views.Icons
 
 
 
@@ -131,14 +130,12 @@ viewError maybeError =
     case maybeError of
         Just (DecodeError e) ->
             div [ class "alert alert-error flex" ]
-                [ Views.Icons.error
-                , span [] [ text (Decode.errorToString e) ]
+                [ {- Views.Icons.error -} span [] [ text (Decode.errorToString e) ]
                 ]
 
         Just UnvalidSituationFile ->
             div [ class "alert alert-error flex" ]
-                [ Views.Icons.error
-                , span [] [ text "Le fichier renseigné ne contient pas de situation valide." ]
+                [ {- Views.Icons.error -} span [] [ text "Le fichier renseigné ne contient pas de situation valide." ]
                 ]
 
         Nothing ->
