@@ -1,5 +1,6 @@
 module Page.Home exposing (Model, Msg(..), init, subscriptions, update, view)
 
+import BetaGouv.DSFR.Input as Input
 import Dict exposing (Dict)
 import Effect
 import FormatNumber.Locales exposing (Decimals(..))
@@ -400,28 +401,13 @@ viewQuestion model ( name, rule ) isApplicable =
     rule.question
         |> Maybe.map
             (\question ->
-                div []
-                    [ label [ class "form-control mb-1 h-full" ]
-                        [ div [ class "label" ]
-                            [ span
-                                [ if isApplicable then
-                                    class "label-text text-md font-semibold"
-
-                                  else
-                                    class "label-text text-md font-semibold text-slate-500 blur-sm"
-                                ]
-                                [ text question ]
-                            , span [ class "label-text-alt text-md min-w-fit" ] [ viewUnit rule ]
-                            ]
-                        , viewInput model ( name, rule ) isApplicable
-                        ]
-                    ]
+                viewInput model question ( name, rule ) isApplicable
             )
         |> Maybe.withDefault (text "")
 
 
-viewInput : Model -> ( P.RuleName, P.RawRule ) -> Bool -> Html Msg
-viewInput model ( name, rule ) isApplicable =
+viewInput : Model -> String -> ( P.RuleName, P.RawRule ) -> Bool -> Html Msg
+viewInput model question ( name, rule ) isApplicable =
     let
         newAnswer val =
             case String.toFloat val of
@@ -446,68 +432,69 @@ viewInput model ( name, rule ) isApplicable =
     else
         case ( ( rule.formula, rule.unit ), maybeNodeValue ) of
             ( ( Just (UnePossibilite { possibilites }), _ ), Just nodeValue ) ->
-                viewSelectInput model.session.rawRules name possibilites nodeValue
+                viewSelectInput question model.session.rawRules name possibilites nodeValue
 
             ( ( _, Just "%" ), Just (P.Num num) ) ->
-                viewRangeInput num newAnswer
+                viewRangeInput newAnswer num
 
             ( _, Just (P.Num num) ) ->
-                case Dict.get name model.session.situation of
-                    Just _ ->
-                        viewNumberInput num newAnswer
-
-                    Nothing ->
-                        viewNumberInputOnlyPlaceHolder num newAnswer
+                viewNumericInput newAnswer model.session.situation question rule name num
 
             ( _, Just (P.Boolean bool) ) ->
                 viewBooleanRadioInput name bool
-
-            ( _, Just (P.Str _) ) ->
-                -- Should not happen
-                viewDisabledInput
 
             _ ->
                 viewDisabledInput
 
 
-viewNumberInput : Float -> (String -> Msg) -> Html Msg
-viewNumberInput num newAnswer =
-    input
-        [ type_ "number"
-        , class "input input-bordered"
-        , value (String.fromFloat num)
-        , onInput newAnswer
+viewNumericInput : (String -> Msg) -> P.Situation -> String -> P.RawRule -> P.RuleName -> Float -> Html Msg
+viewNumericInput onInput situation question rule name num =
+    let
+        config =
+            { onInput = onInput
+            , label = text question
+            , id = name
+            , value = ""
+            }
+    in
+    (case Dict.get name situation of
+        Just _ ->
+            Input.new { config | value = String.fromFloat num }
+
+        Nothing ->
+            Input.new config
+                |> Input.withInputAttrs
+                    [ placeholder (H.formatFloatToFrenchLocale (Max 1) num) ]
+    )
+        |> Input.withHint [ text (Maybe.withDefault "" rule.unit) ]
+        |> Input.numeric
+        |> Input.view
+
+
+{-| TODO: extract this in a clean component in elm-dsfr
+-}
+viewSelectInput : String -> P.RawRules -> P.RuleName -> List String -> P.NodeValue -> Html Msg
+viewSelectInput question rules ruleName possibilites nodeValue =
+    div [ class "fr-select-group" ]
+        [ Html.label [ class "fr-label", for "select" ]
+            [ text question ]
+        , select
+            [ onInput (\v -> NewAnswer ( ruleName, P.Str v ))
+            , class "fr-select"
+            , id "select"
+            , name "select"
+            ]
+            (possibilites
+                |> List.map
+                    (\possibilite ->
+                        option
+                            [ value possibilite
+                            , selected (H.getStringFromSituation nodeValue == possibilite)
+                            ]
+                            [ text (H.getOptionTitle rules ruleName possibilite) ]
+                    )
+            )
         ]
-        []
-
-
-viewNumberInputOnlyPlaceHolder : Float -> (String -> Msg) -> Html Msg
-viewNumberInputOnlyPlaceHolder num newAnswer =
-    input
-        [ type_ "number"
-        , class "input input-bordered"
-        , placeholder (H.formatFloatToFrenchLocale (Max 1) num)
-        , onInput newAnswer
-        ]
-        []
-
-
-viewSelectInput : P.RawRules -> P.RuleName -> List String -> P.NodeValue -> Html Msg
-viewSelectInput rules ruleName possibilites nodeValue =
-    select
-        [ onInput (\v -> NewAnswer ( ruleName, P.Str v ))
-        , class "select select-bordered"
-        ]
-        (possibilites
-            |> List.map
-                (\possibilite ->
-                    option
-                        [ value possibilite
-                        , selected (H.getStringFromSituation nodeValue == possibilite)
-                        ]
-                        [ text (H.getOptionTitle rules ruleName possibilite) ]
-                )
-        )
 
 
 viewBooleanRadioInput : P.RuleName -> Bool -> Html Msg
@@ -536,8 +523,8 @@ viewBooleanRadioInput name bool =
         ]
 
 
-viewRangeInput : Float -> (String -> Msg) -> Html Msg
-viewRangeInput num newAnswer =
+viewRangeInput : (String -> Msg) -> Float -> Html Msg
+viewRangeInput newAnswer num =
     div [ class "flex flex-row" ]
         [ input
             [ type_ "range"
@@ -610,9 +597,6 @@ viewResult model name =
 
         title =
             H.getTitle model.session.rawRules name
-
-        _ =
-            Debug.log "get" (Dict.get name model.evaluations)
     in
     case Dict.get name model.evaluations of
         Just { nodeValue } ->
