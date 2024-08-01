@@ -1,22 +1,31 @@
 module Page.Home exposing (Model, Msg(..), init, subscriptions, update, view)
 
+{- TODO: use Html.Extra instead of Html -}
+
+import Accessibility.Aria exposing (currentStep)
+import BetaGouv.DSFR.Button as Button
+import BetaGouv.DSFR.CallOut as CallOut
+import BetaGouv.DSFR.Icons as Icons
+import BetaGouv.DSFR.Input as Input
+import BetaGouv.DSFR.Tag as Tag
 import Dict exposing (Dict)
 import Effect
 import FormatNumber.Locales exposing (Decimals(..))
-import Helpers as H
+import Helpers as H exposing (userEmission)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Html.Extra exposing (nothing, viewIfLazy)
 import Html.Lazy exposing (lazy, lazy3)
 import Json.Decode as Decode
 import Json.Decode.Pipeline as Decode
-import Json.Encode
+import Json.Encode as Encode
 import Markdown
 import Platform.Cmd as Cmd
 import Publicodes as P exposing (Mecanism(..), NodeValue(..))
 import Session as S
 import UI
-import Views.Icons as Icons
+import Views.DSFR.Table as Table
 
 
 
@@ -26,8 +35,10 @@ import Views.Icons as Icons
 type alias Model =
     { session : S.Data
     , resultRules : List P.RuleName
-    , evaluations : Dict P.RuleName Evaluation
-    , currentTab : Maybe UI.Category
+    , evaluations : Dict P.RuleName P.Evaluation
+
+    -- Represents the current step of the simulation
+    , currentStep : SimulationStep
 
     -- TODO: could be removed?
     , orderedCategories : List UI.Category
@@ -36,19 +47,10 @@ type alias Model =
     }
 
 
-{-| TODO: should it be moved in Publicodes module?
--}
-type alias Evaluation =
-    { nodeValue : P.NodeValue
-    , isApplicable : Bool
-    }
-
-
-evaluationDecoder : Decode.Decoder Evaluation
-evaluationDecoder =
-    Decode.succeed Evaluation
-        |> Decode.required "nodeValue" P.nodeValueDecoder
-        |> Decode.required "isApplicable" Decode.bool
+type SimulationStep
+    = Category UI.Category
+    | Result
+    | Start
 
 
 emptyModel : Model
@@ -58,7 +60,7 @@ emptyModel =
     , resultRules = []
     , orderedCategories = []
     , allCategorieAndSubcategorieNames = []
-    , currentTab = Nothing
+    , currentStep = Start
     , openedCategories = Dict.empty
     }
 
@@ -76,7 +78,7 @@ init session =
             , orderedCategories = orderedCategories
             , allCategorieAndSubcategorieNames =
                 UI.getAllCategoryAndSubCategoryNames session.ui.categories
-            , currentTab = List.head orderedCategories
+            , currentStep = List.head orderedCategories |> Maybe.map Category |> Maybe.withDefault Start
         }
 
 
@@ -97,18 +99,19 @@ evaluate model =
     in
     if session.engineInitialized then
         let
-            currentCategory =
-                -- NOTE: we always have a currentTab
-                Maybe.withDefault "" model.currentTab
+            currentQuestions =
+                case model.currentStep of
+                    Category category ->
+                        Dict.get category session.ui.questions
+                            |> Maybe.withDefault []
+                            |> List.concat
 
-            currentCategoryQuestions =
-                Dict.get currentCategory session.ui.questions
-                    |> Maybe.withDefault []
-                    |> List.concat
+                    _ ->
+                        []
         in
         ( model
         , model.resultRules
-            |> List.append currentCategoryQuestions
+            |> List.append currentQuestions
             |> List.append model.orderedCategories
             |> List.append model.allCategorieAndSubcategorieNames
             |> Effect.evaluateAll
@@ -124,11 +127,11 @@ evaluate model =
 
 type Msg
     = NewAnswer ( P.RuleName, P.NodeValue )
-    | ChangeTab P.RuleName
+    | NewStep SimulationStep
     | SetSubCategoryGraphStatus P.RuleName Bool
     | Evaluate
-    | UpdateEvaluation ( P.RuleName, Json.Encode.Value )
-    | UpdateAllEvaluation (List ( P.RuleName, Json.Encode.Value ))
+    | UpdateEvaluation ( P.RuleName, Encode.Value )
+    | UpdateAllEvaluation (List ( P.RuleName, Encode.Value ))
     | NoOp
 
 
@@ -140,10 +143,10 @@ update msg model =
             , Effect.updateSituation ( name, P.nodeValueEncoder value )
             )
 
-        ChangeTab category ->
+        NewStep step ->
             let
                 ( newModel, cmd ) =
-                    evaluate { model | currentTab = Just category }
+                    evaluate { model | currentStep = step }
             in
             ( newModel, Cmd.batch [ Effect.scrollTo ( 0, 0 ), cmd ] )
 
@@ -167,9 +170,9 @@ update msg model =
             ( model, Cmd.none )
 
 
-updateEvaluation : ( P.RuleName, Json.Encode.Value ) -> Model -> Model
+updateEvaluation : ( P.RuleName, Encode.Value ) -> Model -> Model
 updateEvaluation ( name, encodedEvaluation ) model =
-    case Decode.decodeValue evaluationDecoder encodedEvaluation of
+    case Decode.decodeValue P.evaluationDecoder encodedEvaluation of
         Ok eval ->
             { model | evaluations = Dict.insert name eval model.evaluations }
 
@@ -186,167 +189,297 @@ view model =
     let
         session =
             model.session
+
+        inQuestions =
+            not (model.currentStep == Result)
+
+        gridCols =
+            if inQuestions then
+                "lg:grid-cols-6"
+
+            else
+                "lg:grid-cols-1"
     in
     div []
         [ if Dict.isEmpty model.evaluations then
             div [ class "flex flex-col w-full h-full items-center" ]
-                [ div [ class "loading loading-lg text-primary my-4" ] []
+                [ div [ class "text-primary my-4" ]
+                    [ text "Chargement..."
+                    ]
                 ]
 
           else
-            div [ class "md:mb-16" ]
-                [ lazy3 viewCategoriesTabs model.session.rawRules model.orderedCategories model.currentTab
-                , div
-                    [ class "flex flex-col-reverse lg:grid lg:grid-cols-3" ]
-                    [ div [ class "p-4 lg:pl-8 lg:pr-4 lg:col-span-2" ]
-                        [ lazy viewCategoryQuestions model
+            div [ class "fr-container md:my-12" ]
+                [ div [ class ("flex flex-col lg:grid gap-12 " ++ gridCols) ]
+                    [ div [ class "p-4 lg:pl-8 lg:pr-4 lg:col-span-4" ]
+                        [ viewIfLazy inQuestions
+                            (\() ->
+                                viewCategoriesStepper
+                                    model.session.rawRules
+                                    model.orderedCategories
+                                    model.currentStep
+                            )
+                        , lazy viewCategoryQuestions model
                         ]
                     , if not session.engineInitialized then
                         div [ class "flex flex-col w-full h-full items-center" ]
                             [ div [ class "loading loading-lg text-primary mt-4" ] []
                             ]
 
-                      else
-                        div [ class "flex flex-col p-4 lg:pl-4 lg:col-span-1 lg:pr-8" ]
-                            [ div [ class "lg:sticky lg:top-4" ]
+                      else if inQuestions then
+                        div [ class "flex flex-col p-4 lg:pl-4 lg:col-span-2 lg:pr-8" ]
+                            [ div [ class "flex flex-col gap-6 lg:sticky lg:top-4" ]
                                 [ lazy viewTotal model
-                                , lazy viewResults model
+
+                                -- , lazy viewComparisonTable model
                                 ]
                             ]
+
+                      else
+                        nothing
                     ]
                 ]
         ]
 
 
-viewCategoriesTabs : P.RawRules -> List UI.Category -> Maybe P.RuleName -> Html Msg
-viewCategoriesTabs rules categories currentTab =
-    div [ class "flex bg-neutral rounded-md border-b border-base-200 mb-4 px-6 overflow-x-auto" ]
-        (categories
-            |> List.indexedMap
-                (\i category ->
-                    let
-                        isActive =
-                            currentTab == Just category
 
-                        title =
-                            H.getTitle rules category
-                    in
-                    button
-                        [ class
-                            ("flex items-center rounded-none cursor-pointer border-b p-4 tracking-wide text-xs hover:bg-base-100 "
-                                ++ (if isActive then
-                                        " border-primary font-semibold"
+{- TODO: factorize this with the one in UI.elm -}
 
-                                    else
-                                        " border-transparent font-medium"
-                                   )
-                            )
-                        , onClick (ChangeTab category)
-                        ]
-                        [ span
-                            [ class
-                                ("rounded-full inline-flex justify-center items-center w-5 h-5 mr-2 font-normal"
-                                    ++ (if isActive then
-                                            " text-white bg-primary"
 
-                                        else
-                                            " bg-gray-300"
-                                       )
-                                )
-                            ]
-                            [ text (String.fromInt (i + 1)) ]
-                        , text title
-                        ]
-                )
-        )
+viewCategoriesStepper : P.RawRules -> List UI.Category -> SimulationStep -> Html Msg
+viewCategoriesStepper rules categories currentStep =
+    let
+        currentTab =
+            case currentStep of
+                Category category ->
+                    category
+
+                _ ->
+                    ""
+
+        ( nextIndex, maybeCurrentTitle, maybeNextTitle ) =
+            categories
+                |> List.foldl
+                    (\category ( idx, currentTitle, nextTitle ) ->
+                        if category == currentTab then
+                            ( idx + 1, Just (H.getTitle rules category), nextTitle )
+
+                        else
+                            case ( currentTitle, nextTitle ) of
+                                ( Just _, Nothing ) ->
+                                    ( idx, currentTitle, Just (H.getTitle rules category) )
+
+                                ( Nothing, Nothing ) ->
+                                    ( idx + 1, currentTitle, nextTitle )
+
+                                _ ->
+                                    ( idx, currentTitle, nextTitle )
+                    )
+                    ( 0, Nothing, Nothing )
+
+        currentNumStep =
+            String.fromInt nextIndex
+
+        totalNumStep =
+            String.fromInt (List.length categories)
+    in
+    div [ class "fr-stepper" ]
+        [ h2 [ class "fr-stepper__title" ]
+            [ case currentStep of
+                Start ->
+                    text "Démarrer"
+
+                Category _ ->
+                    text (Maybe.withDefault "" maybeCurrentTitle)
+
+                Result ->
+                    text "Résultat"
+            ]
+        , span [ class "fr-stepper__state" ]
+            [ text (String.join " " [ "Étape", currentNumStep, "sur", totalNumStep ])
+            ]
+        , div
+            [ class "fr-stepper__steps"
+            , attribute "data-fr-current-step" currentNumStep
+            , attribute "data-fr-steps" totalNumStep
+            ]
+            []
+        , case maybeNextTitle of
+            Just title ->
+                p [ class "fr-stepper__details" ]
+                    [ span [ class "fr-text--bold" ] [ text "Étape suivante : " ]
+                    , text title
+                    ]
+
+            _ ->
+                nothing
+        ]
 
 
 viewCategoryQuestions : Model -> Html Msg
 viewCategoryQuestions model =
+    case model.currentStep of
+        Start ->
+            nothing
+
+        Category currentCategory ->
+            viewCategory model currentCategory
+
+        Result ->
+            viewResult model
+
+
+viewResult : Model -> Html Msg
+viewResult model =
+    let
+        userEmission =
+            Dict.get H.userEmission model.evaluations
+                |> Maybe.map .nodeValue
+    in
+    div [ class "" ]
+        [ div [ class "flex flex-col gap-8 mb-6 opacity-100" ]
+            [ viewCategoriesNavigation model.orderedCategories Result
+            , case userEmission of
+                Just (P.Num value) ->
+                    div []
+                        [ h1 []
+                            [ text "Résultat" ]
+                        , p []
+                            [ text "Actuellement, votre voiture vous coûte "
+                            , span [ class "font-medium text-[var(--text-title-blue-france)]" ]
+                                [ text "650 €" ]
+                            , text " par mois et émet "
+                            , span [ class "font-medium text-[var(--text-title-blue-france)]" ]
+                                [ text (H.formatFloatToFrenchLocale (Max 0) value ++ " kg de CO2e") ]
+                            , text " par an."
+                            ]
+                        , CallOut.callout "L'objectif des 2 tonnes"
+                            (div []
+                                [ p []
+                                    [ text """
+                            Pour essayer de maintenir l'augmentation
+                            de la température moyenne de la planète en
+                            dessous de 2 °C par rapport aux niveaux
+                            préindustriels, il faudrait arriver à atteindre la """
+                                    , a [ href "https://fr.wikipedia.org/wiki/Neutralit%C3%A9_carbone", target "_blank" ] [ text "neutralité carbone" ]
+                                    , text "."
+                                    ]
+                                , br [] []
+                                , p []
+                                    [ text "Pour cela, un objectif de 2 tonnes de CO2e par an et par personne a été fixé pour 2050 ("
+                                    , a [ href "https://nosgestesclimat.fr/empreinte-climat", target "_blank" ]
+                                        [ text "en savoir plus" ]
+                                    , text ")."
+                                    ]
+                                ]
+                            )
+                        , h2 []
+                            [ text "Comparaison avec les différentes alternatives"
+                            ]
+                        , p []
+                            [ text "Pour le même usage de votre voiture, voici une comparaison de ce que cela pourrait donner avec d'autres types de véhicules."
+                            ]
+                        , case H.getUserEmission model.evaluations of
+                            Just userEmissionValue ->
+                                viewComparisonTable userEmissionValue model
+
+                            _ ->
+                                viewResultError "Une erreur est survenue"
+                        , h2 []
+                            [ text "Les aides auxquelles vous avez droit"
+                            ]
+                        , h2 []
+                            [ text "Les ressources pour aller plus loin"
+                            ]
+                        ]
+
+                _ ->
+                    viewResultError "Une erreur est survenue"
+            ]
+        ]
+
+
+viewCategory : Model -> UI.Category -> Html Msg
+viewCategory model category =
     let
         session =
             model.session
-
-        currentCategory =
-            Maybe.withDefault "" model.currentTab
     in
-    div [ class "bg-neutral border border-base-200 rounded-md" ]
-        (session.ui.categories
-            |> Dict.toList
-            |> List.map
-                (\( category, _ ) ->
-                    let
-                        isVisible =
-                            currentCategory == category
-                    in
-                    div
-                        [ class
-                            -- Add duration to trigger transition
-                            -- TODO: better transition
-                            ("flex flex-col transition-opacity ease-in duration-0"
-                                ++ (if isVisible then
-                                        "  mb-6 opacity-100"
-
-                                    else
-                                        " opacity-50"
-                                   )
-                            )
-                        ]
-                        (if isVisible then
-                            [ viewMarkdownCategoryDescription session.rawRules category
-                            , viewQuestions model (Dict.get category session.ui.questions)
-                            , viewCategoriesNavigation model.orderedCategories category
-                            ]
-
-                         else
-                            []
-                        )
-                )
-        )
-
-
-viewCategoriesNavigation : List UI.Category -> String -> Html Msg
-viewCategoriesNavigation orderedCategories category =
-    let
-        nextList =
-            H.dropUntilNext ((==) category) ("empty" :: orderedCategories)
-
-        maybePrevCategory =
-            if List.head nextList == Just "empty" then
-                Nothing
-
-            else
-                List.head nextList
-
-        maybeNextCategory =
-            nextList
-                |> List.drop 2
-                |> List.head
-    in
-    div [ class "flex justify-between mt-6 mx-6" ]
-        [ case maybePrevCategory of
-            Just prevCategory ->
-                button
-                    [ class "btn btn-sm btn-primary btn-outline self-end"
-                    , onClick (ChangeTab prevCategory)
-                    ]
-                    -- [ Icons.chevronLeft, text (String.toUpper prevCategory) ]
-                    [ Icons.chevronLeft, text "Retour" ]
-
-            _ ->
-                div [] []
-        , case maybeNextCategory of
-            Just nextCategory ->
-                button
-                    [ class "btn btn-sm btn-primary self-end text-white"
-                    , onClick (ChangeTab nextCategory)
-                    ]
-                    -- [ text (H.getTitle rules nextCategory), Icons.chevronRight ]
-                    [ text "Suivant", Icons.chevronRight ]
-
-            _ ->
-                div [] []
+    div [ class "" ]
+        [ div [ class "flex flex-col mb-6 opacity-100" ]
+            [ viewMarkdownCategoryDescription session.rawRules category
+            , viewQuestions model (Dict.get category session.ui.questions)
+            , viewCategoriesNavigation model.orderedCategories (Category category)
+            ]
         ]
+
+
+viewCategoriesNavigation : List UI.Category -> SimulationStep -> Html Msg
+viewCategoriesNavigation orderedCategories step =
+    case step of
+        Start ->
+            nothing
+
+        Category category ->
+            let
+                nextList =
+                    H.dropUntilNext ((==) category) ("empty" :: orderedCategories)
+
+                maybePrevCategory =
+                    if List.head nextList == Just "empty" then
+                        Nothing
+
+                    else
+                        List.head nextList
+
+                maybeNextCategory =
+                    nextList
+                        |> List.drop 2
+                        |> List.head
+            in
+            div [ class "flex justify-between mt-6" ]
+                [ case maybePrevCategory of
+                    Just prevCategory ->
+                        Button.new { onClick = Just (NewStep (Category prevCategory)), label = "Retour" }
+                            |> Button.leftIcon Icons.system.arrowLeftSFill
+                            |> Button.medium
+                            |> Button.secondary
+                            |> Button.view
+
+                    _ ->
+                        div [] []
+                , case maybeNextCategory of
+                    Just nextCategory ->
+                        Button.new { onClick = Just (NewStep (Category nextCategory)), label = "Suivant" }
+                            |> Button.rightIcon Icons.system.arrowRightSFill
+                            |> Button.medium
+                            |> Button.view
+
+                    _ ->
+                        Button.new { onClick = Just (NewStep Result), label = "Voir le résultat" }
+                            |> Button.rightIcon Icons.system.arrowRightSFill
+                            |> Button.medium
+                            |> Button.view
+                ]
+
+        Result ->
+            let
+                lastCategory =
+                    orderedCategories
+                        |> List.reverse
+                        |> List.head
+                        |> Maybe.withDefault ""
+            in
+            div [ class "flex justify-between mb-6" ]
+                [ Button.new
+                    { onClick = Just (NewStep (Category lastCategory))
+                    , label = "Retourner aux questions"
+                    }
+                    |> Button.leftIcon Icons.system.arrowLeftSFill
+                    |> Button.medium
+                    |> Button.tertiary
+                    |> Button.view
+                ]
 
 
 viewMarkdownCategoryDescription : P.RawRules -> String -> Html Msg
@@ -361,10 +494,10 @@ viewMarkdownCategoryDescription rawRules currentCategory =
             text ""
 
         Just desc ->
-            div [ class "px-6 py-3 mb-6 border-b rounded-t-md bg-orange-50" ]
-                [ div [ class "prose max-w-full" ] <|
-                    Markdown.toHtml Nothing desc
-                ]
+            CallOut.callout ""
+                (div []
+                    (Markdown.toHtml Nothing desc)
+                )
 
 
 viewQuestions : Model -> Maybe (List (List P.RuleName)) -> Html Msg
@@ -380,8 +513,7 @@ viewQuestions model maybeQuestions =
 
 viewSubQuestions : Model -> List P.RuleName -> Html Msg
 viewSubQuestions model subquestions =
-    -- div [ class "bg-neutral rounded p-4 border border-base-200" ]
-    div [ class "px-6 max-w-xl flex flex-col gap-3" ]
+    div [ class "max-w-md flex flex-col gap-3" ]
         (subquestions
             |> List.map
                 (\name ->
@@ -400,28 +532,13 @@ viewQuestion model ( name, rule ) isApplicable =
     rule.question
         |> Maybe.map
             (\question ->
-                div []
-                    [ label [ class "form-control mb-1 h-full" ]
-                        [ div [ class "label" ]
-                            [ span
-                                [ if isApplicable then
-                                    class "label-text text-md font-semibold"
-
-                                  else
-                                    class "label-text text-md font-semibold text-slate-500 blur-sm"
-                                ]
-                                [ text question ]
-                            , span [ class "label-text-alt text-md min-w-fit" ] [ viewUnit rule ]
-                            ]
-                        , viewInput model ( name, rule ) isApplicable
-                        ]
-                    ]
+                viewInput model question ( name, rule ) isApplicable
             )
         |> Maybe.withDefault (text "")
 
 
-viewInput : Model -> ( P.RuleName, P.RawRule ) -> Bool -> Html Msg
-viewInput model ( name, rule ) isApplicable =
+viewInput : Model -> String -> ( P.RuleName, P.RawRule ) -> Bool -> Html Msg
+viewInput model question ( name, rule ) isApplicable =
     let
         newAnswer val =
             case String.toFloat val of
@@ -441,73 +558,81 @@ viewInput model ( name, rule ) isApplicable =
                 |> Maybe.map .nodeValue
     in
     if not isApplicable then
-        viewDisabledInput
+        viewDisabledInput question name
 
     else
         case ( ( rule.formula, rule.unit ), maybeNodeValue ) of
             ( ( Just (UnePossibilite { possibilites }), _ ), Just nodeValue ) ->
-                viewSelectInput model.session.rawRules name possibilites nodeValue
+                viewSelectInput question model.session.rawRules name possibilites nodeValue
 
             ( ( _, Just "%" ), Just (P.Num num) ) ->
-                viewRangeInput num newAnswer
+                viewRangeInput newAnswer num
 
             ( _, Just (P.Num num) ) ->
-                case Dict.get name model.session.situation of
-                    Just _ ->
-                        viewNumberInput num newAnswer
-
-                    Nothing ->
-                        viewNumberInputOnlyPlaceHolder num newAnswer
+                viewNumericInput newAnswer model.session.situation question rule name num
 
             ( _, Just (P.Boolean bool) ) ->
                 viewBooleanRadioInput name bool
 
-            ( _, Just (P.Str _) ) ->
-                -- Should not happen
-                viewDisabledInput
-
             _ ->
-                viewDisabledInput
+                viewDisabledInput question name
 
 
-viewNumberInput : Float -> (String -> Msg) -> Html Msg
-viewNumberInput num newAnswer =
-    input
-        [ type_ "number"
-        , class "input input-bordered"
-        , value (String.fromFloat num)
-        , onInput newAnswer
+viewNumericInput : (String -> Msg) -> P.Situation -> String -> P.RawRule -> P.RuleName -> Float -> Html Msg
+viewNumericInput onInput situation question rule name num =
+    let
+        config =
+            { onInput = onInput
+            , label = text question
+            , id = name
+            , value = ""
+            }
+    in
+    (case Dict.get name situation of
+        Just _ ->
+            Input.new { config | value = String.fromFloat num }
+
+        Nothing ->
+            Input.new config
+                |> Input.withInputAttrs
+                    [ placeholder (H.formatFloatToFrenchLocale (Max 1) num) ]
+    )
+        |> Input.withHint [ text (Maybe.withDefault "" rule.unit) ]
+        |> Input.numeric
+        |> Input.view
+
+
+{-| TODO: extract this in a clean component in elm-dsfr
+-}
+viewSelectInput : String -> P.RawRules -> P.RuleName -> List String -> P.NodeValue -> Html Msg
+viewSelectInput question rules ruleName possibilites nodeValue =
+    div [ class "fr-select-group" ]
+        [ Html.label [ class "fr-label", for "select" ]
+            [ text question ]
+        , select
+            [ onInput (\v -> NewAnswer ( ruleName, P.Str v ))
+            , class "fr-select"
+            , id "select"
+            , name "select"
+            ]
+            (possibilites
+                |> List.map
+                    (\possibilite ->
+                        option
+                            [ value possibilite
+                            , selected (H.getStringFromSituation nodeValue == possibilite)
+                            ]
+                            [ text (H.getOptionTitle rules ruleName possibilite) ]
+                    )
+            )
         ]
-        []
 
 
-viewNumberInputOnlyPlaceHolder : Float -> (String -> Msg) -> Html Msg
-viewNumberInputOnlyPlaceHolder num newAnswer =
-    input
-        [ type_ "number"
-        , class "input input-bordered"
-        , placeholder (H.formatFloatToFrenchLocale (Max 1) num)
-        , onInput newAnswer
-        ]
-        []
-
-
-viewSelectInput : P.RawRules -> P.RuleName -> List String -> P.NodeValue -> Html Msg
-viewSelectInput rules ruleName possibilites nodeValue =
-    select
-        [ onInput (\v -> NewAnswer ( ruleName, P.Str v ))
-        , class "select select-bordered"
-        ]
-        (possibilites
-            |> List.map
-                (\possibilite ->
-                    option
-                        [ value possibilite
-                        , selected (H.getStringFromSituation nodeValue == possibilite)
-                        ]
-                        [ text (H.getOptionTitle rules ruleName possibilite) ]
-                )
-        )
+viewDisabledInput : String -> P.RuleName -> Html Msg
+viewDisabledInput question name =
+    Input.new { onInput = \_ -> NoOp, label = text question, id = name, value = "" }
+        |> Input.withDisabled True
+        |> Input.view
 
 
 viewBooleanRadioInput : P.RuleName -> Bool -> Html Msg
@@ -536,8 +661,8 @@ viewBooleanRadioInput name bool =
         ]
 
 
-viewRangeInput : Float -> (String -> Msg) -> Html Msg
-viewRangeInput num newAnswer =
+viewRangeInput : (String -> Msg) -> Float -> Html Msg
+viewRangeInput newAnswer num =
     div [ class "flex flex-row" ]
         [ input
             [ type_ "range"
@@ -556,36 +681,118 @@ viewRangeInput num newAnswer =
         ]
 
 
-viewDisabledInput : Html Msg
-viewDisabledInput =
-    input [ class "input blur-sm", disabled True ] []
-
-
 
 -- Results
 
 
 viewTotal : Model -> Html Msg
 viewTotal model =
-    div []
-        (H.totalRuleNames
-            |> List.map (\name -> viewResult model name)
+    let
+        userEmission =
+            Dict.get H.userEmission model.evaluations
+                |> Maybe.map .nodeValue
+    in
+    div [ class "border p-8 bg-[var(--background-alt-blue-france)]" ]
+        (case userEmission of
+            Just (P.Num value) ->
+                [ h2 [ class "fr-h4" ]
+                    [ text "Situation actuelle" ]
+                , p [ class "m-0" ]
+                    [ text "Votre voiture vous coûte "
+                    , span [ class "font-medium text-[var(--text-title-blue-france)]" ]
+                        [ text "650 €" ]
+                    , text " par mois et émet "
+                    , span [ class "font-medium text-[var(--text-title-blue-france)]" ]
+                        [ text (H.formatFloatToFrenchLocale (Max 0) value ++ " kg de CO2e") ]
+                    , text " par an."
+                    ]
+                ]
+
+            _ ->
+                [ p [ class "fr-error" ]
+                    -- TODO: correctly handle errors
+                    [ text "Une erreur est survenue" ]
+                ]
         )
 
 
-viewResults : Model -> Html Msg
-viewResults model =
-    div [ class "stats stats-vertical border w-full rounded-md bg-neutral border-base-200" ]
-        (model.resultRules
-            |> List.map
-                (\name ->
-                    if List.any ((==) name) H.totalRuleNames then
-                        text ""
+viewComparisonTable : Float -> Model -> Html Msg
+viewComparisonTable userEmission model =
+    let
+        wrapUserEmission name content =
+            if name == H.userEmission then
+                span [ class "font-medium italic" ] [ content ]
 
-                    else
-                        viewResult model name
-                )
-        )
+            else
+                content
+
+        rows =
+            model.resultRules
+                |> List.map
+                    (\name ->
+                        [ wrapUserEmission name <|
+                            if name == H.userEmission then
+                                text "Votre voiture actuelle"
+
+                            else
+                                text (H.getTitle model.session.rawRules name)
+                        , wrapUserEmission name <| text "550 €"
+                        , wrapUserEmission name <|
+                            case H.getNumValue name model.evaluations of
+                                Just value ->
+                                    viewValuePlusDiff value userEmission "kg"
+
+                                Nothing ->
+                                    text "erreur"
+                        ]
+                    )
+    in
+    -- div [ class "border p-8 bg-[var(--background-alt-grey)]" ]
+    Table.view
+        { caption = Just "Comparaison avec les différentes alternatives"
+        , headers = [ "Type de voiture", "Coût mensuel", "Émissions annuelles (CO2eq)" ]
+        , rows = rows
+        }
+
+
+viewValuePlusDiff : Float -> Float -> String -> Html Msg
+viewValuePlusDiff value base unit =
+    let
+        diff =
+            value - base
+
+        tagColor =
+            -- less is better
+            if diff < 0 then
+                "text-[var(--text-default-success)]"
+
+            else
+                "text-[var(--text-default-error)]"
+
+        tagPrefix =
+            if diff > 0 then
+                "+"
+
+            else
+                ""
+
+        formattedValue =
+            H.formatFloatToFrenchLocale (Max 0) value
+
+        formattedDiff =
+            H.formatFloatToFrenchLocale (Max 0) diff
+    in
+    span [ class "flex gap-2" ]
+        [ text (formattedValue ++ " " ++ unit)
+        , if diff == 0 then
+            nothing
+
+          else
+            p [ class ("rounded-full text-xs flex items-center " ++ tagColor) ]
+                [ text tagPrefix
+                , text formattedDiff
+                ]
+        ]
 
 
 viewResultError : String -> Html Msg
@@ -594,40 +801,35 @@ viewResultError title =
         [ div [ class "stat-title" ]
             [ text title ]
         , div [ class "flex items-baseline" ]
-            [ div [ class "stat-value text-error" ]
-                [ Icons.circleSlash2 ]
-            , div [ class "stat-desc text-error text-xl ml-2" ]
+            [ div [ class "stat-desc text-error text-xl ml-2" ]
                 [ text "une erreur est survenue" ]
             ]
         ]
 
 
-viewResult : Model -> P.RuleName -> Html Msg
-viewResult model name =
+viewResult2 : Model -> P.RuleName -> Html Msg
+viewResult2 model name =
     let
         unit =
             H.getUnit model.session.rawRules name
 
         title =
             H.getTitle model.session.rawRules name
-
-        _ =
-            Debug.log "get" (Dict.get name model.evaluations)
     in
     case Dict.get name model.evaluations of
         Just { nodeValue } ->
             case nodeValue of
                 P.Num value ->
                     div
-                        [ class "stat" ]
-                        [ div [ class "stat-title" ]
+                        [ class "" ]
+                        [ div [ class "" ]
                             [ text title ]
                         , div [ class "flex items-baseline" ]
-                            [ div [ class "stat-value text-primary" ]
+                            [ div [ class "text-primary" ]
                                 [ text
                                     (H.formatFloatToFrenchLocale (Max 0) value)
                                 ]
-                            , div [ class "stat-desc text-primary ml-2 text-lg font-semibold" ]
+                            , div [ class "text-primary ml-2" ]
                                 [ case unit of
                                     Just u ->
                                         text u
@@ -656,26 +858,6 @@ viewUnit rawRule =
 
         Nothing ->
             text ""
-
-
-viewComparison : Model -> Html Msg
-viewComparison model =
-    div [ class "bg-neutral border border-base-200 rounded-md p-4" ]
-        [ p [ class "text-lg font-semibold" ]
-            [ text "Comparaison avec les différentes alternatives" ]
-        , viewComparisonTable model
-        ]
-
-
-viewComparisonTable : Model -> Html Msg
-viewComparisonTable model =
-    Html.ul []
-        (model.resultRules
-            |> List.map
-                (\name ->
-                    viewResult model name
-                )
-        )
 
 
 

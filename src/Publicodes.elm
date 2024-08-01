@@ -215,6 +215,19 @@ rawRulesDecoder =
     Decode.dict rawRuleDecoder
 
 
+type alias Evaluation =
+    { nodeValue : NodeValue
+    , isApplicable : Bool
+    }
+
+
+evaluationDecoder : Decode.Decoder Evaluation
+evaluationDecoder =
+    Decode.succeed Evaluation
+        |> required "nodeValue" nodeValueDecoder
+        |> required "isApplicable" Decode.bool
+
+
 
 -- Helpers
 

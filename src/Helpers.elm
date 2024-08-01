@@ -13,9 +13,32 @@ import Regex
 -- RESULT RULE HELPERS
 
 
+{-| The namespace of the rules that corresponds to all the combined
+results in term of carbon emissions.
+-}
 resultNamespace : P.RuleName
 resultNamespace =
     "empreinte"
+
+
+{-| The name of the rule that represents the total emission for the user car.
+-}
+userEmission : P.RuleName
+userEmission =
+    "empreinte"
+
+
+getNumValue : P.RuleName -> Dict P.RuleName P.Evaluation -> Maybe Float
+getNumValue ruleName evaluations =
+    evaluations
+        |> Dict.get ruleName
+        |> Maybe.andThen (\{ nodeValue } -> Just nodeValue)
+        |> Maybe.andThen P.nodeValueToFloat
+
+
+getUserEmission : Dict P.RuleName P.Evaluation -> Maybe Float
+getUserEmission =
+    getNumValue userEmission
 
 
 

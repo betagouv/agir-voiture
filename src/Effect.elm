@@ -25,27 +25,25 @@ port updateSituation : ( P.RuleName, Json.Encode.Value ) -> Cmd msg
 port scrollTo : ( Int, Int ) -> Cmd msg
 
 
-{-| Calls the native function to show a modal with the given id.
 
-```js
-document.getElementById(id)?.showModal()
-```
-
--}
-port showModal : String -> Cmd msg
-
-
-{-| Calls the native function to close a modal with the given id.
-
-```js
-document.getElementById(id)?.close()
-```
-
--}
-port closeModal : String -> Cmd msg
-
-
-
+-- {-| Calls the native function to show a modal with the given id.
+--
+-- ```js
+-- document.getElementById(id)?.showModal()
+-- ```
+--
+-- -}
+-- port showModal : String -> Cmd msg
+--
+--
+-- {-| Calls the native function to close a modal with the given id.
+--
+-- ```js
+-- document.getElementById(id)?.close()
+-- ```
+--
+-- -}
+-- port closeModal : String -> Cmd msg
 -- SUBSCRIPTIONS
 
 
