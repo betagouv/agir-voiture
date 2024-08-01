@@ -44,6 +44,7 @@ type alias Data =
     , rawRules : P.RawRules
     , ui : UI.Data
     , personas : Personas
+    , personasModalOpened : Bool
     }
 
 
@@ -66,6 +67,7 @@ empty =
     , ui = UI.empty
     , personas = Dict.empty
     , currentErr = Nothing
+    , personasModalOpened = False
     }
 
 
@@ -117,6 +119,28 @@ updateError f model =
 
         newSession =
             { session | currentErr = f session.currentErr }
+    in
+    { model | session = newSession }
+
+
+openPersonasModal : WithSession model -> WithSession model
+openPersonasModal model =
+    updatePersonasModalOpened True model
+
+
+closePersonasModal : WithSession model -> WithSession model
+closePersonasModal model =
+    updatePersonasModalOpened False model
+
+
+updatePersonasModalOpened : Bool -> WithSession model -> WithSession model
+updatePersonasModalOpened b model =
+    let
+        session =
+            model.session
+
+        newSession =
+            { session | personasModalOpened = b }
     in
     { model | session = newSession }
 

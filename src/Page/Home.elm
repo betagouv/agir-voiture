@@ -8,7 +8,6 @@ import BetaGouv.DSFR.CallOut as CallOut
 import BetaGouv.DSFR.Icons as Icons
 import BetaGouv.DSFR.Input as Input
 import BetaGouv.DSFR.Tag as Tag
-import Debug exposing (todo)
 import Dict exposing (Dict)
 import Effect
 import FormatNumber.Locales exposing (Decimals(..))
@@ -204,7 +203,9 @@ view model =
     div []
         [ if Dict.isEmpty model.evaluations then
             div [ class "flex flex-col w-full h-full items-center" ]
-                [ div [ class "loading loading-lg text-primary my-4" ] []
+                [ div [ class "text-primary my-4" ]
+                    [ text "Chargement..."
+                    ]
                 ]
 
           else
@@ -417,7 +418,7 @@ viewCategoriesNavigation : List UI.Category -> SimulationStep -> Html Msg
 viewCategoriesNavigation orderedCategories step =
     case step of
         Start ->
-            todo "viewCategoriesNavigation Start"
+            nothing
 
         Category category ->
             let

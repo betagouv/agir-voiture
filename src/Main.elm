@@ -22,8 +22,9 @@ import Page.NotFound as NotFound
 import Page.Template as Template
 import Platform.Cmd as Cmd
 import Publicodes as P exposing (Mecanism(..), NodeValue(..))
-import Session as S
+import Session as S exposing (WithSession)
 import Task
+import Time
 import Url
 import Url.Parser exposing (Parser)
 
@@ -278,13 +279,53 @@ update msg model =
                 ( newModel, cmd ) =
                     updateSituation personaSituation model
             in
-            ( newModel, Cmd.batch [ cmd, Effect.closeModal "persona-modal" ] )
+            ( newModel
+            , Cmd.batch [ cmd, Task.perform (\_ -> ClosePersonasModal) Time.now ]
+            )
 
         OpenPersonasModal ->
-            ( model, Effect.showModal "persona-modal" )
+            let
+                newModel =
+                    case model.page of
+                        Home m ->
+                            { model | page = Home (S.openPersonasModal m) }
+
+                        Documentation m ->
+                            { model | page = Documentation (S.openPersonasModal m) }
+
+                        NotFound s ->
+                            { model | page = NotFound { s | personasModalOpened = True } }
+            in
+            ( newModel, Cmd.none )
 
         ClosePersonasModal ->
-            ( model, Effect.closeModal "persona-modal" )
+            let
+                newModel =
+                    case model.page of
+                        Home m ->
+                            { model | page = Home (S.closePersonasModal m) }
+
+                        Documentation m ->
+                            { model | page = Documentation (S.closePersonasModal m) }
+
+                        NotFound s ->
+                            { model | page = NotFound { s | personasModalOpened = False } }
+            in
+            ( newModel, Cmd.none )
+
+
+
+-- updateSessionWith : (WithSession Model -> WithSession Model) -> Model -> Model
+-- updateSessionWith updateSession model =
+--     case model.page of
+--         Home m ->
+--             { model | page = Home (updateSession m.session) }
+--
+--         Documentation m ->
+--             { model | page = Documentation (updateSession m.session) }
+--
+--         NotFound s ->
+--             { model | page = NotFound (updateSession s) }
 
 
 updateSituation : P.Situation -> Model -> ( Model, Cmd Msg )

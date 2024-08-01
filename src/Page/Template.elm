@@ -1,5 +1,10 @@
 module Page.Template exposing (Config, view)
 
+import Accessibility
+import Accessibility.Aria as Aria exposing (labelledBy)
+import BetaGouv.DSFR.Button as Button exposing (ButtonConfig)
+import BetaGouv.DSFR.Icons as Icons
+import BetaGouv.DSFR.Modal as Modal
 import Browser exposing (Document)
 import Dict
 import Html exposing (..)
@@ -30,13 +35,23 @@ type alias Config msg =
 
 view : Config msg -> Document msg
 view config =
+    let
+        ( personasModal, personasModalButton ) =
+            Modal.view
+                { id = "personas-modal"
+                , label = "Choissir un profil type"
+                , openMsg = config.openPersonasModal
+                , closeMsg = Just config.closePersonasModal
+                , title = text "Choississez un profil type"
+                , opened = config.session.personasModalOpened
+                }
+                (viewPersonas config.session.personas config.setPersonaSituation)
+                Nothing
+    in
     { title = config.title ++ " | Agir - Simulateur voiture"
     , body =
-        [ viewHeader config
-        , viewPersonasModal
-            config.session.personas
-            config.setPersonaSituation
-            config.closePersonasModal
+        [ viewHeader config personasModalButton
+        , personasModal
         , if config.showReactRoot then
             div [ id "react-root" ] []
 
@@ -57,12 +72,8 @@ view config =
     }
 
 
-viewHeader : Config msg -> Html msg
-viewHeader { resetSituation, exportSituation, importSituation, openPersonasModal, session } =
-    let
-        btnClass =
-            "inline-flex items-center bg-base-100 border border-base-200 hover:bg-base-200"
-    in
+viewHeader : Config msg -> Html msg -> Html msg
+viewHeader config personasModalButton =
     header [ role "banner", class "fr-header" ]
         [ div [ class "fr-header__body" ]
             [ div [ class "fr-container" ]
@@ -92,80 +103,40 @@ viewHeader { resetSituation, exportSituation, importSituation, openPersonasModal
                                 ]
                             ]
                         ]
-                    ]
-                ]
-            ]
-        ]
-
-
-
--- [ div [ class "flex items-center md:flex-row justify-between flex-col w-full px-4 lg:px-8 border-b border-base-200 bg-neutral" ]
---     [ div [ class "flex flex-col items-center gap-4 mb-4 sm:mb-0 sm:items-center sm:justify-center sm:flex-row" ]
---         [ span [ class "py-4" ]
---             [ text "Agir - Simulateur voiture"
---             ]
---         , span [ class "relative inline-flex" ]
---             [ button [ class (btnClass ++ " rounded-md"), onClick openPersonasModal ]
---                 [ text "Commencer avec un profil type"
---                 ]
---             ]
---         ]
---     , div [ class "join my-4 md:my-0 md:mb-0 rounded-md" ]
---         [ button [ class btnClass, onClick resetSituation ]
---             [ span [ class "invisible hidden xsm:visible xsm:block" ] [ text "Recommencer" ]
---             ]
---         , button [ class btnClass, onClick exportSituation ]
---             [ span [ class "invisible hidden xsm:visible xsm:block" ] [ text "Télécharger" ]
---             ]
---         , button
---             [ class btnClass
---             , type_ "file"
---             , multiple False
---             , accept ".json"
---             , onClick importSituation
---             ]
---             [ span [ class "invisible hidden xsm:visible xsm:block" ] [ text "Importer" ]
---             ]
---         ]
---     ]
--- ]
-
-
-{-| TODO: abstract this into a reusable component
--}
-viewPersonasModal : Personas -> (P.Situation -> msg) -> msg -> Html msg
-viewPersonasModal personas setPersonaSituation closePersonasModal =
-    node "dialog"
-        [ id "persona-modal", class "modal modal-bottom sm:modal-middle" ]
-        [ div [ class "modal-box rounded-md bg-neutral" ]
-            [ h3 [ class "text-xl pb-4 font-semibold" ]
-                [ text "Choississez le profil qui correspond le plus à votre évènement" ]
-            , viewPersonas personas setPersonaSituation
-            , div [ class "modal-action" ]
-                [ button
-                    [ class "btn-sm border border-base-200 hover:bg-base-200 rounded-md"
-                    , onClick closePersonasModal
-                    ]
-                    [ text "Fermer" ]
-                ]
-            ]
-        ]
-
-
-viewPersonas : Personas -> (P.Situation -> msg) -> Html msg
-viewPersonas personas setPersonaSituation =
-    div [ class "grid grid-cols-2 gap-4" ]
-        (personas
-            |> Dict.toList
-            |> List.map
-                (\( _, persona ) ->
-                    button
-                        [ class "btn text-md font-semibold bg-primary/5 border border-primary/20 hover:bg-primary/20 hover:border-primary/20 rounded-md p-4 flex items-center justify-center w-full h-24"
-                        , onClick (setPersonaSituation persona.situation)
+                    , div [ class "fr-header__tools" ]
+                        [ div [ class "fr-header__tools-links" ]
+                            [ [ Button.new { label = "Choisir un profil type", onClick = Just config.openPersonasModal }
+                                    |> Button.leftIcon Icons.user.accountCircleLine
+                                    |> Button.withAttrs [ Aria.controls [ "personas-modal" ] ]
+                                    |> Button.secondary
+                              , Button.new
+                                    { label = "Réinitialiser", onClick = Just config.resetSituation }
+                              ]
+                                |> Button.group
+                                |> Button.viewGroup
+                            ]
                         ]
-                        [ text persona.titre ]
-                )
-        )
+                    ]
+                ]
+            ]
+        ]
+
+
+viewPersonas : Personas -> (P.Situation -> msg) -> Accessibility.Html msg
+viewPersonas personas setPersonaSituation =
+    (personas
+        |> Dict.toList
+        |> List.map
+            (\( _, persona ) ->
+                Button.new
+                    { label = persona.titre
+                    , onClick = Just (setPersonaSituation persona.situation)
+                    }
+                    |> Button.secondary
+            )
+    )
+        |> Button.group
+        |> Button.viewGroup
 
 
 viewFooter : Html msg

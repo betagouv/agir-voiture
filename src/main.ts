@@ -30,18 +30,18 @@ defineCustomElementWith(engine)
 app.ports.scrollTo.subscribe((x: number, y: number) => {
     window.scrollTo(x, y)
 })
-
-app.ports.showModal.subscribe((id: string) => {
-    const modal = document.getElementById(id)
-    // @ts-ignore
-    modal?.showModal()
-})
-
-app.ports.closeModal.subscribe((id: string) => {
-    const modal = document.getElementById(id)
-    // @ts-ignore
-    modal?.close()
-})
+//
+// app.ports.showModal.subscribe((id: string) => {
+//     const modal = document.getElementById(id)
+//     // @ts-ignore
+//     modal?.showModal()
+// })
+//
+// app.ports.closeModal.subscribe((id: string) => {
+//     const modal = document.getElementById(id)
+//     // @ts-ignore
+//     modal?.close()
+// })
 
 /// Publicodes
 
