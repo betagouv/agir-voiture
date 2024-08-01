@@ -839,59 +839,6 @@ viewResultError title =
         ]
 
 
-viewResult2 : Model -> P.RuleName -> Html Msg
-viewResult2 model name =
-    let
-        unit =
-            H.getUnit model.session.rawRules name
-
-        title =
-            H.getTitle model.session.rawRules name
-    in
-    case Dict.get name model.evaluations of
-        Just { nodeValue } ->
-            case nodeValue of
-                P.Num value ->
-                    div
-                        [ class "" ]
-                        [ div [ class "" ]
-                            [ text title ]
-                        , div [ class "flex items-baseline" ]
-                            [ div [ class "text-primary" ]
-                                [ text
-                                    (H.formatFloatToFrenchLocale (Max 0) value)
-                                ]
-                            , div [ class "text-primary ml-2" ]
-                                [ case unit of
-                                    Just u ->
-                                        text u
-
-                                    _ ->
-                                        text ""
-                                ]
-                            ]
-                        ]
-
-                _ ->
-                    viewResultError title
-
-        _ ->
-            viewResultError title
-
-
-viewUnit : P.RawRule -> Html Msg
-viewUnit rawRule =
-    case rawRule.unit of
-        Just "l" ->
-            text " litre"
-
-        Just unit ->
-            text (" " ++ unit)
-
-        Nothing ->
-            text ""
-
-
 
 -- Subscriptions
 
