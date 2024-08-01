@@ -25,7 +25,7 @@ resultNamespace =
 -}
 userEmission : P.RuleName
 userEmission =
-    "empreinte"
+    "empreinte . voiture"
 
 
 getNumValue : P.RuleName -> Dict P.RuleName P.Evaluation -> Maybe Float
@@ -56,7 +56,7 @@ getResultRules rules =
         |> Dict.keys
         |> List.filterMap
             (\name ->
-                case P.splitRuleName name of
+                case P.split name of
                     namespace :: _ ->
                         if namespace == resultNamespace then
                             Just name
@@ -106,7 +106,7 @@ getQuestions rules categories =
 
 isInCategory : P.RuleName -> P.RuleName -> Bool
 isInCategory category ruleName =
-    P.splitRuleName ruleName
+    P.split ruleName
         |> List.head
         |> Maybe.withDefault ""
         |> (\namespace -> namespace == category)

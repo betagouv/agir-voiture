@@ -726,31 +726,63 @@ viewComparisonTable userEmission model =
             else
                 content
 
+        getTitle =
+            H.getTitle model.session.rawRules
+
         rows =
             model.resultRules
-                |> List.map
+                |> List.filterMap
                     (\name ->
-                        [ wrapUserEmission name <|
-                            if name == H.userEmission then
-                                text "Votre voiture actuelle"
+                        H.getNumValue name model.evaluations
+                            |> Maybe.map (\value -> ( name, value ))
+                    )
+                |> List.sortWith
+                    (\( aName, aVal ) ( bName, bVal ) ->
+                        if aName == H.userEmission then
+                            LT
 
-                            else
-                                text (H.getTitle model.session.rawRules name)
-                        , wrapUserEmission name <| text "550 €"
-                        , wrapUserEmission name <|
-                            case H.getNumValue name model.evaluations of
-                                Just value ->
-                                    viewValuePlusDiff value userEmission "kg"
+                        else if bName == H.userEmission then
+                            GT
 
-                                Nothing ->
-                                    text "erreur"
-                        ]
+                        else
+                            Basics.compare aVal bVal
+                    )
+                |> List.map
+                    (\( name, value ) ->
+                        let
+                            infos =
+                                P.split name
+                                    |> List.tail
+                                    |> Maybe.withDefault []
+                        in
+                        case infos of
+                            motorisation :: gabarit :: rest ->
+                                [ text (getTitle (P.join [ "voiture", "motorisation", motorisation ]))
+                                , text (getTitle (P.join [ "voiture", "gabarit", gabarit ]))
+                                , case rest of
+                                    carburant :: [] ->
+                                        text (getTitle (P.join [ "voiture", "thermique", "carburant", carburant ]))
+
+                                    _ ->
+                                        text ""
+                                , wrapUserEmission name <| text "550 €"
+                                , wrapUserEmission name <| viewValuePlusDiff value userEmission "kg"
+                                ]
+
+                            _ ->
+                                []
                     )
     in
     -- div [ class "border p-8 bg-[var(--background-alt-grey)]" ]
     Table.view
         { caption = Just "Comparaison avec les différentes alternatives"
-        , headers = [ "Type de voiture", "Coût mensuel", "Émissions annuelles (CO2eq)" ]
+        , headers =
+            [ "Motorisation"
+            , "Taille"
+            , "Carburant"
+            , "Coût mensuel"
+            , "Émissions annuelles (CO2eq)"
+            ]
         , rows = rows
         }
 

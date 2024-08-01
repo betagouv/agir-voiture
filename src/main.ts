@@ -30,24 +30,12 @@ defineCustomElementWith(engine)
 app.ports.scrollTo.subscribe((x: number, y: number) => {
     window.scrollTo(x, y)
 })
-//
-// app.ports.showModal.subscribe((id: string) => {
-//     const modal = document.getElementById(id)
-//     // @ts-ignore
-//     modal?.showModal()
-// })
-//
-// app.ports.closeModal.subscribe((id: string) => {
-//     const modal = document.getElementById(id)
-//     // @ts-ignore
-//     modal?.close()
-// })
 
 /// Publicodes
 
 app.ports.engineInitialized.send(null)
 
-app.ports.setSituation.subscribe((newSituation: Situation<RuleName>) => {
+app.ports.setSituation.subscribe((newSituation: Situation) => {
     // TODO: check if the situation is valid
     engine.setSituation(newSituation)
     localStorage.setItem("situation", JSON.stringify(newSituation))

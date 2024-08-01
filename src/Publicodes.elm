@@ -242,14 +242,19 @@ toConstantString str =
     "'" ++ str ++ "'"
 
 
-splitRuleName : RuleName -> SplitedRuleName
-splitRuleName ruleName =
-    String.split " . " ruleName
+split : RuleName -> SplitedRuleName
+split =
+    String.split " . "
+
+
+join : SplitedRuleName -> RuleName
+join =
+    String.join " . "
 
 
 namespace : RuleName -> RuleName
 namespace ruleName =
-    splitRuleName ruleName
+    split ruleName
         |> List.head
         |> Maybe.withDefault ruleName
 
