@@ -7,7 +7,6 @@ import BetaGouv.DSFR.Button as Button
 import BetaGouv.DSFR.CallOut as CallOut
 import BetaGouv.DSFR.Icons as Icons
 import BetaGouv.DSFR.Input as Input
-import BetaGouv.DSFR.Tag as Tag
 import Dict exposing (Dict)
 import Effect
 import FormatNumber.Locales exposing (Decimals(..))
@@ -16,14 +15,14 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Extra exposing (nothing, viewIfLazy)
-import Html.Lazy exposing (lazy, lazy3)
+import Html.Lazy exposing (lazy)
 import Json.Decode as Decode
 import Json.Decode.Pipeline as Decode
 import Json.Encode as Encode
 import Markdown
 import Platform.Cmd as Cmd
 import Publicodes as P exposing (Mecanism(..), NodeValue(..))
-import Session as S
+import Session as S exposing (SimulationStep(..))
 import UI
 import Views.DSFR.Table as Table
 
@@ -37,20 +36,11 @@ type alias Model =
     , resultRules : List P.RuleName
     , evaluations : Dict P.RuleName P.Evaluation
 
-    -- Represents the current step of the simulation
-    , currentStep : SimulationStep
-
     -- TODO: could be removed?
     , orderedCategories : List UI.Category
     , allCategorieAndSubcategorieNames : List P.RuleName
     , openedCategories : Dict P.RuleName Bool
     }
-
-
-type SimulationStep
-    = Category UI.Category
-    | Result
-    | Start
 
 
 emptyModel : Model
@@ -60,7 +50,6 @@ emptyModel =
     , resultRules = []
     , orderedCategories = []
     , allCategorieAndSubcategorieNames = []
-    , currentStep = Start
     , openedCategories = Dict.empty
     }
 
@@ -78,7 +67,8 @@ init session =
             , orderedCategories = orderedCategories
             , allCategorieAndSubcategorieNames =
                 UI.getAllCategoryAndSubCategoryNames session.ui.categories
-            , currentStep = List.head orderedCategories |> Maybe.map Category |> Maybe.withDefault Start
+
+            -- , currentStep = List.head orderedCategories |> Maybe.map Category |> Maybe.withDefault Start
         }
 
 
@@ -100,7 +90,7 @@ evaluate model =
     if session.engineInitialized then
         let
             currentQuestions =
-                case model.currentStep of
+                case model.session.currentStep of
                     Category category ->
                         Dict.get category session.ui.questions
                             |> Maybe.withDefault []
@@ -146,9 +136,15 @@ update msg model =
         NewStep step ->
             let
                 ( newModel, cmd ) =
-                    evaluate { model | currentStep = step }
+                    evaluate (S.updateCurrentStep step model)
             in
-            ( newModel, Cmd.batch [ Effect.scrollTo ( 0, 0 ), cmd ] )
+            ( newModel
+            , Cmd.batch
+                [ Effect.scrollTo ( 0, 0 )
+                , Effect.saveCurrentStep (S.simulationStepEncoder step)
+                , cmd
+                ]
+            )
 
         SetSubCategoryGraphStatus category status ->
             let
@@ -191,7 +187,7 @@ view model =
             model.session
 
         inQuestions =
-            not (model.currentStep == Result)
+            not (model.session.currentStep == Result)
 
         gridCols =
             if inQuestions then
@@ -217,7 +213,7 @@ view model =
                                 viewCategoriesStepper
                                     model.session.rawRules
                                     model.orderedCategories
-                                    model.currentStep
+                                    model.session.currentStep
                             )
                         , lazy viewCategoryQuestions model
                         ]
@@ -244,6 +240,26 @@ view model =
 
 
 {- TODO: factorize this with the one in UI.elm -}
+
+
+viewCategoryQuestions : Model -> Html Msg
+viewCategoryQuestions model =
+    case model.session.currentStep of
+        Start ->
+            viewStart model
+
+        Category currentCategory ->
+            viewCategory model currentCategory
+
+        Result ->
+            viewResult model
+
+
+viewStart : Model -> Html Msg
+viewStart model =
+    div []
+        [ h1 [] [ text "Le simulateur voiture d'Agir" ]
+        ]
 
 
 viewCategoriesStepper : P.RawRules -> List UI.Category -> SimulationStep -> Html Msg
@@ -314,19 +330,6 @@ viewCategoriesStepper rules categories currentStep =
             _ ->
                 nothing
         ]
-
-
-viewCategoryQuestions : Model -> Html Msg
-viewCategoryQuestions model =
-    case model.currentStep of
-        Start ->
-            nothing
-
-        Category currentCategory ->
-            viewCategory model currentCategory
-
-        Result ->
-            viewResult model
 
 
 viewResult : Model -> Html Msg

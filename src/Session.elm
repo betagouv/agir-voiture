@@ -5,6 +5,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Json.Decode as Decode
 import Json.Decode.Pipeline as Decode
+import Json.Encode as Encode
 import Personas exposing (Personas)
 import Publicodes as P
 import UI
@@ -18,11 +19,40 @@ import UI
 --
 
 
+type SimulationStep
+    = Category UI.Category
+    | Result
+    | Start
+
+
+simulationStepDecoder : Decode.Decoder SimulationStep
+simulationStepDecoder =
+    Decode.oneOf
+        [ Decode.map Category Decode.string
+        , Decode.succeed Result
+        , Decode.succeed Start
+        ]
+
+
+simulationStepEncoder : SimulationStep -> Encode.Value
+simulationStepEncoder step =
+    case step of
+        Category category ->
+            Encode.string category
+
+        Result ->
+            Encode.string "Result"
+
+        Start ->
+            Encode.string "Start"
+
+
 type alias Flags =
     { rules : P.RawRules
     , ui : UI.Data
     , personas : Personas
     , situation : P.Situation
+    , currentStep : SimulationStep
     }
 
 
@@ -33,6 +63,7 @@ flagsDecoder =
         |> Decode.required "ui" UI.uiDecoder
         |> Decode.required "personas" Personas.personasDecoder
         |> Decode.required "situation" P.situationDecoder
+        |> Decode.required "currentStep" simulationStepDecoder
 
 
 {-| TODO: should [rawRules] and [ui] stored here?
@@ -45,6 +76,7 @@ type alias Data =
     , ui : UI.Data
     , personas : Personas
     , personasModalOpened : Bool
+    , currentStep : SimulationStep
     }
 
 
@@ -68,16 +100,18 @@ empty =
     , personas = Dict.empty
     , currentErr = Nothing
     , personasModalOpened = False
+    , currentStep = Start
     }
 
 
 init : Flags -> Data
-init { rules, situation, ui, personas } =
+init { rules, situation, ui, personas, currentStep } =
     { empty
         | rawRules = rules
         , situation = situation
         , ui = ui
         , personas = personas
+        , currentStep = currentStep
     }
 
 
@@ -90,11 +124,8 @@ updateEngineInitialized b model =
     let
         session =
             model.session
-
-        newSession =
-            { session | engineInitialized = b }
     in
-    { model | session = newSession }
+    { model | session = { session | engineInitialized = b } }
 
 
 {-| NOTE: this could only accept a [P.Situation] as argument, but it's more flexible this way.
@@ -104,11 +135,8 @@ updateSituation f model =
     let
         session =
             model.session
-
-        newSession =
-            { session | situation = f session.situation }
     in
-    { model | session = newSession }
+    { model | session = { session | situation = f session.situation } }
 
 
 updateError : (Maybe AppError -> Maybe AppError) -> WithSession model -> WithSession model
@@ -116,11 +144,8 @@ updateError f model =
     let
         session =
             model.session
-
-        newSession =
-            { session | currentErr = f session.currentErr }
     in
-    { model | session = newSession }
+    { model | session = { session | currentErr = f session.currentErr } }
 
 
 openPersonasModal : WithSession model -> WithSession model
@@ -138,11 +163,17 @@ updatePersonasModalOpened b model =
     let
         session =
             model.session
-
-        newSession =
-            { session | personasModalOpened = b }
     in
-    { model | session = newSession }
+    { model | session = { session | personasModalOpened = b } }
+
+
+updateCurrentStep : SimulationStep -> WithSession model -> WithSession model
+updateCurrentStep step model =
+    let
+        session =
+            model.session
+    in
+    { model | session = { session | currentStep = step } }
 
 
 
