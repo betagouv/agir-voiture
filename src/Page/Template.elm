@@ -36,7 +36,7 @@ type alias Config msg =
 view : Config msg -> Document msg
 view config =
     let
-        ( personasModal, personasModalButton ) =
+        ( personasModal, _ ) =
             Modal.view
                 { id = "personas-modal"
                 , label = "Choissir un profil type"
@@ -50,10 +50,12 @@ view config =
     in
     { title = config.title ++ " | Agir - Simulateur voiture"
     , body =
-        [ viewHeader config personasModalButton
+        [ viewHeader config
         , personasModal
         , if config.showReactRoot then
-            div [ id "react-root" ] []
+            div [ class "fr-container" ]
+                [ div [ id "react-root" ] []
+                ]
 
           else
             text ""
@@ -72,8 +74,8 @@ view config =
     }
 
 
-viewHeader : Config msg -> Html msg -> Html msg
-viewHeader config personasModalButton =
+viewHeader : Config msg -> Html msg
+viewHeader config =
     header [ role "banner", class "fr-header" ]
         [ div [ class "fr-header__body" ]
             [ div [ class "fr-container" ]
@@ -105,12 +107,24 @@ viewHeader config personasModalButton =
                         ]
                     , div [ class "fr-header__tools" ]
                         [ div [ class "fr-header__tools-links" ]
-                            [ [ Button.new { label = "Choisir un profil type", onClick = Just config.openPersonasModal }
+                            [ [ Button.new
+                                    { label = "Choisir un profil type"
+                                    , onClick = Just config.openPersonasModal
+                                    }
                                     |> Button.leftIcon Icons.user.accountCircleLine
                                     |> Button.withAttrs [ Aria.controls [ "personas-modal" ] ]
                                     |> Button.secondary
                               , Button.new
-                                    { label = "Réinitialiser", onClick = Just config.resetSituation }
+                                    { label = "Réinitialiser"
+                                    , onClick = Just config.resetSituation
+                                    }
+                                    |> Button.leftIcon Icons.system.refreshLine
+                              , Button.new
+                                    { label = "Comprendre les calculs"
+                                    , onClick = Nothing
+                                    }
+                                    |> Button.linkButton "/documentation"
+                                    |> Button.leftIcon Icons.document.fileTextLine
                               ]
                                 |> Button.group
                                 |> Button.viewGroup

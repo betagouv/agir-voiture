@@ -21,6 +21,7 @@ export type Props = {
 export default function ({ engine, rulePath, documentationPath }: Props) {
     return (
         <RulePage
+            className="fr-container"
             engine={engine}
             rulePath={rulePath}
             documentationPath={documentationPath}

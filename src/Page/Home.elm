@@ -209,7 +209,7 @@ view model =
                 ]
 
           else
-            div [ class "fr-container md:my-12" ]
+            div [ class "fr-container md:my-8" ]
                 [ div [ class ("flex flex-col lg:grid gap-12 " ++ gridCols) ]
                     [ div [ class "p-4 lg:pl-8 lg:pr-4 lg:col-span-4" ]
                         [ viewIfLazy inQuestions

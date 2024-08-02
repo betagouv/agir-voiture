@@ -1,6 +1,7 @@
 #documentation-rule-root {
     min-height: 80vh;
     text-align: left;
+    padding-top: 2rem;
 }
 
 #documentation-rule-root nav {
