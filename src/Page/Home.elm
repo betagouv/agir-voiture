@@ -48,11 +48,11 @@ view { session } =
                 Result ->
                     "Voir mes résultats"
     in
-    div [ class "fr-container bg-[var(--background-default-grey)] md:py-8" ]
+    div [ class "fr-container bg-[var(--background-default-grey)] md:py-16" ]
         [ div [ class "fr-grid-row fr-grid-row--gutters fr-grid-row--center" ]
-            [ div [ class "fr-col-lg-6" ]
+            [ div [ class "fr-col-md-6" ]
                 [ h1 [] [ text "Comparer les coûts et les émissions de votre voiture" ]
-                , div [ class "fr-text--lead" ]
+                , div [ class "" ]
                     [ text """
                     En répondant à quelques questions, vous pourrez comparer
                     les coûts et les émissions de votre voiture avec d'autres
@@ -64,13 +64,16 @@ view { session } =
                     , onClick = Nothing
                     }
                     |> Button.linkButton (Url.Builder.absolute Page.Simulateur.path [])
+                    |> Button.withAttrs [ class "mt-4" ]
                     |> Button.view
                 ]
-            , img
-                [ src "/undraw_order_a_car.svg"
-                , alt "Illustration d'une voiture"
-                , class "fr-col-lg-4 p-12"
+            , div [ class "fr-col-md-4 hidden md:block" ]
+                [ img
+                    [ src "/undraw_order_a_car.svg"
+                    , alt "Illustration d'une voiture"
+                    , class "p-8"
+                    ]
+                    []
                 ]
-                []
             ]
         ]
