@@ -1,5 +1,7 @@
 module Main exposing (..)
 
+-- TODO: use Page.* instead of importing all pages
+
 import AppUrl
 import Browser exposing (Document)
 import Browser.Navigation as Nav
@@ -16,13 +18,14 @@ import Html.Events exposing (..)
 import Json.Decode as Decode
 import Json.Decode.Pipeline as Decode
 import Json.Encode
-import Page.Documentation as Documentation
-import Page.Home as Home
-import Page.NotFound as NotFound
-import Page.Template as Template
+import Page.Documentation
+import Page.Home
+import Page.NotFound
+import Page.Simulateur
+import Page.Template
 import Platform.Cmd as Cmd
 import Publicodes as P exposing (Mecanism(..), NodeValue(..))
-import Session as S exposing (WithSession)
+import Session as S
 import Task
 import Time
 import Url
@@ -56,8 +59,9 @@ type alias Model =
 
 
 type Page
-    = Home Home.Model
-    | Documentation Documentation.Model
+    = Home Page.Home.Model
+    | Simulateur Page.Simulateur.Model
+    | Documentation Page.Documentation.Model
     | NotFound S.Data
 
 
@@ -82,14 +86,21 @@ init encodedFlags url key =
                 Model key (NotFound { emptySession | currentErr = Just (S.DecodeError e) })
 
 
-gotoHome : Model -> ( Home.Model, Cmd Home.Msg ) -> ( Model, Cmd Msg )
+gotoHome : Model -> ( Page.Home.Model, Cmd Page.Home.Msg ) -> ( Model, Cmd Msg )
 gotoHome model ( homeModel, cmd ) =
     ( { model | page = Home homeModel }
     , Cmd.map HomeMsg cmd
     )
 
 
-gotoDocumentation : Model -> ( Documentation.Model, Cmd Documentation.Msg ) -> ( Model, Cmd Msg )
+gotoSimulateur : Model -> ( Page.Simulateur.Model, Cmd Page.Simulateur.Msg ) -> ( Model, Cmd Msg )
+gotoSimulateur model ( homeModel, cmd ) =
+    ( { model | page = Simulateur homeModel }
+    , Cmd.map SimulateurMsg cmd
+    )
+
+
+gotoDocumentation : Model -> ( Page.Documentation.Model, Cmd Page.Documentation.Msg ) -> ( Model, Cmd Msg )
 gotoDocumentation model ( documentationModel, cmd ) =
     ( { model | page = Documentation documentationModel }
     , Cmd.map DocumentationMsg cmd
@@ -104,6 +115,9 @@ exit : Model -> S.Data
 exit model =
     case model.page of
         Home m ->
+            m.session
+
+        Simulateur m ->
             m.session
 
         Documentation m ->
@@ -128,12 +142,16 @@ router url model =
     in
     case appUrl.path of
         [] ->
-            Home.init session
+            Page.Home.init session
                 |> gotoHome model
+
+        [ "simulateur" ] ->
+            Page.Simulateur.init session
+                |> gotoSimulateur model
 
         [ "documentation" ] ->
             -- NOTE: we may want to redirect to the corresponding rule to have a correct URL
-            Documentation.init session (List.head H.totalRuleNames |> Maybe.withDefault "")
+            Page.Documentation.init session (List.head H.totalRuleNames |> Maybe.withDefault "")
                 |> gotoDocumentation model
 
         "documentation" :: rulePath ->
@@ -143,7 +161,7 @@ router url model =
                         |> P.decodeRuleName
             in
             if Dict.member ruleName session.rawRules then
-                Documentation.init session ruleName
+                Page.Documentation.init session ruleName
                     |> gotoDocumentation model
 
             else
@@ -165,8 +183,8 @@ route parser handler =
 type Msg
     = NoOp
       -- Page's Msg wrappers
-    | HomeMsg Home.Msg
-    | DocumentationMsg Documentation.Msg
+    | SimulateurMsg Page.Simulateur.Msg
+    | DocumentationMsg Page.Documentation.Msg
       -- Navigation
     | UrlChanged Url.Url
     | UrlRequested Browser.UrlRequest
@@ -182,6 +200,7 @@ type Msg
     | SetPersonaSituation P.Situation
     | OpenPersonasModal
     | ClosePersonasModal
+    | HomeMsg Page.Home.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -190,8 +209,17 @@ update msg model =
         HomeMsg homeMsg ->
             case model.page of
                 Home m ->
-                    Home.update homeMsg m
+                    Page.Home.update homeMsg m
                         |> gotoHome model
+
+                _ ->
+                    ( model, Cmd.none )
+
+        SimulateurMsg simulateurMsg ->
+            case model.page of
+                Simulateur m ->
+                    Page.Simulateur.update simulateurMsg m
+                        |> gotoSimulateur model
 
                 _ ->
                     ( model, Cmd.none )
@@ -199,7 +227,7 @@ update msg model =
         DocumentationMsg docMsg ->
             case model.page of
                 Documentation m ->
-                    Documentation.update docMsg m
+                    Page.Documentation.update docMsg m
                         |> gotoDocumentation model
 
                 _ ->
@@ -207,18 +235,23 @@ update msg model =
 
         EngineInitialized ->
             case model.page of
-                Home m ->
+                Simulateur m ->
                     -- NOTE: currently, we only evalute rules in the home page,
-                    -- because the evaluation is done in the Home module.
+                    -- because the evaluation is done in the Simulateur module.
                     -- However, me may want to evaluate rules in the other pages as well
                     -- (e.g. to display the result of a rule in the documentation page).
                     -- To do so, we would need to move the evaluation logic to the Main module.
                     let
                         ( newHomeModel, homeCmd ) =
                             S.updateEngineInitialized True m
-                                |> Home.update Home.Evaluate
+                                |> Page.Simulateur.update Page.Simulateur.Evaluate
                     in
-                    gotoHome model ( newHomeModel, homeCmd )
+                    gotoSimulateur model ( newHomeModel, homeCmd )
+
+                Home m ->
+                    ( { model | page = Home (S.updateEngineInitialized True m) }
+                    , Cmd.none
+                    )
 
                 Documentation m ->
                     ( { model | page = Documentation (S.updateEngineInitialized True m) }
@@ -231,6 +264,7 @@ update msg model =
                     )
 
         ResetSituation ->
+            -- TODO: reset the current step to Start
             updateSituation Dict.empty model
 
         ExportSituation ->
@@ -280,7 +314,7 @@ update msg model =
                     updateSituation personaSituation model
             in
             ( newModel
-            , Cmd.batch [ cmd, Task.perform (\_ -> ClosePersonasModal) Time.now ]
+            , Cmd.batch [ cmd, H.performCmdNow ClosePersonasModal ]
             )
 
         OpenPersonasModal ->
@@ -289,6 +323,9 @@ update msg model =
                     case model.page of
                         Home m ->
                             { model | page = Home (S.openPersonasModal m) }
+
+                        Simulateur m ->
+                            { model | page = Simulateur (S.openPersonasModal m) }
 
                         Documentation m ->
                             { model | page = Documentation (S.openPersonasModal m) }
@@ -301,9 +338,13 @@ update msg model =
         ClosePersonasModal ->
             let
                 newModel =
+                    -- TODO: find a way to avoid this duplication
                     case model.page of
                         Home m ->
                             { model | page = Home (S.closePersonasModal m) }
+
+                        Simulateur m ->
+                            { model | page = Simulateur (S.closePersonasModal m) }
 
                         Documentation m ->
                             { model | page = Documentation (S.closePersonasModal m) }
@@ -314,20 +355,6 @@ update msg model =
             ( newModel, Cmd.none )
 
 
-
--- updateSessionWith : (WithSession Model -> WithSession Model) -> Model -> Model
--- updateSessionWith updateSession model =
---     case model.page of
---         Home m ->
---             { model | page = Home (updateSession m.session) }
---
---         Documentation m ->
---             { model | page = Documentation (updateSession m.session) }
---
---         NotFound s ->
---             { model | page = NotFound (updateSession s) }
-
-
 updateSituation : P.Situation -> Model -> ( Model, Cmd Msg )
 updateSituation situation model =
     let
@@ -335,6 +362,9 @@ updateSituation situation model =
             case model.page of
                 Home m ->
                     { model | page = Home (S.updateSituation (\_ -> situation) m) }
+
+                Simulateur m ->
+                    { model | page = Simulateur (S.updateSituation (\_ -> situation) m) }
 
                 Documentation m ->
                     { model | page = Documentation (S.updateSituation (\_ -> situation) m) }
@@ -372,25 +402,32 @@ view model =
     in
     case model.page of
         Home m ->
-            Template.view
+            Page.Template.view
+                { baseConfig
+                    | title = "Accueil"
+                    , content = Html.map HomeMsg (Page.Home.view m)
+                }
+
+        Simulateur m ->
+            Page.Template.view
                 { baseConfig
                     | title = "Simulateur"
-                    , content = Html.map HomeMsg (Home.view m)
+                    , content = Html.map SimulateurMsg (Page.Simulateur.view m)
                 }
 
         Documentation m ->
-            Template.view
+            Page.Template.view
                 { baseConfig
                     | title = "Documentation" ++ " - " ++ H.getTitle session.rawRules m.rule
-                    , content = Html.map DocumentationMsg (Documentation.view m)
+                    , content = Html.map DocumentationMsg (Page.Documentation.view m)
                     , showReactRoot = True
                 }
 
         NotFound _ ->
-            Template.view
+            Page.Template.view
                 { baseConfig
                     | title = "404"
-                    , content = NotFound.view
+                    , content = Page.NotFound.view
                 }
 
 
@@ -403,5 +440,5 @@ subscriptions _ =
     Sub.batch
         [ Effect.engineInitialized (\_ -> EngineInitialized)
         , Effect.reactLinkClicked ReactLinkClicked
-        , Sub.map HomeMsg Home.subscriptions
+        , Sub.map SimulateurMsg Page.Simulateur.subscriptions
         ]

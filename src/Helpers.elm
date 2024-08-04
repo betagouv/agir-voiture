@@ -7,6 +7,8 @@ import FormatNumber.Locales exposing (Decimals(..), frenchLocale)
 import Json.Decode as Decode exposing (Decoder)
 import Publicodes as P
 import Regex
+import Task
+import Time
 
 
 
@@ -260,3 +262,12 @@ dropUntilNext predicate list =
 
         _ ->
             []
+
+
+
+-- CMD HELPERS
+
+
+performCmdNow : msg -> Cmd msg
+performCmdNow msg =
+    Task.perform (\_ -> msg) Time.now

@@ -101,7 +101,7 @@ viewHeader config =
                                     ]
                                 ]
                             , p [ class "fr-header__service-description" ]
-                                [ text "Estimez les coûts de votre voiture"
+                                [ text "Estimer les coûts de votre voiture"
                                 ]
                             ]
                         ]
@@ -123,7 +123,7 @@ viewHeader config =
                                     { label = "Comprendre les calculs"
                                     , onClick = Nothing
                                     }
-                                    |> Button.linkButton "/documentation"
+                                    |> Button.linkButton "documentation"
                                     |> Button.leftIcon Icons.document.fileTextLine
                               ]
                                 |> Button.group

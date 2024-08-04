@@ -28,9 +28,17 @@ type SimulationStep
 simulationStepDecoder : Decode.Decoder SimulationStep
 simulationStepDecoder =
     Decode.oneOf
-        [ Decode.map Category Decode.string
-        , Decode.succeed Result
-        , Decode.succeed Start
+        [ Decode.map Category (Decode.field "Category" Decode.string)
+        , Decode.map
+            (\s ->
+                case s of
+                    "Result" ->
+                        Result
+
+                    _ ->
+                        Start
+            )
+            Decode.string
         ]
 
 
@@ -38,7 +46,7 @@ simulationStepEncoder : SimulationStep -> Encode.Value
 simulationStepEncoder step =
     case step of
         Category category ->
-            Encode.string category
+            Encode.object [ ( "Category", Encode.string category ) ]
 
         Result ->
             Encode.string "Result"
@@ -76,7 +84,7 @@ type alias Data =
     , ui : UI.Data
     , personas : Personas
     , personasModalOpened : Bool
-    , currentStep : SimulationStep
+    , simulationStep : SimulationStep
     }
 
 
@@ -100,7 +108,7 @@ empty =
     , personas = Dict.empty
     , currentErr = Nothing
     , personasModalOpened = False
-    , currentStep = Start
+    , simulationStep = Start
     }
 
 
@@ -111,7 +119,7 @@ init { rules, situation, ui, personas, currentStep } =
         , situation = situation
         , ui = ui
         , personas = personas
-        , currentStep = currentStep
+        , simulationStep = currentStep
     }
 
 
@@ -173,7 +181,7 @@ updateCurrentStep step model =
         session =
             model.session
     in
-    { model | session = { session | currentStep = step } }
+    { model | session = { session | simulationStep = step } }
 
 
 
