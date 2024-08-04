@@ -7,10 +7,10 @@ import { defineCustomElementWith } from "./RulePageCustomElement"
 import { Situation } from "publicodes"
 
 const situation = JSON.parse(localStorage.getItem("situation") ?? "{}")
-const currentStep = localStorage.getItem("currentStep") ?? "Start"
+const simulationStep = localStorage.getItem("simulationStep") ?? "Start"
 
 const app = Elm.Main.init({
-    flags: { rules, ui, personas, situation, currentStep },
+    flags: { rules, ui, personas, situation, simulationStep },
     node: document.getElementById("elm-app"),
 })
 
@@ -54,6 +54,6 @@ app.ports.evaluateAll.subscribe((rules: RuleName[]) => {
     engine.evaluateAll(rules)
 })
 
-app.ports.saveCurrentStep.subscribe((currentStep: string) => {
-    localStorage.setItem("currentStep", currentStep)
+app.ports.saveCurrentStep.subscribe((simulationStep: string) => {
+    localStorage.setItem("simulationStep", simulationStep)
 })

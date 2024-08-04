@@ -27,26 +27,26 @@ type SimulationStep
 
 simulationStepDecoder : Decode.Decoder SimulationStep
 simulationStepDecoder =
-    Decode.oneOf
-        [ Decode.map Category (Decode.field "Category" Decode.string)
-        , Decode.map
-            (\s ->
-                case s of
-                    "Result" ->
-                        Result
+    Decode.map
+        (\s ->
+            case s of
+                "Result" ->
+                    Result
 
-                    _ ->
-                        Start
-            )
-            Decode.string
-        ]
+                "Start" ->
+                    Start
+
+                _ ->
+                    Category s
+        )
+        Decode.string
 
 
 simulationStepEncoder : SimulationStep -> Encode.Value
 simulationStepEncoder step =
     case step of
         Category category ->
-            Encode.object [ ( "Category", Encode.string category ) ]
+            Encode.string category
 
         Result ->
             Encode.string "Result"
@@ -60,7 +60,7 @@ type alias Flags =
     , ui : UI.Data
     , personas : Personas
     , situation : P.Situation
-    , currentStep : SimulationStep
+    , simulationStep : SimulationStep
     }
 
 
@@ -71,7 +71,7 @@ flagsDecoder =
         |> Decode.required "ui" UI.uiDecoder
         |> Decode.required "personas" Personas.personasDecoder
         |> Decode.required "situation" P.situationDecoder
-        |> Decode.required "currentStep" simulationStepDecoder
+        |> Decode.required "simulationStep" simulationStepDecoder
 
 
 {-| TODO: should [rawRules] and [ui] stored here?
@@ -113,13 +113,13 @@ empty =
 
 
 init : Flags -> Data
-init { rules, situation, ui, personas, currentStep } =
+init { rules, situation, ui, personas, simulationStep } =
     { empty
         | rawRules = rules
         , situation = situation
         , ui = ui
         , personas = personas
-        , simulationStep = currentStep
+        , simulationStep = simulationStep
     }
 
 
