@@ -121,7 +121,7 @@ getTitle : P.RawRules -> P.RuleName -> String
 getTitle rules name =
     case Dict.get name rules of
         Just rule ->
-            Maybe.withDefault name rule.title
+            Maybe.withDefault name rule.titre
 
         Nothing ->
             name
@@ -130,7 +130,7 @@ getTitle rules name =
 getUnit : P.RawRules -> P.RuleName -> Maybe String
 getUnit rules name =
     Dict.get name rules
-        |> Maybe.andThen .unit
+        |> Maybe.andThen .unite
 
 
 getStringFromSituation : P.NodeValue -> String
@@ -151,7 +151,7 @@ getOptionTitle : P.RawRules -> P.RuleName -> P.RuleName -> String
 getOptionTitle rules contexte optionVal =
     rules
         |> Dict.get (contexte ++ " . " ++ optionVal)
-        |> Maybe.andThen (\r -> r.title)
+        |> Maybe.andThen (\r -> r.titre)
         |> Maybe.withDefault optionVal
 
 

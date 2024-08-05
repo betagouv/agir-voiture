@@ -604,9 +604,21 @@ viewInput model question ( name, rule ) isApplicable =
         viewDisabledInput question name
 
     else
-        case ( ( rule.formula, rule.unit ), maybeNodeValue ) of
-            ( ( Just (UnePossibilite { possibilites }), _ ), Just nodeValue ) ->
-                viewSelectInput question model.session.rawRules name possibilites nodeValue
+        case ( ( rule.formule, rule.unite ), maybeNodeValue ) of
+            ( ( Just (ChainedMecanism { une_possibilite }), _ ), Just nodeValue ) ->
+                case une_possibilite of
+                    Just { possibilites } ->
+                        -- TODO: use type alias to get named parameters
+                        -- TODO: extract in its own module/component
+                        viewSelectInput
+                            question
+                            model.session.rawRules
+                            name
+                            possibilites
+                            nodeValue
+
+                    Nothing ->
+                        viewDisabledInput question name
 
             ( ( _, Just "%" ), Just (P.Num num) ) ->
                 viewRangeInput newAnswer num
@@ -640,7 +652,7 @@ viewNumericInput onInput situation question rule name num =
                 |> Input.withInputAttrs
                     [ placeholder (H.formatFloatToFrenchLocale (Max 1) num) ]
     )
-        |> Input.withHint [ text (Maybe.withDefault "" rule.unit) ]
+        |> Input.withHint [ text (Maybe.withDefault "" rule.unite) ]
         |> Input.numeric
         |> Input.view
 

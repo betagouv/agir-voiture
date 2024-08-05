@@ -3,7 +3,7 @@ module Publicodes exposing (..)
 import Dict exposing (Dict)
 import FormatNumber exposing (format)
 import FormatNumber.Locales exposing (Decimals(..), frenchLocale)
-import Json.Decode as Decode exposing (Decoder, field, lazy, list, map, nullable, string)
+import Json.Decode as Decode exposing (Decoder, lazy, list, map, nullable, string)
 import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode as Encode
 
@@ -23,8 +23,8 @@ type NodeValue
     | Empty
 
 
-nodeValueDecoder : Decoder NodeValue
-nodeValueDecoder =
+exprDecoder : Decoder NodeValue
+exprDecoder =
     Decode.oneOf
         [ Decode.map
             (\str ->
@@ -105,24 +105,12 @@ type alias Situation =
 
 situationDecoder : Decoder Situation
 situationDecoder =
-    Decode.dict nodeValueDecoder
+    Decode.dict exprDecoder
 
 
 encodeSituation : Situation -> Encode.Value
 encodeSituation situation =
     Encode.dict identity nodeValueEncoder situation
-
-
-type alias RawRule =
-    { question : Maybe String
-    , description : Maybe String
-    , summary : Maybe String
-    , unit : Maybe String
-    , default : Maybe Mecanism
-    , formula : Maybe Mecanism
-    , title : Maybe String
-    , note : Maybe String
-    }
 
 
 
@@ -170,31 +158,88 @@ recalculNodeDecoder =
         |> required "avec" situationDecoder
 
 
+
+-- type Mecanism
+--     = Expr NodeValue
+--     | Somme (List String)
+--     | Moyenne (List String)
+--     | Variations (List Clause)
+--     | UnePossibilite PossibiliteNode
+--     | ToutesCesConditions (List Clause)
+--     | UneDeCesConditions (List Clause)
+--     | Recalcul RecalculNode
+--     | EstDefini String
+--
+--
+-- mecanismDecoder : Decoder Mecanism
+-- mecanismDecoder =
+--     Decode.oneOf
+--         [ map Expr nodeValueDecoder
+--         , map Somme (field "somme" (list string))
+--         , map Moyenne (field "moyenne" (list string))
+--         , map Variations (field "variations" (list (lazy (\_ -> clauseDecoder))))
+--         , map UnePossibilite (field "une possibilité" possibiliteNodeDecoder)
+--         , map ToutesCesConditions (field "toutes ces conditions" (list (lazy (\_ -> clauseDecoder))))
+--         , map UneDeCesConditions (field "une de ces conditions" (list (lazy (\_ -> clauseDecoder))))
+--         , map Recalcul (field "recalcul" recalculNodeDecoder)
+--         , map EstDefini (field "est défini" string)
+--         ]
+--
+
+
+{-| TODO: could be a cleaner way to do this?
+-}
+type alias ChainedMecanisms =
+    { valeur : Maybe Mecanism
+    , somme : Maybe (List String)
+    , moyenne : Maybe (List String)
+    , variations : Maybe (List Clause)
+    , une_possibilite : Maybe PossibiliteNode
+    , toutes_ces_conditions : Maybe (List Clause)
+    , une_de_ces_conditions : Maybe (List Clause)
+    , recalcul : Maybe RecalculNode
+    , est_defini : Maybe String
+    }
+
+
 type Mecanism
     = Expr NodeValue
-    | Somme (List String)
-    | Moyenne (List String)
-    | Variations (List Clause)
-    | UnePossibilite PossibiliteNode
-    | ToutesCesConditions (List Clause)
-    | UneDeCesConditions (List Clause)
-    | Recalcul RecalculNode
-    | EstDefini String
+    | ChainedMecanism ChainedMecanisms
 
 
 mecanismDecoder : Decoder Mecanism
 mecanismDecoder =
     Decode.oneOf
-        [ map Expr nodeValueDecoder
-        , map Somme (field "somme" (list string))
-        , map Moyenne (field "moyenne" (list string))
-        , map Variations (field "variations" (list (lazy (\_ -> clauseDecoder))))
-        , map UnePossibilite (field "une possibilité" possibiliteNodeDecoder)
-        , map ToutesCesConditions (field "toutes ces conditions" (list (lazy (\_ -> clauseDecoder))))
-        , map UneDeCesConditions (field "une de ces conditions" (list (lazy (\_ -> clauseDecoder))))
-        , map Recalcul (field "recalcul" recalculNodeDecoder)
-        , map EstDefini (field "est défini" string)
+        [ map Expr exprDecoder
+        , map ChainedMecanism chainedMecanismsDecoder
         ]
+
+
+chainedMecanismsDecoder : Decoder ChainedMecanisms
+chainedMecanismsDecoder =
+    Decode.succeed ChainedMecanisms
+        |> optional "valeur" (nullable (lazy (\_ -> mecanismDecoder))) Nothing
+        |> optional "somme" (nullable (list string)) Nothing
+        |> optional "moyenne" (nullable (list string)) Nothing
+        |> optional "variations" (nullable (list (lazy (\_ -> clauseDecoder)))) Nothing
+        |> optional "une possibilité" (nullable possibiliteNodeDecoder) Nothing
+        |> optional "toutes ces conditions" (nullable (list (lazy (\_ -> clauseDecoder)))) Nothing
+        |> optional "une de ces conditions" (nullable (list (lazy (\_ -> clauseDecoder)))) Nothing
+        |> optional "recalcul" (nullable recalculNodeDecoder) Nothing
+        |> optional "est défini" (nullable string) Nothing
+
+
+type alias RawRule =
+    { question : Maybe String
+    , description : Maybe String
+    , resume : Maybe String
+    , unite : Maybe String
+    , par_defaut : Maybe Mecanism
+    , formule : Maybe Mecanism
+    , valeur : Maybe Mecanism
+    , titre : Maybe String
+    , note : Maybe String
+    }
 
 
 rawRuleDecoder : Decoder RawRule
@@ -206,6 +251,7 @@ rawRuleDecoder =
         |> optional "unité" (nullable string) Nothing
         |> optional "par défaut" (nullable mecanismDecoder) Nothing
         |> optional "formule" (nullable mecanismDecoder) Nothing
+        |> optional "valeur" (nullable mecanismDecoder) Nothing
         |> optional "titre" (nullable string) Nothing
         |> optional "note" (nullable string) Nothing
 
@@ -224,7 +270,7 @@ type alias Evaluation =
 evaluationDecoder : Decode.Decoder Evaluation
 evaluationDecoder =
     Decode.succeed Evaluation
-        |> required "nodeValue" nodeValueDecoder
+        |> required "nodeValue" exprDecoder
         |> required "isApplicable" Decode.bool
 
 
