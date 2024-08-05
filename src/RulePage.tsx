@@ -19,6 +19,7 @@ export type Props = {
 }
 
 export default function ({ engine, rulePath, documentationPath }: Props) {
+    console.log("rulePath", rulePath)
     return (
         <RulePage
             className="fr-container"

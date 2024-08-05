@@ -3,14 +3,16 @@ module Page.Simulateur exposing (Model, Msg(..), init, path, subscriptions, upda
 {- TODO: use Html.Extra instead of Html -}
 
 import Accessibility.Aria exposing (currentStep)
-import BetaGouv.DSFR.Button as Button
-import BetaGouv.DSFR.CallOut as CallOut
-import BetaGouv.DSFR.Icons as Icons
-import BetaGouv.DSFR.Input as Input
+import BetaGouv.DSFR.Button as ButtonDSFR
+import BetaGouv.DSFR.CallOut as CallOutDSFR
+import BetaGouv.DSFR.Icons as IconsDSFR
+import BetaGouv.DSFR.Input as InputDSFR
+import Components.ComparisonTable
+import Components.Total
 import Dict exposing (Dict)
 import Effect
 import FormatNumber.Locales exposing (Decimals(..))
-import Helpers as H exposing (userEmission)
+import Helpers as H exposing (userCost, userEmission)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -19,12 +21,12 @@ import Html.Lazy exposing (lazy)
 import Json.Decode as Decode
 import Json.Decode.Pipeline as Decode
 import Json.Encode as Encode
+import List.Extra exposing (unique)
 import Markdown
 import Platform.Cmd as Cmd
 import Publicodes as P exposing (Mecanism(..), NodeValue(..))
 import Session as S exposing (SimulationStep(..))
 import UI
-import Views.DSFR.Table as Table
 
 
 path : List String
@@ -119,7 +121,7 @@ evaluate model =
         , model.resultRules
             |> List.append currentQuestions
             |> List.append model.orderedCategories
-            |> List.append model.allCategorieAndSubcategorieNames
+            -- |> List.append model.allCategorieAndSubcategorieNames
             |> Effect.evaluateAll
         )
 
@@ -248,7 +250,7 @@ view model =
                       else if inQuestions then
                         div [ class "flex flex-col p-4 lg:pl-4 lg:col-span-2 lg:pr-8" ]
                             [ div [ class "flex flex-col gap-6 lg:sticky lg:top-4" ]
-                                [ lazy viewTotal model
+                                [ viewInQuestionsTotal model.evaluations
 
                                 -- , lazy viewComparisonTable model
                                 ]
@@ -375,69 +377,79 @@ viewCategoriesStepper rules categories currentStep =
 viewResult : Model -> Html Msg
 viewResult model =
     let
-        userEmission =
-            Dict.get H.userEmission model.evaluations
-                |> Maybe.map .nodeValue
+        { userEmission, userCost } =
+            H.getUserValues model.evaluations
+
+        rulesToCompare =
+            model.resultRules
+                |> List.filterMap
+                    (\name ->
+                        case P.split name of
+                            namespace :: rest ->
+                                if List.member namespace H.resultNamespaces then
+                                    Just rest
+
+                                else
+                                    Nothing
+
+                            _ ->
+                                Nothing
+                    )
+                |> unique
     in
     div [ class "" ]
         [ div [ class "flex flex-col gap-8 mb-6 opacity-100" ]
             [ viewCategoriesNavigation model.orderedCategories Result
-            , case userEmission of
-                Just (P.Num value) ->
-                    div []
-                        [ h1 []
-                            [ text "Résultat" ]
-                        , p []
-                            [ text "Actuellement, votre voiture vous coûte "
-                            , span [ class "font-medium text-[var(--text-title-blue-france)]" ]
-                                [ text "650 €" ]
-                            , text " par mois et émet "
-                            , span [ class "font-medium text-[var(--text-title-blue-france)]" ]
-                                [ text (H.formatFloatToFrenchLocale (Max 0) value ++ " kg de CO2e") ]
-                            , text " par an."
-                            ]
-                        , CallOut.callout "L'objectif des 2 tonnes"
-                            (div []
-                                [ p []
-                                    [ text """
+            , div []
+                [ h1 []
+                    [ text "Résultat" ]
+                , Components.Total.viewParagraph
+                    { cost = userCost, emission = userEmission }
+                , CallOutDSFR.callout "L'objectif des 2 tonnes"
+                    (div []
+                        [ p []
+                            [ text """
                             Pour essayer de maintenir l'augmentation
                             de la température moyenne de la planète en
                             dessous de 2 °C par rapport aux niveaux
                             préindustriels, il faudrait arriver à atteindre la """
-                                    , a [ href "https://fr.wikipedia.org/wiki/Neutralit%C3%A9_carbone", target "_blank" ] [ text "neutralité carbone" ]
-                                    , text "."
-                                    ]
-                                , br [] []
-                                , p []
-                                    [ text "Pour cela, un objectif de 2 tonnes de CO2e par an et par personne a été fixé pour 2050 ("
-                                    , a [ href "https://nosgestesclimat.fr/empreinte-climat", target "_blank" ]
-                                        [ text "en savoir plus" ]
-                                    , text ")."
-                                    ]
-                                ]
-                            )
-                        , h2 []
-                            [ text "Comparaison avec les différentes alternatives"
+                            , a [ href "https://fr.wikipedia.org/wiki/Neutralit%C3%A9_carbone", target "_blank" ] [ text "neutralité carbone" ]
+                            , text "."
                             ]
+                        , br [] []
                         , p []
-                            [ text "Pour le même usage de votre voiture, voici une comparaison de ce que cela pourrait donner avec d'autres types de véhicules."
-                            ]
-                        , case H.getUserEmission model.evaluations of
-                            Just userEmissionValue ->
-                                viewComparisonTable userEmissionValue model
-
-                            _ ->
-                                viewResultError "Une erreur est survenue"
-                        , h2 []
-                            [ text "Les aides auxquelles vous avez droit"
-                            ]
-                        , h2 []
-                            [ text "Les ressources pour aller plus loin"
+                            [ text "Pour cela, un objectif de 2 tonnes de CO2e par an et par personne a été fixé pour 2050 ("
+                            , a [ href "https://nosgestesclimat.fr/empreinte-climat", target "_blank" ]
+                                [ text "en savoir plus" ]
+                            , text ")."
                             ]
                         ]
+                    )
+                , h2 []
+                    [ text "Comparaison avec les différentes alternatives"
+                    ]
+                , p []
+                    [ text "Pour le même usage de votre voiture, voici une comparaison de ce que cela pourrait donner avec d'autres types de véhicules."
+                    ]
+                , case ( userEmission, userCost ) of
+                    ( Just emission, Just cost ) ->
+                        Components.ComparisonTable.view
+                            { rawRules = model.session.rawRules
+                            , evaluations = model.evaluations
+                            , rulesToCompare = rulesToCompare
+                            , userEmission = emission
+                            , userCost = cost
+                            }
 
-                _ ->
-                    viewResultError "Une erreur est survenue"
+                    _ ->
+                        text "No user emission or cost"
+                , h2 []
+                    [ text "Les aides auxquelles vous avez droit"
+                    ]
+                , h2 []
+                    [ text "Les ressources pour aller plus loin"
+                    ]
+                ]
             ]
         ]
 
@@ -483,26 +495,26 @@ viewCategoriesNavigation orderedCategories step =
             div [ class "flex justify-between mt-6" ]
                 [ case maybePrevCategory of
                     Just prevCategory ->
-                        Button.new { onClick = Just (NewStep (Category prevCategory)), label = "Retour" }
-                            |> Button.leftIcon Icons.system.arrowLeftSFill
-                            |> Button.medium
-                            |> Button.secondary
-                            |> Button.view
+                        ButtonDSFR.new { onClick = Just (NewStep (Category prevCategory)), label = "Retour" }
+                            |> ButtonDSFR.leftIcon IconsDSFR.system.arrowLeftSFill
+                            |> ButtonDSFR.medium
+                            |> ButtonDSFR.secondary
+                            |> ButtonDSFR.view
 
                     _ ->
                         div [] []
                 , case maybeNextCategory of
                     Just nextCategory ->
-                        Button.new { onClick = Just (NewStep (Category nextCategory)), label = "Suivant" }
-                            |> Button.rightIcon Icons.system.arrowRightSFill
-                            |> Button.medium
-                            |> Button.view
+                        ButtonDSFR.new { onClick = Just (NewStep (Category nextCategory)), label = "Suivant" }
+                            |> ButtonDSFR.rightIcon IconsDSFR.system.arrowRightSFill
+                            |> ButtonDSFR.medium
+                            |> ButtonDSFR.view
 
                     _ ->
-                        Button.new { onClick = Just (NewStep Result), label = "Voir le résultat" }
-                            |> Button.rightIcon Icons.system.arrowRightSFill
-                            |> Button.medium
-                            |> Button.view
+                        ButtonDSFR.new { onClick = Just (NewStep Result), label = "Voir le résultat" }
+                            |> ButtonDSFR.rightIcon IconsDSFR.system.arrowRightSFill
+                            |> ButtonDSFR.medium
+                            |> ButtonDSFR.view
                 ]
 
         Result ->
@@ -514,14 +526,14 @@ viewCategoriesNavigation orderedCategories step =
                         |> Maybe.withDefault ""
             in
             div [ class "flex justify-between mb-6" ]
-                [ Button.new
+                [ ButtonDSFR.new
                     { onClick = Just (NewStep (Category lastCategory))
                     , label = "Retourner aux questions"
                     }
-                    |> Button.leftIcon Icons.system.arrowLeftSFill
-                    |> Button.medium
-                    |> Button.tertiary
-                    |> Button.view
+                    |> ButtonDSFR.leftIcon IconsDSFR.system.arrowLeftSFill
+                    |> ButtonDSFR.medium
+                    |> ButtonDSFR.tertiary
+                    |> ButtonDSFR.view
                 ]
 
 
@@ -537,7 +549,7 @@ viewMarkdownCategoryDescription rawRules currentCategory =
             text ""
 
         Just desc ->
-            CallOut.callout ""
+            CallOutDSFR.callout ""
                 (div []
                     (Markdown.toHtml Nothing desc)
                 )
@@ -586,7 +598,7 @@ viewInput model question ( name, rule ) isApplicable =
         newAnswer val =
             case String.toFloat val of
                 Just value ->
-                    NewAnswer ( name, P.Num value )
+                    NewAnswer ( name, P.Number value )
 
                 Nothing ->
                     if String.isEmpty val then
@@ -620,10 +632,10 @@ viewInput model question ( name, rule ) isApplicable =
                     Nothing ->
                         viewDisabledInput question name
 
-            ( ( _, Just "%" ), Just (P.Num num) ) ->
+            ( ( _, Just "%" ), Just (P.Number num) ) ->
                 viewRangeInput newAnswer num
 
-            ( _, Just (P.Num num) ) ->
+            ( _, Just (P.Number num) ) ->
                 viewNumericInput newAnswer model.session.situation question rule name num
 
             ( _, Just (P.Boolean bool) ) ->
@@ -645,16 +657,16 @@ viewNumericInput onInput situation question rule name num =
     in
     (case Dict.get name situation of
         Just _ ->
-            Input.new { config | value = String.fromFloat num }
+            InputDSFR.new { config | value = String.fromFloat num }
 
         Nothing ->
-            Input.new config
-                |> Input.withInputAttrs
+            InputDSFR.new config
+                |> InputDSFR.withInputAttrs
                     [ placeholder (H.formatFloatToFrenchLocale (Max 1) num) ]
     )
-        |> Input.withHint [ text (Maybe.withDefault "" rule.unite) ]
-        |> Input.numeric
-        |> Input.view
+        |> InputDSFR.withHint [ text (Maybe.withDefault "" rule.unite) ]
+        |> InputDSFR.numeric
+        |> InputDSFR.view
 
 
 {-| TODO: extract this in a clean component in elm-dsfr
@@ -685,9 +697,9 @@ viewSelectInput question rules ruleName possibilites nodeValue =
 
 viewDisabledInput : String -> P.RuleName -> Html Msg
 viewDisabledInput question name =
-    Input.new { onInput = \_ -> NoOp, label = text question, id = name, value = "" }
-        |> Input.withDisabled True
-        |> Input.view
+    InputDSFR.new { onInput = \_ -> NoOp, label = text question, id = name, value = "" }
+        |> InputDSFR.withDisabled True
+        |> InputDSFR.view
 
 
 viewBooleanRadioInput : P.RuleName -> Bool -> Html Msg
@@ -740,157 +752,15 @@ viewRangeInput newAnswer num =
 -- Results
 
 
-viewTotal : Model -> Html Msg
-viewTotal model =
+viewInQuestionsTotal : Dict P.RuleName P.Evaluation -> Html Msg
+viewInQuestionsTotal evaluations =
     let
-        userEmission =
-            Dict.get H.userEmission model.evaluations
-                |> Maybe.map .nodeValue
+        { userEmission, userCost } =
+            H.getUserValues evaluations
     in
-    div [ class "border p-8 bg-[var(--background-alt-blue-france)]" ]
-        (case userEmission of
-            Just (P.Num value) ->
-                [ h2 [ class "fr-h4" ]
-                    [ text "Situation actuelle" ]
-                , p [ class "m-0" ]
-                    [ text "Votre voiture vous coûte "
-                    , span [ class "font-medium text-[var(--text-title-blue-france)]" ]
-                        [ text "650 €" ]
-                    , text " par mois et émet "
-                    , span [ class "font-medium text-[var(--text-title-blue-france)]" ]
-                        [ text (H.formatFloatToFrenchLocale (Max 0) value ++ " kg de CO2e") ]
-                    , text " par an."
-                    ]
-                ]
-
-            _ ->
-                [ p [ class "fr-error" ]
-                    -- TODO: correctly handle errors
-                    [ text "Une erreur est survenue" ]
-                ]
-        )
-
-
-viewComparisonTable : Float -> Model -> Html Msg
-viewComparisonTable userEmission model =
-    let
-        wrapUserEmission name content =
-            if name == H.userEmission then
-                span [ class "font-medium italic" ] [ content ]
-
-            else
-                content
-
-        getTitle =
-            H.getTitle model.session.rawRules
-
-        rows =
-            model.resultRules
-                |> List.filterMap
-                    (\name ->
-                        H.getNumValue name model.evaluations
-                            |> Maybe.map (\value -> ( name, value ))
-                    )
-                |> List.sortWith
-                    (\( aName, aVal ) ( bName, bVal ) ->
-                        if aName == H.userEmission then
-                            LT
-
-                        else if bName == H.userEmission then
-                            GT
-
-                        else
-                            Basics.compare aVal bVal
-                    )
-                |> List.map
-                    (\( name, value ) ->
-                        let
-                            infos =
-                                P.split name
-                                    |> List.tail
-                                    |> Maybe.withDefault []
-                        in
-                        case infos of
-                            motorisation :: gabarit :: rest ->
-                                [ text (getTitle (P.join [ "voiture", "motorisation", motorisation ]))
-                                , text (getTitle (P.join [ "voiture", "gabarit", gabarit ]))
-                                , case rest of
-                                    carburant :: [] ->
-                                        text (getTitle (P.join [ "voiture", "thermique", "carburant", carburant ]))
-
-                                    _ ->
-                                        text ""
-                                , wrapUserEmission name <| text "550 €"
-                                , wrapUserEmission name <| viewValuePlusDiff value userEmission "kg"
-                                ]
-
-                            _ ->
-                                []
-                    )
-    in
-    -- div [ class "border p-8 bg-[var(--background-alt-grey)]" ]
-    Table.view
-        { caption = Just "Comparaison avec les différentes alternatives"
-        , headers =
-            [ "Motorisation"
-            , "Taille"
-            , "Carburant"
-            , "Coût mensuel"
-            , "Émissions annuelles (CO2eq)"
-            ]
-        , rows = rows
-        }
-
-
-viewValuePlusDiff : Float -> Float -> String -> Html Msg
-viewValuePlusDiff value base unit =
-    let
-        diff =
-            value - base
-
-        tagColor =
-            -- less is better
-            if diff < 0 then
-                "text-[var(--text-default-success)]"
-
-            else
-                "text-[var(--text-default-error)]"
-
-        tagPrefix =
-            if diff > 0 then
-                "+"
-
-            else
-                ""
-
-        formattedValue =
-            H.formatFloatToFrenchLocale (Max 0) value
-
-        formattedDiff =
-            H.formatFloatToFrenchLocale (Max 0) diff
-    in
-    span [ class "flex gap-2" ]
-        [ text (formattedValue ++ " " ++ unit)
-        , if diff == 0 then
-            nothing
-
-          else
-            p [ class ("rounded-full text-xs flex items-center " ++ tagColor) ]
-                [ text tagPrefix
-                , text formattedDiff
-                ]
-        ]
-
-
-viewResultError : String -> Html Msg
-viewResultError title =
-    div [ class "stat" ]
-        [ div [ class "stat-title" ]
-            [ text title ]
-        , div [ class "flex items-baseline" ]
-            [ div [ class "stat-desc text-error text-xl ml-2" ]
-                [ text "une erreur est survenue" ]
-            ]
+    div [ class "border px-6 pt-6 bg-[var(--background-alt-blue-france)]" ]
+        [ Components.Total.viewParagraph
+            { emission = userEmission, cost = userCost }
         ]
 
 

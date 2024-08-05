@@ -1,4 +1,6 @@
-module Views.DSFR.Table exposing (..)
+module Components.DSFR.Table exposing (..)
+
+-- TODO: use the new DSFR Table module
 
 import Accessibility exposing (..)
 import Html.Attributes exposing (..)

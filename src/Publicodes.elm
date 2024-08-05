@@ -18,7 +18,7 @@ type alias SplitedRuleName =
 
 type NodeValue
     = Str String
-    | Num Float
+    | Number Float
     | Boolean Bool
     | Empty
 
@@ -39,7 +39,7 @@ exprDecoder =
                         Str str
             )
             Decode.string
-        , Decode.map Num Decode.float
+        , Decode.map Number Decode.float
         , Decode.map Boolean Decode.bool
         , Decode.null Empty
         ]
@@ -51,7 +51,7 @@ nodeValueEncoder nodeValue =
         Str str ->
             Encode.string (toConstantString str)
 
-        Num num ->
+        Number num ->
             Encode.float num
 
         Boolean bool ->
@@ -71,7 +71,7 @@ nodeValueToString nodeValue =
         Str str ->
             str
 
-        Num num ->
+        Number num ->
             format { frenchLocale | decimals = Exact 1 } num
 
         Boolean bool ->
@@ -88,7 +88,7 @@ nodeValueToString nodeValue =
 nodeValueToFloat : NodeValue -> Maybe Float
 nodeValueToFloat nodeValue =
     case nodeValue of
-        Num num ->
+        Number num ->
             Just num
 
         _ ->

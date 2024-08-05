@@ -13,14 +13,15 @@ import Time
 
 
 -- RESULT RULE HELPERS
+--  TODO: should be defined in ui.yaml
 
 
 {-| The namespace of the rules that corresponds to all the combined
 results in term of carbon emissions.
 -}
-resultNamespace : P.RuleName
-resultNamespace =
-    "empreinte"
+resultNamespaces : List P.RuleName
+resultNamespaces =
+    [ "empreinte", "coût" ]
 
 
 {-| The name of the rule that represents the total emission for the user car.
@@ -30,8 +31,15 @@ userEmission =
     "empreinte . voiture"
 
 
-getNumValue : P.RuleName -> Dict P.RuleName P.Evaluation -> Maybe Float
-getNumValue ruleName evaluations =
+{-| The name of the rule that represents the total cost for the user car.
+-}
+userCost : P.RuleName
+userCost =
+    "coût . voiture"
+
+
+getNumValue : Dict P.RuleName P.Evaluation -> P.RuleName -> Maybe Float
+getNumValue evaluations ruleName =
     evaluations
         |> Dict.get ruleName
         |> Maybe.andThen (\{ nodeValue } -> Just nodeValue)
@@ -39,17 +47,22 @@ getNumValue ruleName evaluations =
 
 
 getUserEmission : Dict P.RuleName P.Evaluation -> Maybe Float
-getUserEmission =
-    getNumValue userEmission
+getUserEmission evaluations =
+    getNumValue evaluations userEmission
 
 
+getUserCost : Dict P.RuleName P.Evaluation -> Maybe Float
+getUserCost evaluations =
+    getNumValue evaluations userCost
 
---  TODO: should be defined in ui.yaml
 
-
-totalRuleNames : List P.RuleName
-totalRuleNames =
-    [ "empreinte" ]
+{-| Returns the user values for the emission and the cost.
+-}
+getUserValues :
+    Dict P.RuleName P.Evaluation
+    -> { userEmission : Maybe Float, userCost : Maybe Float }
+getUserValues evaluations =
+    { userEmission = getUserEmission evaluations, userCost = getUserCost evaluations }
 
 
 getResultRules : P.RawRules -> List P.RuleName
@@ -60,7 +73,7 @@ getResultRules rules =
             (\name ->
                 case P.split name of
                     namespace :: _ ->
-                        if namespace == resultNamespace then
+                        if List.member namespace resultNamespaces then
                             Just name
 
                         else

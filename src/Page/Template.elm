@@ -120,7 +120,7 @@ viewHeader config =
                                     }
                                     |> Button.leftIcon Icons.system.refreshLine
                               , Button.new
-                                    { label = "Comprendre les calculs"
+                                    { label = "Comprendre le calcul"
                                     , onClick = Nothing
                                     }
                                     |> Button.linkButton "documentation"

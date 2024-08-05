@@ -27,7 +27,6 @@ import Platform.Cmd as Cmd
 import Publicodes as P exposing (Mecanism(..), NodeValue(..))
 import Session as S
 import Task
-import Time
 import Url
 import Url.Parser exposing (Parser)
 
@@ -151,7 +150,7 @@ router url model =
 
         [ "documentation" ] ->
             -- NOTE: we may want to redirect to the corresponding rule to have a correct URL
-            Page.Documentation.init session (List.head H.totalRuleNames |> Maybe.withDefault "")
+            Page.Documentation.init session H.userEmission
                 |> gotoDocumentation model
 
         "documentation" :: rulePath ->
