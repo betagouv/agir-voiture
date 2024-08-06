@@ -6,6 +6,7 @@ import BetaGouv.DSFR.Button as Button exposing (ButtonConfig)
 import BetaGouv.DSFR.Icons as Icons
 import BetaGouv.DSFR.Modal as Modal
 import Browser exposing (Document)
+import Components.DSFR.Notice
 import Dict
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -51,6 +52,10 @@ view config =
     { title = config.title ++ " | Agir - Simulateur voiture"
     , body =
         [ viewHeader config
+        , Components.DSFR.Notice.view
+            { title = "En cours de développement"
+            , desc = text "Les résultats de ce simulateur ne sont pas stables et sont susceptibles de fortement évoluer."
+            }
         , personasModal
         , if config.showReactRoot then
             div [ class "fr-container" ]
