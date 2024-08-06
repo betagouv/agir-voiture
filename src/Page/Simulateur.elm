@@ -60,6 +60,18 @@ emptyModel =
     }
 
 
+getSimulationStep : SimulationStep -> List UI.Category -> SimulationStep
+getSimulationStep step orderedCategories =
+    case step of
+        Start ->
+            List.head orderedCategories
+                |> Maybe.map Category
+                |> Maybe.withDefault Start
+
+        _ ->
+            step
+
+
 init : S.Data -> ( Model, Cmd Msg )
 init session =
     let
@@ -67,14 +79,7 @@ init session =
             UI.getOrderedCategories session.ui.categories
 
         currentStep =
-            case session.simulationStep of
-                Start ->
-                    List.head orderedCategories
-                        |> Maybe.map Category
-                        |> Maybe.withDefault Start
-
-                _ ->
-                    session.simulationStep
+            getSimulationStep session.simulationStep orderedCategories
 
         ( newModel, newCmd ) =
             evaluate
@@ -153,13 +158,16 @@ update msg model =
 
         NewStep step ->
             let
+                newStep =
+                    getSimulationStep step model.orderedCategories
+
                 ( newModel, cmd ) =
-                    evaluate (S.updateCurrentStep step model)
+                    evaluate (S.updateCurrentStep newStep model)
             in
             ( newModel
             , Cmd.batch
                 [ Effect.scrollTo ( 0, 0 )
-                , Effect.saveCurrentStep (S.simulationStepEncoder step)
+                , Effect.saveCurrentStep (S.simulationStepEncoder newStep)
                 , cmd
                 ]
             )
@@ -270,38 +278,15 @@ view model =
 viewCategoryQuestions : Model -> Html Msg
 viewCategoryQuestions model =
     case model.session.simulationStep of
-        Start ->
-            viewStart model
-
         Category currentCategory ->
             viewCategory model currentCategory
 
         Result ->
             viewResult model
 
-
-viewStart : Model -> Html Msg
-viewStart model =
-    div [ class "fr-container bg-[var(--background-default-grey)] md:py-8" ]
-        [ div [ class "fr-grid-row fr-grid-row--gutters fr-grid-row--center" ]
-            [ div [ class "fr-col-lg-6" ]
-                [ h1 [] [ text "Comparer les coûts et les émissions de votre voiture" ]
-                , div [ class "fr-text--lead" ]
-                    [ text """
-                    En répondant à quelques questions, vous pourrez comparer
-                    les coûts et les émissions de votre voiture avec d'autres
-                    types de véhicules.
-                    """
-                    ]
-                ]
-            , img
-                [ src "/undraw_order_a_car.svg"
-                , alt "Illustration d'une voiture"
-                , class "fr-col-lg-4 p-12"
-                ]
-                []
-            ]
-        ]
+        Start ->
+            -- Should not happen
+            nothing
 
 
 viewCategoriesStepper : P.RawRules -> List UI.Category -> SimulationStep -> Html Msg

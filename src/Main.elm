@@ -21,12 +21,13 @@ import Json.Encode
 import Page.Documentation
 import Page.Home
 import Page.NotFound
-import Page.Simulateur
+import Page.Simulateur exposing (Msg(..))
 import Page.Template
 import Platform.Cmd as Cmd
 import Publicodes as P exposing (Mecanism(..), NodeValue(..))
 import Session as S
 import Task
+import Time
 import Url
 import Url.Parser exposing (Parser)
 
@@ -191,7 +192,7 @@ type Msg
     | EngineInitialized
     | NewEncodedSituation String
       -- Situation buttons (reset, import, export)
-    | ResetSituation
+    | ResetSimulation
     | SelectSituationFile
     | ExportSituation
     | ImportSituationFile File
@@ -262,9 +263,20 @@ update msg model =
                     , Cmd.none
                     )
 
-        ResetSituation ->
-            -- TODO: reset the current step to Start
-            updateSituation Dict.empty model
+        ResetSimulation ->
+            updateSession
+                (\session ->
+                    { session
+                        | situation = Dict.empty
+                        , simulationStep = S.Start
+                    }
+                )
+                model
+                (Cmd.batch
+                    [ Effect.setSituation (P.encodeSituation Dict.empty)
+                    , Task.perform (\_ -> SimulateurMsg (NewStep S.Start)) Time.now
+                    ]
+                )
 
         ExportSituation ->
             let
@@ -355,25 +367,51 @@ update msg model =
 
 
 updateSituation : P.Situation -> Model -> ( Model, Cmd Msg )
-updateSituation situation model =
+updateSituation newSituation model =
+    updateSession (\session -> { session | situation = newSituation })
+        model
+        (Effect.setSituation (P.encodeSituation newSituation))
+
+
+
+-- let
+--     newModel =
+--         case model.page of
+--             Home m ->
+--                 { model | page = Home (S.updateSituation (\_ -> situation) m) }
+--
+--             Simulateur m ->
+--                 { model | page = Simulateur (S.updateSituation (\_ -> situation) m) }
+--
+--             Documentation m ->
+--                 { model | page = Documentation (S.updateSituation (\_ -> situation) m) }
+--
+--             NotFound s ->
+--                 { model | page = NotFound { s | situation = s.situation } }
+-- in
+-- ( newModel
+-- , Effect.setSituation (P.encodeSituation situation)
+-- )
+
+
+updateSession : (S.Data -> S.Data) -> Model -> Cmd Msg -> ( Model, Cmd Msg )
+updateSession f model cmd =
     let
         newModel =
             case model.page of
                 Home m ->
-                    { model | page = Home (S.updateSituation (\_ -> situation) m) }
+                    { model | page = Home { m | session = f m.session } }
 
                 Simulateur m ->
-                    { model | page = Simulateur (S.updateSituation (\_ -> situation) m) }
+                    { model | page = Simulateur { m | session = f m.session } }
 
                 Documentation m ->
-                    { model | page = Documentation (S.updateSituation (\_ -> situation) m) }
+                    { model | page = Documentation { m | session = f m.session } }
 
                 NotFound s ->
-                    { model | page = NotFound { s | situation = s.situation } }
+                    { model | page = NotFound (f s) }
     in
-    ( newModel
-    , Effect.setSituation (P.encodeSituation situation)
-    )
+    ( newModel, cmd )
 
 
 
@@ -391,7 +429,7 @@ view model =
             , content = text ""
             , session = session
             , showReactRoot = False
-            , resetSituation = ResetSituation
+            , resetSituation = ResetSimulation
             , exportSituation = ExportSituation
             , importSituation = SelectSituationFile
             , openPersonasModal = OpenPersonasModal
