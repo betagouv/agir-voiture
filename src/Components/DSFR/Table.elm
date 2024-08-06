@@ -41,7 +41,28 @@ view config =
                                         in
                                         tr [ id ("table-sm-row-key-" ++ idx), attribute "data-row-key" idx ]
                                             (row
-                                                |> List.map (\cell -> td [] [ cell ])
+                                                |> List.indexedMap
+                                                    (\cellIdx cell ->
+                                                        let
+                                                            span =
+                                                                List.length config.headers - List.length row
+                                                        in
+                                                        -- TODO: should probably not be here
+                                                        if cellIdx == 0 && span > 0 then
+                                                            td
+                                                                [ colspan (span + 1)
+                                                                , style "background-color" "#ededed"
+                                                                ]
+                                                                [ cell ]
+
+                                                        else if span > 0 then
+                                                            td
+                                                                [ style "background-color" "#ededed" ]
+                                                                [ cell ]
+
+                                                        else
+                                                            td [] [ cell ]
+                                                    )
                                             )
                                     )
                             )

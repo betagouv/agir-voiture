@@ -20,13 +20,6 @@ view :
     -> Html msg
 view { rawRules, evaluations, rulesToCompare, userCost, userEmission } =
     let
-        wrapUserEmission name content =
-            if P.join name == H.userEmission then
-                span [ class "font-medium italic" ] [ content ]
-
-            else
-                content
-
         getTitle =
             H.getTitle rawRules
 
@@ -36,16 +29,25 @@ view { rawRules, evaluations, rulesToCompare, userCost, userEmission } =
                     (\( name, { cost, emission } ) ->
                         case name of
                             motorisation :: gabarit :: rest ->
-                                [ text (getTitle (P.join [ "voiture", "motorisation", motorisation ]))
-                                , text (getTitle (P.join [ "voiture", "gabarit", gabarit ]))
+                                [ text <| getTitle <| P.join [ "voiture", "motorisation", motorisation ]
+                                , text <| getTitle <| P.join [ "voiture", "gabarit", gabarit ]
                                 , case rest of
                                     carburant :: [] ->
-                                        text (getTitle (P.join [ "voiture", "thermique", "carburant", carburant ]))
+                                        text <| getTitle <| P.join <| [ "voiture", "thermique", "carburant", carburant ]
 
                                     _ ->
-                                        text ""
-                                , wrapUserEmission name <| viewValuePlusDiff emission userEmission "kg"
-                                , wrapUserEmission name <| viewValuePlusDiff cost userCost "€"
+                                        text "Électricité"
+                                , viewValuePlusDiff emission userEmission "kg"
+                                , viewValuePlusDiff cost userCost "€"
+                                ]
+
+                            [ "voiture" ] ->
+                                [ span [ class "italic" ]
+                                    [ text "Votre voiture actuelle" ]
+                                , span [ class "italic" ]
+                                    [ viewValuePlusDiff emission userEmission "kg" ]
+                                , span [ class "italic" ]
+                                    [ viewValuePlusDiff cost userCost "€" ]
                                 ]
 
                             _ ->
