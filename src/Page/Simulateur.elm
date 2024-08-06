@@ -8,6 +8,7 @@ import BetaGouv.DSFR.CallOut as CallOutDSFR
 import BetaGouv.DSFR.Icons as IconsDSFR
 import BetaGouv.DSFR.Input as InputDSFR
 import Components.ComparisonTable
+import Components.DSFR.Card as CardDSFR
 import Components.Total
 import Dict exposing (Dict)
 import Effect
@@ -395,58 +396,128 @@ viewResult model =
                                 Nothing
                     )
                 |> unique
+
+        viewCard ( title, link, desc ) =
+            CardDSFR.card
+                (text title)
+                CardDSFR.vertical
+                |> CardDSFR.linkFull link
+                |> CardDSFR.withDescription
+                    (Just
+                        (text desc)
+                    )
+                |> CardDSFR.withArrow True
+                |> CardDSFR.view
     in
     div [ class "" ]
         [ div [ class "flex flex-col gap-8 mb-6 opacity-100" ]
             [ viewCategoriesNavigation model.orderedCategories Result
-            , div []
+            , div [ class "flex flex-col gap-8" ]
                 [ h1 []
                     [ text "Résultat" ]
-                , Components.Total.viewParagraph
-                    { cost = userCost, emission = userEmission }
-                , CallOutDSFR.callout "L'objectif des 2 tonnes"
-                    (div []
-                        [ p []
-                            [ text """
+                , section []
+                    [ Components.Total.viewParagraph
+                        { cost = userCost, emission = userEmission }
+                    , CallOutDSFR.callout "L'objectif des 2 tonnes"
+                        (div []
+                            [ p []
+                                [ text """
                             Pour essayer de maintenir l'augmentation
                             de la température moyenne de la planète en
                             dessous de 2 °C par rapport aux niveaux
                             préindustriels, il faudrait arriver à atteindre la """
-                            , a [ href "https://fr.wikipedia.org/wiki/Neutralit%C3%A9_carbone", target "_blank" ] [ text "neutralité carbone" ]
+                                , a [ href "https://fr.wikipedia.org/wiki/Neutralit%C3%A9_carbone", target "_blank" ] [ text "neutralité carbone" ]
+                                , text "."
+                                ]
+                            , br [] []
+                            , p []
+                                [ text "Pour cela, un objectif de 2 tonnes de CO2e par an et par personne a été fixé pour 2050 ("
+                                , a [ href "https://nosgestesclimat.fr/empreinte-climat", target "_blank" ]
+                                    [ text "en savoir plus" ]
+                                , text ")."
+                                ]
+                            ]
+                        )
+                    ]
+                , section []
+                    [ h2 []
+                        [ text "Comparaison avec les différentes alternatives"
+                        ]
+                    , p []
+                        [ text "Pour le même usage de votre voiture, voici une comparaison de ce que cela pourrait donner avec d'autres types de véhicules."
+                        ]
+                    , case ( userEmission, userCost ) of
+                        ( Just emission, Just cost ) ->
+                            Components.ComparisonTable.view
+                                { rawRules = model.session.rawRules
+                                , evaluations = model.evaluations
+                                , rulesToCompare = rulesToCompare
+                                , userEmission = emission
+                                , userCost = cost
+                                }
+
+                        _ ->
+                            text "No user emission or cost"
+                    ]
+                , section []
+                    [ h2 [] [ text "Les aides financières" ]
+                    , p []
+                        [ text """
+                            Afin d'aider les particuliers à passer à des véhicules plus propres, il existe des aides financières
+                            mis en place par l'État et les collectivités locales."""
+                        ]
+                    , CallOutDSFR.callout ""
+                        (span []
+                            [ text "Au niveau national par exemple, avec le "
+                            , a [ href "https://www.economie.gouv.fr/particuliers/bonus-ecologique", target "_blank" ]
+                                [ text "bonus écologique" ]
+                            , text ", vous pouvez bénéficier d'une aide allant jusqu'à "
+                            , span [ class "text-[var(--text-default-info)]" ] [ text "7 000 €" ]
+                            , text " pour l'achat d'un véhicule électrique. Et avec la "
+                            , a [ href "https://www.service-public.fr/particuliers/vosdroits/F36848", target "_blank" ]
+                                [ text "prime à la conversion" ]
+                            , text ", vous pouvez bénéficier d'une aide allant jusqu'à "
+                            , span [ class "text-[var(--text-default-info)]" ] [ text "3 000 €" ]
                             , text "."
                             ]
-                        , br [] []
-                        , p []
-                            [ text "Pour cela, un objectif de 2 tonnes de CO2e par an et par personne a été fixé pour 2050 ("
-                            , a [ href "https://nosgestesclimat.fr/empreinte-climat", target "_blank" ]
-                                [ text "en savoir plus" ]
-                            , text ")."
-                            ]
+                        )
+                    , p []
+                        [ text "Il existe également des aides locales auxquelles vous pouvez être éligible."
                         ]
-                    )
-                , h2 []
-                    [ text "Comparaison avec les différentes alternatives"
+                    , ButtonDSFR.new
+                        { onClick = Nothing
+                        , label = "Découvrir toutes les aides"
+                        }
+                        |> ButtonDSFR.linkButton "https://agir.beta.gouv.fr"
+                        |> ButtonDSFR.rightIcon IconsDSFR.system.arrowRightFill
+                        |> ButtonDSFR.view
                     ]
-                , p []
-                    [ text "Pour le même usage de votre voiture, voici une comparaison de ce que cela pourrait donner avec d'autres types de véhicules."
-                    ]
-                , case ( userEmission, userCost ) of
-                    ( Just emission, Just cost ) ->
-                        Components.ComparisonTable.view
-                            { rawRules = model.session.rawRules
-                            , evaluations = model.evaluations
-                            , rulesToCompare = rulesToCompare
-                            , userEmission = emission
-                            , userCost = cost
-                            }
-
-                    _ ->
-                        text "No user emission or cost"
-                , h2 []
-                    [ text "Les aides auxquelles vous avez droit"
-                    ]
-                , h2 []
-                    [ text "Les ressources pour aller plus loin"
+                , section [ class "mt-8" ]
+                    [ h2 []
+                        [ text "Les ressources pour aller plus loin"
+                        ]
+                    , p [] [ text "Découvrez une sélection pour continuer votre engagement." ]
+                    , div [ class "fr-grid-row fr-grid-row--gutters fr-grid-row--center" ]
+                        ([ ( "Agir !"
+                           , "https://agir.beta.gouv.fr"
+                           , "Faite vous accompagner pour réduire votre empreinte carbone à travers des actions concrètes."
+                           )
+                         , ( "Nos Gestes Climat"
+                           , "https://nosgestesclimat.fr"
+                           , "Calculez votre empreinte carbone individuelle et découvrez des gestes pour la réduire."
+                           )
+                         , ( "Impact CO2"
+                           , "https://impactCO2.fr"
+                           , "Comprendre les ordres de grandeur et les équivalences des émissions de CO2e."
+                           )
+                         , ( "La voiture électrique, solution idéale pour le climat ?"
+                           , "https://bonpote.com/la-voiture-electrique-solution-ideale-pour-le-climat"
+                           , "Article du chercheur Aurélien Bigo qui décortique les différentes critiques faites à la voiture électrique."
+                           )
+                         ]
+                            |> List.map viewCard
+                            |> List.map (\card -> div [ class "fr-col-md-4" ] [ card ])
+                        )
                     ]
                 ]
             ]

@@ -58,7 +58,7 @@ view { session } =
                         , span [ class "fr-text--bold text-[var(--text-default-info)]" ] [ text "moins de 5 minutes" ]
                         , text """, découvrez les coûts et
                     les émissions de votre voiture et comparez-les aux
-                    alternatives afin de faire un choix éclairé.
+                    alternatives afin de faire un choix éclairé pour une mobilité plus durable.
                     """
                         ]
                     , Button.new
