@@ -118,7 +118,6 @@ viewHeader config =
                                     }
                                     |> Button.leftIcon Icons.user.accountCircleLine
                                     |> Button.withAttrs [ Aria.controls [ "personas-modal" ] ]
-                                    |> Button.secondary
                               , Button.new
                                     { label = "Réinitialiser"
                                     , onClick = Just config.resetSituation
