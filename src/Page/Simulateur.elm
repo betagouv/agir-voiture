@@ -45,7 +45,6 @@ type alias Model =
 
     -- TODO: could be removed?
     , orderedCategories : List UI.Category
-    , allCategorieAndSubcategorieNames : List P.RuleName
     , openedCategories : Dict P.RuleName Bool
     }
 
@@ -56,7 +55,6 @@ emptyModel =
     , evaluations = Dict.empty
     , resultRules = []
     , orderedCategories = []
-    , allCategorieAndSubcategorieNames = []
     , openedCategories = Dict.empty
     }
 
@@ -83,8 +81,6 @@ init session =
                     | session = session
                     , resultRules = H.getResultRules session.rawRules
                     , orderedCategories = orderedCategories
-                    , allCategorieAndSubcategorieNames =
-                        UI.getAllCategoryAndSubCategoryNames session.ui.categories
                 }
     in
     ( newModel, Cmd.batch [ newCmd, H.performCmdNow (NewStep currentStep) ] )
@@ -118,11 +114,14 @@ evaluate model =
                         []
         in
         ( model
-        , model.resultRules
-            |> List.append currentQuestions
-            |> List.append model.orderedCategories
-            -- |> List.append model.allCategorieAndSubcategorieNames
-            |> Effect.evaluateAll
+        , if model.session.simulationStep == Result then
+            Effect.evaluateAll model.resultRules
+
+          else
+            [ H.userCost, H.userEmission ]
+                ++ currentQuestions
+                ++ model.orderedCategories
+                |> Effect.evaluateAll
         )
 
     else
