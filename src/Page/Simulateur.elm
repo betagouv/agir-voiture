@@ -510,10 +510,6 @@ viewResult model =
                            , "https://impactCO2.fr"
                            , "Comprendre les ordres de grandeur et les équivalences des émissions de CO2e."
                            )
-                         , ( "La voiture électrique, solution idéale pour le climat ?"
-                           , "https://bonpote.com/la-voiture-electrique-solution-ideale-pour-le-climat"
-                           , "Article du chercheur Aurélien Bigo qui décortique les différentes critiques faites à la voiture électrique."
-                           )
                          ]
                             |> List.map viewCard
                             |> List.map (\card -> div [ class "fr-col-md-4" ] [ card ])
