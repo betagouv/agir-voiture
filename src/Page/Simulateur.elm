@@ -3,22 +3,24 @@ module Page.Simulateur exposing (Model, Msg(..), init, path, subscriptions, upda
 {- TODO: use Html.Extra instead of Html -}
 
 import Accessibility.Aria exposing (currentStep)
+import BetaGouv.DSFR.Badge as BadgeDSFR
 import BetaGouv.DSFR.Button as ButtonDSFR
 import BetaGouv.DSFR.CallOut as CallOutDSFR
 import BetaGouv.DSFR.Icons as IconsDSFR
-import BetaGouv.DSFR.Input as InputDSFR
+import BetaGouv.DSFR.Input as InputDSFR exposing (withIcon)
 import Components.ComparisonTable
 import Components.DSFR.Card as CardDSFR
 import Components.Total
+import Core.Result exposing (ComputedResult(..))
 import Core.UI as UI exposing (Category)
 import Dict exposing (Dict)
 import Effect
 import FormatNumber.Locales exposing (Decimals(..))
-import Helpers as H exposing (userCost, userEmission)
+import Helpers as H
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Html.Extra exposing (nothing, viewIfLazy)
+import Html.Extra exposing (nothing, viewIfLazy, viewMaybe)
 import Html.Lazy exposing (lazy)
 import Json.Decode as Decode
 import Json.Decode.Pipeline as Decode
@@ -85,7 +87,7 @@ init session =
             evaluate
                 { emptyModel
                     | session = session
-                    , resultRules = H.getResultRules session.rawRules
+                    , resultRules = Core.Result.getRules session.rawRules
                     , orderedCategories = orderedCategories
                 }
     in
@@ -124,7 +126,7 @@ evaluate model =
             Effect.evaluateAll model.resultRules
 
           else
-            [ H.userCost, H.userEmission ]
+            [ Core.Result.userCost, Core.Result.userEmission ]
                 ++ currentQuestions
                 ++ model.orderedCategories
                 |> Effect.evaluateAll
@@ -362,16 +364,17 @@ viewCategoriesStepper rules categories currentStep =
 viewResult : Model -> Html Msg
 viewResult model =
     let
-        { userEmission, userCost } =
-            H.getUserValues model.evaluations
+        { maybeUserEmission, maybeUserCost } =
+            Core.Result.getUserValues model.evaluations
 
-        rulesToCompare =
+        computedResults : List Core.Result.ComputedResult
+        computedResults =
             model.resultRules
                 |> List.filterMap
                     (\name ->
                         case P.split name of
                             namespace :: rest ->
-                                if List.member namespace H.resultNamespaces then
+                                if List.member namespace Core.Result.resultNamespaces then
                                     Just rest
 
                                 else
@@ -384,64 +387,115 @@ viewResult model =
                 |> List.filterMap
                     (\name ->
                         case
-                            ( H.getCostValueOf model.evaluations name
-                            , H.getEmissionValueOf model.evaluations name
+                            ( Core.Result.getCostValueOf model.evaluations name
+                            , Core.Result.getEmissionValueOf model.evaluations name
                             )
                         of
                             ( Just cost, Just emission ) ->
-                                -- case name of
-                                --     motorisation :: gabarit :: rest ->
-                                Just ( name, { cost = cost, emission = emission } )
+                                case name of
+                                    motorisation :: gabarit :: rest ->
+                                        Just <|
+                                            Core.Result.AlternativeCar
+                                                { motorisation =
+                                                    Core.Result.getMotorisationTitle model.session.rawRules motorisation
+                                                , gabarit =
+                                                    Core.Result.getGabaritTitle model.session.rawRules gabarit
+                                                , carburant =
+                                                    case rest of
+                                                        carburant :: [] ->
+                                                            Core.Result.getCarburantTitle model.session.rawRules carburant
 
-                            -- [ "voiture" ] ->
-                            --     Just (CurrentUserCar { cost = cost, emission = emission })
+                                                        _ ->
+                                                            "Électricité"
+                                                , cost = cost
+                                                , emission = emission
+                                                }
+
+                                    [ "voiture" ] ->
+                                        Just <|
+                                            Core.Result.CurrentUserCar
+                                                { cost = cost
+                                                , emission = emission
+                                                }
+
+                                    _ ->
+                                        Nothing
+
                             _ ->
                                 Nothing
                     )
 
         cheapest =
-            -- TODO: manage the case where the current car is the selected one
-            rulesToCompare
+            computedResults
                 |> List.sortWith
-                    (\( _, a ) ( _, b ) ->
-                        Basics.compare a.cost b.cost
+                    (\resA resB ->
+                        Core.Result.compareWith
+                            (\a b -> Basics.compare a.cost b.cost)
+                            resA
+                            resB
                     )
                 |> List.head
 
         greenest =
-            rulesToCompare
+            computedResults
                 |> List.sortWith
-                    (\( _, a ) ( _, b ) ->
-                        Basics.compare a.emission b.emission
+                    (\resA resB ->
+                        Core.Result.compareWith
+                            (\a b -> Basics.compare a.emission b.emission)
+                            resA
+                            resB
                     )
                 |> List.head
 
-        -- viewAlternative ( name, { cost, emission } ) =
-        --     case name of
-        --         motorisation :: gabarit :: rest ->
-        --             [ text <| H.getTitle model.session.rawRules <| P.join [ "voiture", "motorisation", motorisation ]
-        --             , text <| H.getTitle model.session.rawRules <| P.join [ "voiture", "gabarit", gabarit ]
-        --             , case rest of
-        --                 carburant :: [] ->
-        --                     text <| H.getTitle model.session.rawRules <| P.join <| [ "voiture", "thermique", "carburant", carburant ]
-        --
-        --                 _ ->
-        --                     text "Électricité"
-        --             , viewValuePlusDiff emission userEmission "kg"
-        --             , viewValuePlusDiff cost userCost "€"
-        --             ]
-        --
-        --         [ "voiture" ] ->
-        --             [ span [ class "italic" ]
-        --                 [ text "Votre voiture actuelle" ]
-        --             , span [ class "italic" ]
-        --                 [ viewValuePlusDiff emission userEmission "kg" ]
-        --             , span [ class "italic" ]
-        --                 [ viewValuePlusDiff cost userCost "€" ]
-        --             ]
-        --
-        --         _ ->
-        --             []
+        viewAlternative title car =
+            let
+                userCost =
+                    Maybe.withDefault 0 maybeUserCost
+
+                userEmission =
+                    Maybe.withDefault 0 maybeUserEmission
+            in
+            div [ class "flex flex-col gap-4 border bg-[var(--background-alt-blue)] p-4" ]
+                [ h6 [] [ text title ]
+                , case car of
+                    AlternativeCar infos ->
+                        div []
+                            [ p [ class "text-lg" ]
+                                [ text
+                                    (infos.gabarit
+                                        ++ " "
+                                        ++ infos.motorisation
+                                        ++ " "
+                                        ++ (if not (infos.carburant == "Électricité") then
+                                                "(" ++ infos.carburant ++ ")"
+
+                                            else
+                                                ""
+                                           )
+                                    )
+                                ]
+                            , p []
+                                [ text "Utiliser vous coûterait par an : "
+                                , text (H.formatFloatToFrenchLocale (Max 1) infos.cost)
+                                , text " € "
+                                , text (H.formatFloatToFrenchLocale (Max 1) (infos.cost - userCost))
+                                    |> BadgeDSFR.system { context = BadgeDSFR.success, withIcon = False }
+                                    |> BadgeDSFR.badgeMD
+                                , text " et émettrait : "
+                                , text (H.formatFloatToFrenchLocale (Max 1) infos.emission)
+                                , text " kg "
+                                , text (H.formatFloatToFrenchLocale (Max 1) (infos.emission - userEmission))
+                                    |> BadgeDSFR.system { context = BadgeDSFR.success, withIcon = False }
+                                    |> BadgeDSFR.badgeMD
+                                ]
+                            ]
+
+                    CurrentUserCar _ ->
+                        p []
+                            [ text "Vous avez déjà la meilleure alternative !"
+                            ]
+                ]
+
         viewCard ( title, link, desc ) =
             CardDSFR.card
                 (text title)
@@ -462,7 +516,7 @@ viewResult model =
                     [ text "Résultat" ]
                 , section []
                     [ Components.Total.viewParagraph
-                        { cost = userCost, emission = userEmission }
+                        { cost = maybeUserCost, emission = maybeUserEmission }
                     , CallOutDSFR.callout "L'objectif des 2 tonnes"
                         (div []
                             [ p []
@@ -491,14 +545,14 @@ viewResult model =
                     , p []
                         [ text "Pour le même usage de votre voiture, voici une comparaison de ce que cela pourrait donner avec d'autres types de véhicules."
                         ]
-                    , h3 [] [ text "L'alternative la plus économique" ]
-                    , h3 [] [ text "L'alternative la plus écologique" ]
-                    , h3 [] [ text "Toutes les alternatives" ]
-                    , case ( userEmission, userCost ) of
+                    , div [ class "grid grid-cols-2 gap-6" ]
+                        [ viewMaybe (viewAlternative "La plus économique") cheapest
+                        , viewMaybe (viewAlternative "La plus écologique") greenest
+                        ]
+                    , case ( maybeUserEmission, maybeUserCost ) of
                         ( Just emission, Just cost ) ->
                             Components.ComparisonTable.view
-                                { rawRules = model.session.rawRules
-                                , rulesToCompare = rulesToCompare
+                                { rulesToCompare = computedResults
                                 , userEmission = emission
                                 , userCost = cost
                                 }
@@ -868,12 +922,12 @@ viewRangeInput newAnswer num =
 viewInQuestionsTotal : Dict P.RuleName P.Evaluation -> Html Msg
 viewInQuestionsTotal evaluations =
     let
-        { userEmission, userCost } =
-            H.getUserValues evaluations
+        { maybeUserEmission, maybeUserCost } =
+            Core.Result.getUserValues evaluations
     in
     div [ class "border px-6 pt-6 bg-[var(--background-alt-blue-france)]" ]
         [ Components.Total.viewParagraph
-            { emission = userEmission, cost = userCost }
+            { emission = maybeUserEmission, cost = maybeUserCost }
         ]
 
 

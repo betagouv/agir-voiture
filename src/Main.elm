@@ -5,6 +5,7 @@ module Main exposing (..)
 import AppUrl
 import Browser exposing (Document)
 import Browser.Navigation as Nav
+import Core.Result
 import Dict
 import Effect
 import File exposing (File)
@@ -151,7 +152,7 @@ router url model =
 
         [ "documentation" ] ->
             -- NOTE: we may want to redirect to the corresponding rule to have a correct URL
-            Page.Documentation.init session H.userEmission
+            Page.Documentation.init session Core.Result.userEmission
                 |> gotoDocumentation model
 
         "documentation" :: rulePath ->
@@ -371,27 +372,6 @@ updateSituation newSituation model =
     updateSession (\session -> { session | situation = newSituation })
         model
         (Effect.setSituation (P.encodeSituation newSituation))
-
-
-
--- let
---     newModel =
---         case model.page of
---             Home m ->
---                 { model | page = Home (S.updateSituation (\_ -> situation) m) }
---
---             Simulateur m ->
---                 { model | page = Simulateur (S.updateSituation (\_ -> situation) m) }
---
---             Documentation m ->
---                 { model | page = Documentation (S.updateSituation (\_ -> situation) m) }
---
---             NotFound s ->
---                 { model | page = NotFound { s | situation = s.situation } }
--- in
--- ( newModel
--- , Effect.setSituation (P.encodeSituation situation)
--- )
 
 
 updateSession : (S.Data -> S.Data) -> Model -> Cmd Msg -> ( Model, Cmd Msg )
