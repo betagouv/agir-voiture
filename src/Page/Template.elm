@@ -1,19 +1,19 @@
 module Page.Template exposing (Config, view)
 
 import Accessibility
-import Accessibility.Aria as Aria exposing (labelledBy)
-import BetaGouv.DSFR.Button as Button exposing (ButtonConfig)
+import Accessibility.Aria as Aria
+import BetaGouv.DSFR.Button as Button
 import BetaGouv.DSFR.Icons as Icons
 import BetaGouv.DSFR.Modal as Modal
 import Browser exposing (Document)
 import Components.DSFR.Notice
+import Core.Personas exposing (Personas)
 import Dict
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Attributes.Extra exposing (role)
 import Html.Events exposing (..)
-import Personas exposing (Personas)
-import Publicodes as P
+import Publicodes.Publicodes as P
 import Session as S
 
 

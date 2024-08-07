@@ -1,9 +1,9 @@
-module Personas exposing (..)
+module Core.Personas exposing (..)
 
 import Dict exposing (Dict)
 import Json.Decode as Decode exposing (..)
 import Json.Decode.Pipeline exposing (..)
-import Publicodes as P
+import Publicodes.Publicodes as P
 
 
 type alias Personas =

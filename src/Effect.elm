@@ -1,7 +1,7 @@
 port module Effect exposing (..)
 
 import Json.Encode
-import Publicodes as P
+import Publicodes.Publicodes as P
 
 
 

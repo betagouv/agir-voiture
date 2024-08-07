@@ -1,9 +1,9 @@
 // @ts-ignore
 import { Elm } from "./Main.elm"
-import CustomEngine, { PublicodeValue, RuleName } from "./CustomEngine"
+import CustomEngine, { PublicodeValue, RuleName } from "./Core/CustomEngine"
 
 import rules, { ui, personas } from "publicodes-voiture"
-import { defineCustomElementWith } from "./RulePageCustomElement"
+import { defineCustomElementWith } from "./Core/RulePageCustomElement"
 import { Situation } from "publicodes"
 
 const situation = JSON.parse(localStorage.getItem("situation") ?? "{}")

@@ -3,7 +3,7 @@ module Page.Documentation exposing (Model, Msg, init, update, view)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Json.Encode
-import Publicodes as P
+import Publicodes.Publicodes as P
 import Session
 
 

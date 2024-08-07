@@ -1,8 +1,6 @@
 module Page.Home exposing (Model, Msg(..), init, update, view)
 
 import BetaGouv.DSFR.Button as Button
-import Browser exposing (UrlRequest)
-import Browser.Navigation as Navigation exposing (pushUrl)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Page.Simulateur

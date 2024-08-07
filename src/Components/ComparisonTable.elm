@@ -1,30 +1,38 @@
 module Components.ComparisonTable exposing (view)
 
 import Components.DSFR.Table
-import Dict exposing (Dict)
 import FormatNumber.Locales exposing (Decimals(..))
 import Helpers as H
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Extra exposing (nothing)
-import Publicodes as P
+import Publicodes.Publicodes as P
 
 
 view :
     { rawRules : P.RawRules
-    , evaluations : Dict P.RuleName P.Evaluation
-    , rulesToCompare : List P.SplitedRuleName
+    , rulesToCompare : List ( P.SplitedRuleName, { cost : Float, emission : Float } )
     , userCost : Float
     , userEmission : Float
     }
     -> Html msg
-view { rawRules, evaluations, rulesToCompare, userCost, userEmission } =
+view { rawRules, rulesToCompare, userCost, userEmission } =
     let
         getTitle =
             H.getTitle rawRules
 
         rows =
-            getSortedValues evaluations rulesToCompare
+            rulesToCompare
+                |> List.sortWith
+                    (\( _, a ) ( _, b ) ->
+                        -- Compare on emission first
+                        -- TODO: add a way to choose the comparison
+                        if a.emission == b.emission then
+                            Basics.compare b.cost a.cost
+
+                        else
+                            Basics.compare a.emission b.emission
+                    )
                 |> List.map
                     (\( name, { cost, emission } ) ->
                         case name of
@@ -65,49 +73,6 @@ view { rawRules, evaluations, rulesToCompare, userCost, userEmission } =
             ]
         , rows = rows
         }
-
-
-getCostValueOf : Dict P.RuleName P.Evaluation -> P.SplitedRuleName -> Maybe Float
-getCostValueOf evaluations name =
-    "coût"
-        :: name
-        |> P.join
-        |> H.getNumValue evaluations
-
-
-getEmissionValueOf : Dict P.RuleName P.Evaluation -> P.SplitedRuleName -> Maybe Float
-getEmissionValueOf evaluations name =
-    "empreinte"
-        :: name
-        |> P.join
-        |> H.getNumValue evaluations
-
-
-getSortedValues :
-    Dict P.RuleName P.Evaluation
-    -> List P.SplitedRuleName
-    -> List ( P.SplitedRuleName, { cost : Float, emission : Float } )
-getSortedValues evaluations rulesToCompare =
-    rulesToCompare
-        |> List.filterMap
-            (\name ->
-                case ( getCostValueOf evaluations name, getEmissionValueOf evaluations name ) of
-                    ( Just cost, Just emission ) ->
-                        Just ( name, { cost = cost, emission = emission } )
-
-                    _ ->
-                        Nothing
-            )
-        |> List.sortWith
-            (\( _, a ) ( _, b ) ->
-                -- Compare on emission first
-                -- TODO: add a way to choose the comparison
-                if a.emission == b.emission then
-                    Basics.compare b.cost a.cost
-
-                else
-                    Basics.compare a.emission b.emission
-            )
 
 
 viewValuePlusDiff : Float -> Float -> String -> Html msg

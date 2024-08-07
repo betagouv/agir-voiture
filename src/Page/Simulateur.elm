@@ -10,6 +10,7 @@ import BetaGouv.DSFR.Input as InputDSFR
 import Components.ComparisonTable
 import Components.DSFR.Card as CardDSFR
 import Components.Total
+import Core.UI as UI exposing (Category)
 import Dict exposing (Dict)
 import Effect
 import FormatNumber.Locales exposing (Decimals(..))
@@ -25,9 +26,8 @@ import Json.Encode as Encode
 import List.Extra exposing (unique)
 import Markdown
 import Platform.Cmd as Cmd
-import Publicodes as P exposing (Mecanism(..), NodeValue(..))
+import Publicodes.Publicodes as P exposing (Mecanism(..), NodeValue(..))
 import Session as S exposing (SimulationStep(..))
-import UI
 
 
 path : List String
@@ -381,7 +381,67 @@ viewResult model =
                                 Nothing
                     )
                 |> unique
+                |> List.filterMap
+                    (\name ->
+                        case
+                            ( H.getCostValueOf model.evaluations name
+                            , H.getEmissionValueOf model.evaluations name
+                            )
+                        of
+                            ( Just cost, Just emission ) ->
+                                -- case name of
+                                --     motorisation :: gabarit :: rest ->
+                                Just ( name, { cost = cost, emission = emission } )
 
+                            -- [ "voiture" ] ->
+                            --     Just (CurrentUserCar { cost = cost, emission = emission })
+                            _ ->
+                                Nothing
+                    )
+
+        cheapest =
+            -- TODO: manage the case where the current car is the selected one
+            rulesToCompare
+                |> List.sortWith
+                    (\( _, a ) ( _, b ) ->
+                        Basics.compare a.cost b.cost
+                    )
+                |> List.head
+
+        greenest =
+            rulesToCompare
+                |> List.sortWith
+                    (\( _, a ) ( _, b ) ->
+                        Basics.compare a.emission b.emission
+                    )
+                |> List.head
+
+        -- viewAlternative ( name, { cost, emission } ) =
+        --     case name of
+        --         motorisation :: gabarit :: rest ->
+        --             [ text <| H.getTitle model.session.rawRules <| P.join [ "voiture", "motorisation", motorisation ]
+        --             , text <| H.getTitle model.session.rawRules <| P.join [ "voiture", "gabarit", gabarit ]
+        --             , case rest of
+        --                 carburant :: [] ->
+        --                     text <| H.getTitle model.session.rawRules <| P.join <| [ "voiture", "thermique", "carburant", carburant ]
+        --
+        --                 _ ->
+        --                     text "Électricité"
+        --             , viewValuePlusDiff emission userEmission "kg"
+        --             , viewValuePlusDiff cost userCost "€"
+        --             ]
+        --
+        --         [ "voiture" ] ->
+        --             [ span [ class "italic" ]
+        --                 [ text "Votre voiture actuelle" ]
+        --             , span [ class "italic" ]
+        --                 [ viewValuePlusDiff emission userEmission "kg" ]
+        --             , span [ class "italic" ]
+        --                 [ viewValuePlusDiff cost userCost "€" ]
+        --             ]
+        --
+        --         _ ->
+        --             []
         viewCard ( title, link, desc ) =
             CardDSFR.card
                 (text title)
@@ -431,11 +491,13 @@ viewResult model =
                     , p []
                         [ text "Pour le même usage de votre voiture, voici une comparaison de ce que cela pourrait donner avec d'autres types de véhicules."
                         ]
+                    , h3 [] [ text "L'alternative la plus économique" ]
+                    , h3 [] [ text "L'alternative la plus écologique" ]
+                    , h3 [] [ text "Toutes les alternatives" ]
                     , case ( userEmission, userCost ) of
                         ( Just emission, Just cost ) ->
                             Components.ComparisonTable.view
                                 { rawRules = model.session.rawRules
-                                , evaluations = model.evaluations
                                 , rulesToCompare = rulesToCompare
                                 , userEmission = emission
                                 , userCost = cost

@@ -5,7 +5,7 @@ import File exposing (File)
 import FormatNumber exposing (format)
 import FormatNumber.Locales exposing (Decimals(..), frenchLocale)
 import Json.Decode as Decode exposing (Decoder)
-import Publicodes as P
+import Publicodes.Publicodes as P
 import Regex
 import Task
 import Time
@@ -63,6 +63,22 @@ getUserValues :
     -> { userEmission : Maybe Float, userCost : Maybe Float }
 getUserValues evaluations =
     { userEmission = getUserEmission evaluations, userCost = getUserCost evaluations }
+
+
+getCostValueOf : Dict P.RuleName P.Evaluation -> P.SplitedRuleName -> Maybe Float
+getCostValueOf evaluations name =
+    "coût"
+        :: name
+        |> P.join
+        |> getNumValue evaluations
+
+
+getEmissionValueOf : Dict P.RuleName P.Evaluation -> P.SplitedRuleName -> Maybe Float
+getEmissionValueOf evaluations name =
+    "empreinte"
+        :: name
+        |> P.join
+        |> getNumValue evaluations
 
 
 getResultRules : P.RawRules -> List P.RuleName

@@ -1,4 +1,4 @@
-module Publicodes exposing (..)
+module Publicodes.Publicodes exposing (..)
 
 import Dict exposing (Dict)
 import FormatNumber exposing (format)

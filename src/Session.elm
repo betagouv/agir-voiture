@@ -1,14 +1,14 @@
 module Session exposing (..)
 
+import Core.Personas as Personas exposing (Personas)
+import Core.UI as UI
 import Dict
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Json.Decode as Decode
 import Json.Decode.Pipeline as Decode
 import Json.Encode as Encode
-import Personas exposing (Personas)
-import Publicodes as P
-import UI
+import Publicodes.Publicodes as P
 
 
 

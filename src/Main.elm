@@ -24,7 +24,7 @@ import Page.NotFound
 import Page.Simulateur exposing (Msg(..))
 import Page.Template
 import Platform.Cmd as Cmd
-import Publicodes as P exposing (Mecanism(..), NodeValue(..))
+import Publicodes.Publicodes as P exposing (Mecanism(..), NodeValue(..))
 import Session as S
 import Task
 import Time
