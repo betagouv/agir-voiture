@@ -1,21 +1,21 @@
 #documentation-rule-root {
-    min-height: 80vh;
-    text-align: left;
-    padding-top: 2rem;
+  min-height: 80vh;
+  text-align: left;
+  padding-top: 2rem;
 }
 
 #documentation-rule-root nav {
 }
 
 #documentation-search-item-name {
-    text-align: left;
+  text-align: left;
 }
 
 #documentation-search-input {
 }
 
 #documentation-search-results {
-    width: 350px;
+  width: 350px;
 }
 
 #documentation-rule-root header h1 {
@@ -34,7 +34,7 @@
 }
 
 #documentation-rule-root button {
-    text-align: left;
+  text-align: left;
 }
 
 .publicodes_btn-small {
@@ -47,6 +47,6 @@
 }
 
 .markdown {
-    @apply prose max-w-none my-2;
-    @apply prose-table:max-w-[80%];
+  @apply prose max-w-none my-2;
+  @apply prose-table:max-w-[80%];
 }

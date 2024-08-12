@@ -1,116 +1,15 @@
 module Publicodes exposing (..)
 
 import Dict exposing (Dict)
-import FormatNumber exposing (format)
-import FormatNumber.Locales exposing (Decimals(..), frenchLocale)
 import Json.Decode as Decode exposing (Decoder, lazy, list, map, nullable, string)
 import Json.Decode.Pipeline exposing (optional, required)
-import Json.Encode as Encode
-
-
-type alias RuleName =
-    String
-
-
-type alias SplitedRuleName =
-    List RuleName
-
-
-type NodeValue
-    = Str String
-    | Number Float
-    | Boolean Bool
-    | Empty
-
-
-exprDecoder : Decoder NodeValue
-exprDecoder =
-    Decode.oneOf
-        [ Decode.map
-            (\str ->
-                case str of
-                    "oui" ->
-                        Boolean True
-
-                    "non" ->
-                        Boolean False
-
-                    _ ->
-                        Str str
-            )
-            Decode.string
-        , Decode.map Number Decode.float
-        , Decode.map Boolean Decode.bool
-        , Decode.null Empty
-        ]
-
-
-nodeValueEncoder : NodeValue -> Encode.Value
-nodeValueEncoder nodeValue =
-    case nodeValue of
-        Str str ->
-            Encode.string (toConstantString str)
-
-        Number num ->
-            Encode.float num
-
-        Boolean bool ->
-            if bool then
-                Encode.string "oui"
-
-            else
-                Encode.string "non"
-
-        Empty ->
-            Encode.null
-
-
-nodeValueToString : NodeValue -> String
-nodeValueToString nodeValue =
-    case nodeValue of
-        Str str ->
-            str
-
-        Number num ->
-            format { frenchLocale | decimals = Exact 1 } num
-
-        Boolean bool ->
-            if bool then
-                "oui"
-
-            else
-                "non"
-
-        Empty ->
-            ""
-
-
-nodeValueToFloat : NodeValue -> Maybe Float
-nodeValueToFloat nodeValue =
-    case nodeValue of
-        Number num ->
-            Just num
-
-        _ ->
-            Nothing
+import Publicodes.NodeValue as NodeValue exposing (NodeValue)
+import Publicodes.RuleName exposing (RuleName)
+import Publicodes.Situation as Situation exposing (Situation)
 
 
 type alias RawRules =
     Dict RuleName RawRule
-
-
-type alias Situation =
-    Dict RuleName NodeValue
-
-
-situationDecoder : Decoder Situation
-situationDecoder =
-    Decode.dict exprDecoder
-
-
-encodeSituation : Situation -> Encode.Value
-encodeSituation situation =
-    Encode.dict identity nodeValueEncoder situation
 
 
 
@@ -155,7 +54,7 @@ recalculNodeDecoder : Decoder RecalculNode
 recalculNodeDecoder =
     Decode.succeed RecalculNode
         |> required "règle" string
-        |> required "avec" situationDecoder
+        |> required "avec" Situation.decoder
 
 
 
@@ -210,7 +109,7 @@ type Mecanism
 mecanismDecoder : Decoder Mecanism
 mecanismDecoder =
     Decode.oneOf
-        [ map Expr exprDecoder
+        [ map Expr NodeValue.decoder
         , map ChainedMecanism chainedMecanismsDecoder
         ]
 
@@ -270,7 +169,7 @@ type alias Evaluation =
 evaluationDecoder : Decode.Decoder Evaluation
 evaluationDecoder =
     Decode.succeed Evaluation
-        |> required "nodeValue" exprDecoder
+        |> required "nodeValue" NodeValue.decoder
         |> required "isApplicable" Decode.bool
 
 
@@ -278,39 +177,14 @@ evaluationDecoder =
 -- Helpers
 
 
-{-| Publicodes enums needs to be single quoted
-
-TODO: express constant strings in a more type-safe way
-
+{-| Get the title of a rule from its name.
+If the rule doesn't have a title, the name is returned.
 -}
-toConstantString : String -> String
-toConstantString str =
-    "'" ++ str ++ "'"
+getTitle : RawRules -> RuleName -> String
+getTitle rules name =
+    case Dict.get name rules of
+        Just rule ->
+            Maybe.withDefault name rule.titre
 
-
-split : RuleName -> SplitedRuleName
-split =
-    String.split " . "
-
-
-join : SplitedRuleName -> RuleName
-join =
-    String.join " . "
-
-
-namespace : RuleName -> RuleName
-namespace ruleName =
-    split ruleName
-        |> List.head
-        |> Maybe.withDefault ruleName
-
-
-{-| Decode a rule name from a URL path. Elm implementation of `publicodes/utils.ts#decodeRuleName`
--}
-decodeRuleName : String -> RuleName
-decodeRuleName urlPath =
-    urlPath
-        |> String.replace "/" " . "
-        |> String.replace "-" " "
-        |> --NOTE: it's [\u{2011}] but when formatted it's became [‑] (which is different from [-])
-           String.replace "‑" "-"
+        Nothing ->
+            name
