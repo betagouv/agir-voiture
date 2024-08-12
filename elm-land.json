@@ -23,9 +23,7 @@
         { "name": "og:description", "content": "Agir - Simulateur voiture" },
         { "name": "og:type", "content": "website" }
       ],
-      "link": [
-        { "rel": "icon", "type": "image/png", "href": "/favicon-32x32.png" }
-      ]
+      "link": [{ "rel": "icon", "href": "/favicon.png" }]
     },
     "router": {
       "useHashRouting": false
