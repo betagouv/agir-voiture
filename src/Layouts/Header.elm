@@ -1,5 +1,7 @@
 module Layouts.Header exposing (Model, Msg, Props, layout)
 
+import Components.DSFR.Header
+import Components.DSFR.Notice
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -7,6 +9,7 @@ import Html.Extra exposing (viewIf)
 import Layout exposing (Layout)
 import Route exposing (Route)
 import Shared
+import Shared.Msg exposing (Msg(..))
 import View exposing (View)
 
 
@@ -43,16 +46,14 @@ init _ =
 
 
 type Msg
-    = ReplaceMe
+    = ResetSimulation
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        ReplaceMe ->
-            ( model
-            , Effect.none
-            )
+        ResetSimulation ->
+            ( model, Effect.resetSimulation )
 
 
 subscriptions : Model -> Sub Msg
@@ -65,10 +66,17 @@ subscriptions _ =
 
 
 view : Props -> { toContentMsg : Msg -> contentMsg, content : View contentMsg, model : Model } -> View contentMsg
-view props { content } =
+view props { content, toContentMsg } =
     { title = content.title
     , body =
         [ viewIf props.showReactRoot viewReactRoot
+        , Components.DSFR.Header.new { onReset = ResetSimulation }
+            |> Components.DSFR.Header.view
+            |> Html.map toContentMsg
+        , Components.DSFR.Notice.view
+            { title = "En cours de développement"
+            , desc = text "Les résultats de ce simulateur ne sont pas stables et sont susceptibles de fortement évoluer."
+            }
         , div [ class "page" ] content.body
         ]
     }

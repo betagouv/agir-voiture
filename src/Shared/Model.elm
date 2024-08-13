@@ -3,7 +3,7 @@ module Shared.Model exposing
     , SimulationStep(..)
     , empty
     , simulationStepDecoder
-    , simulationStepEncoder
+    , simulationStepEncode
     )
 
 import Core.UI as UI
@@ -75,8 +75,8 @@ simulationStepDecoder =
         Decode.string
 
 
-simulationStepEncoder : SimulationStep -> Encode.Value
-simulationStepEncoder step =
+simulationStepEncode : SimulationStep -> Encode.Value
+simulationStepEncode step =
     case step of
         Category category ->
             Encode.string category

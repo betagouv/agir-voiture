@@ -4,6 +4,8 @@ import BetaGouv.DSFR.Button as Button
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Layouts
+import Layouts.Header
 import Main.Layouts.Model exposing (Model)
 import Page exposing (Page)
 import Pages.Simulateur exposing (Msg)
@@ -22,6 +24,12 @@ page shared _ =
         , subscriptions = subscriptions
         , view = view shared
         }
+        |> Page.withLayout toLayout
+
+
+toLayout : Model -> Layouts.Layout Msg
+toLayout _ =
+    Layouts.Header { showReactRoot = False }
 
 
 

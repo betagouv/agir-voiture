@@ -1,6 +1,10 @@
 {
     "type": "application",
-    "source-directories": ["src", "lib", ".elm-land/src"],
+    "source-directories": [
+        "src",
+        "lib",
+        ".elm-land/src"
+    ],
     "elm-version": "0.19.1",
     "dependencies": {
         "direct": {
@@ -15,14 +19,14 @@
             "elm-community/html-extra": "3.4.0",
             "elm-community/list-extra": "8.7.0",
             "myrho/elm-round": "1.0.5",
-            "pablohirafuji/elm-markdown": "2.0.5"
+            "pablohirafuji/elm-markdown": "2.0.5",
+            "tesk9/accessible-html": "6.2.0"
         },
         "indirect": {
             "elm/regex": "1.0.0",
             "elm/svg": "1.0.1",
             "elm/time": "1.0.0",
-            "elm/virtual-dom": "1.0.3",
-            "tesk9/accessible-html": "6.2.0"
+            "elm/virtual-dom": "1.0.3"
         }
     },
     "test-dependencies": {

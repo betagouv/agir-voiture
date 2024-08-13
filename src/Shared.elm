@@ -12,8 +12,8 @@ module Shared exposing
 
 -}
 
+import Dict
 import Effect exposing (Effect)
-import Interop
 import Json.Decode
 import Json.Decode.Pipeline as Decode
 import Publicodes exposing (RawRules)
@@ -21,7 +21,7 @@ import Publicodes.Situation as Situation exposing (Situation)
 import Route exposing (Route)
 import Route.Path
 import Shared.Model
-import Shared.Msg
+import Shared.Msg exposing (Msg(..))
 
 
 
@@ -84,7 +84,7 @@ type alias Msg =
 update : Route () -> Msg -> Model -> ( Model, Effect Msg )
 update _ msg model =
     case msg of
-        Shared.Msg.PushNewPath stringPath ->
+        PushNewPath stringPath ->
             let
                 path =
                     Route.Path.fromString stringPath
@@ -94,7 +94,25 @@ update _ msg model =
             , Effect.pushRoutePath path
             )
 
-        Shared.Msg.NoOp ->
+        SetSituation newSituation ->
+            ( { model | situation = newSituation }
+            , Effect.none
+            )
+
+        SetSimulationStep newStep ->
+            ( { model | simulationStep = newStep }
+            , Effect.none
+            )
+
+        ResetSimulation ->
+            ( model
+            , Effect.batch
+                [ Effect.setSituation Dict.empty
+                , Effect.setSimulationStep Shared.Model.Start
+                ]
+            )
+
+        NoOp ->
             ( model
             , Effect.none
             )
@@ -107,5 +125,5 @@ update _ msg model =
 subscriptions : Route () -> Model -> Sub Msg
 subscriptions _ _ =
     Sub.batch
-        [ Interop.onReactLinkClicked Shared.Msg.PushNewPath
+        [ Effect.onReactLinkClicked Shared.Msg.PushNewPath
         ]
