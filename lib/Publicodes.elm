@@ -1,4 +1,11 @@
-module Publicodes exposing (..)
+module Publicodes exposing
+    ( Evaluation
+    , Mecanism(..)
+    , RawRule
+    , RawRules
+    , decodeRawRules
+    , evaluationDecoder
+    )
 
 import Dict exposing (Dict)
 import Json.Decode as Decode exposing (Decoder, lazy, list, map, nullable, string)
@@ -6,14 +13,6 @@ import Json.Decode.Pipeline exposing (optional, required)
 import Publicodes.NodeValue as NodeValue exposing (NodeValue)
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation as Situation exposing (Situation)
-
-
-type alias RawRules =
-    Dict RuleName RawRule
-
-
-
--- TODO: could be more precise
 
 
 type alias Clause =
@@ -155,8 +154,12 @@ rawRuleDecoder =
         |> optional "note" (nullable string) Nothing
 
 
-rawRulesDecoder : Decoder RawRules
-rawRulesDecoder =
+type alias RawRules =
+    Dict RuleName RawRule
+
+
+decodeRawRules : Decoder RawRules
+decodeRawRules =
     Decode.dict rawRuleDecoder
 
 
@@ -171,20 +174,3 @@ evaluationDecoder =
     Decode.succeed Evaluation
         |> required "nodeValue" NodeValue.decoder
         |> required "isApplicable" Decode.bool
-
-
-
--- Helpers
-
-
-{-| Get the title of a rule from its name.
-If the rule doesn't have a title, the name is returned.
--}
-getTitle : RawRules -> RuleName -> String
-getTitle rules name =
-    case Dict.get name rules of
-        Just rule ->
-            Maybe.withDefault name rule.titre
-
-        Nothing ->
-            name

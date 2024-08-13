@@ -35,19 +35,57 @@ export const onReady = async ({ app }: { app: any }) => {
   // if we await it directly?
   const engine = await publicodes.createAsync(rules, situation);
 
+  const setSituation = (app: any, newSituation: publicodes.Situation) => {
+    localStorage.setItem("situation", JSON.stringify(newSituation));
+    engine.setSituation(newSituation);
+    app.ports.onSituationUpdated.send(null);
+  };
+
+  // Defines the custom component <publicodes-rule-page> to be used in the Elm
+  // app to render the React component <RulePage> used for the documentation.
   publicodesRulePage.defineCustomElementWith(engine, app);
 
+  // Subscribes to outgoing messages from Elm and handles them
   if (app.ports && app.ports.outgoing) {
     app.ports.outgoing.subscribe(({ tag, data }) => {
       switch (tag) {
         // Publicodes
         case "SET_SITUATION": {
-          localStorage.setItem("situation", JSON.stringify(data));
-          engine.setSituation(data);
+          setSituation(app, data);
+          break;
+        }
+        case "UPDATE_SITUATION": {
+          const newSituation = {
+            ...engine.getSituation(),
+            [data.name]: data.value,
+          };
+          setSituation(app, newSituation);
           break;
         }
         case "SET_SIMULATION_STEP": {
           localStorage.setItem("simulationStep", data);
+          break;
+        }
+        case "EVALUATE_ALL": {
+          console.log("Evaluating all rules:", data);
+          const evaluatedRules = data.map((rule: publicodes.RuleName) => {
+            const result = engine.evaluate(rule);
+            const isApplicable =
+              // NOTE: maybe checking [result.nodeValue !== null] is enough. If
+              // we start to experience performance issues, we can remove the
+              // check for [result.nodeValue !== null]
+              engine.evaluate({ "est applicable": rule }).nodeValue === true;
+
+            return [
+              rule,
+              {
+                nodeValue: result.nodeValue ?? null,
+                isApplicable,
+              },
+            ];
+          });
+
+          app.ports.onEvaluatedRules.send(evaluatedRules);
           break;
         }
 

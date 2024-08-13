@@ -5,7 +5,6 @@ import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Layouts
-import Layouts.Header
 import Main.Layouts.Model exposing (Model)
 import Page exposing (Page)
 import Pages.Simulateur exposing (Msg)
@@ -80,7 +79,7 @@ view shared _ =
         let
             ctaLabel =
                 case shared.simulationStep of
-                    Start ->
+                    NotStarted ->
                         "Démarrer"
 
                     Category _ ->

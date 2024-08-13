@@ -7,7 +7,7 @@ port module Effect exposing
     , loadExternalUrl, back
     , map, toCmd
     , -- CUSTOM
-      closePersonasModal, onReactLinkClicked, openPersonasModal, resetSimulation, setSimulationStep, setSituation
+      closePersonasModal, evaluate, evaluateAll, onEvaluatedRules, onReactLinkClicked, onSituationUpdated, openPersonasModal, resetSimulation, setSimulationStep, setSituation, updateSituation
     )
 
 {-|
@@ -28,9 +28,11 @@ port module Effect exposing
 import Browser.Navigation
 import Dict exposing (Dict)
 import Json.Encode
+import Publicodes.NodeValue as NodeValue exposing (NodeValue)
+import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation as Situation exposing (Situation)
 import Route
-import Route.Path
+import Route.Path exposing (Path(..))
 import Shared.Constants
 import Shared.Model
 import Shared.Msg
@@ -58,6 +60,11 @@ type Effect msg
 -- CUSTOM
 
 
+evaluate : Effect msg
+evaluate =
+    SendSharedMsg Shared.Msg.Evaluate
+
+
 resetSimulation : Effect msg
 resetSimulation =
     SendSharedMsg Shared.Msg.ResetSimulation
@@ -81,6 +88,29 @@ setSimulationStep step =
         , SendToJs
             { tag = "SET_SIMULATION_STEP"
             , data = Shared.Model.simulationStepEncode step
+            }
+        ]
+
+
+evaluateAll : List RuleName -> Effect msg
+evaluateAll ruleNames =
+    SendToJs
+        { tag = "EVALUATE_ALL"
+        , data = Json.Encode.list Json.Encode.string ruleNames
+        }
+
+
+updateSituation : ( RuleName, NodeValue ) -> Effect msg
+updateSituation ( name, value ) =
+    batch
+        [ SendSharedMsg (Shared.Msg.UpdateSituation ( name, value ))
+        , SendToJs
+            { tag = "UPDATE_SITUATION"
+            , data =
+                Json.Encode.object
+                    [ ( "name", Json.Encode.string name )
+                    , ( "value", NodeValue.encode value )
+                    ]
             }
         ]
 
@@ -126,12 +156,22 @@ closeModal modalId =
 -- PORTS (SUBSCRIPTIONS)
 
 
-{-| A link was clicked on the custom [RulePage] component.
+{-| A link was clicked on the custom `RulePage` component.
 
-    The link is a string that represents the URL of the page to navigate to.
+The link is a string that represents the URL of the page to navigate to.
 
 -}
 port onReactLinkClicked : (String -> msg) -> Sub msg
+
+
+{-| Received a list of rules with their corresponding evaluation result.
+-}
+port onEvaluatedRules : (List ( RuleName, Json.Encode.Value ) -> msg) -> Sub msg
+
+
+{-| The situation has correctly been updated in the JS side.
+-}
+port onSituationUpdated : (() -> msg) -> Sub msg
 
 
 

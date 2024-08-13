@@ -13,16 +13,18 @@ module Shared exposing
 -}
 
 import Core.Personas as Personas exposing (Personas)
+import Core.Rules as Rules
 import Core.UI as UI
 import Dict
 import Effect exposing (Effect)
 import Json.Decode
 import Json.Decode.Pipeline as Decode
-import Publicodes exposing (RawRules)
+import Publicodes exposing (Evaluation, RawRules)
+import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation as Situation exposing (Situation)
 import Route exposing (Route)
 import Route.Path
-import Shared.Model
+import Shared.Model exposing (SimulationStep(..))
 import Shared.Msg exposing (Msg(..))
 
 
@@ -48,7 +50,7 @@ type alias Flags =
 decoder : Json.Decode.Decoder Flags
 decoder =
     Json.Decode.succeed Flags
-        |> Decode.required "rules" Publicodes.rawRulesDecoder
+        |> Decode.required "rules" Publicodes.decodeRawRules
         |> Decode.required "ui" UI.decode
         |> Decode.required "personas" Personas.personasDecoder
         |> Decode.required "situation" Situation.decoder
@@ -65,20 +67,27 @@ type alias Model =
 
 init : Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )
 init flagsResult _ =
+    let
+        emptyModel =
+            Shared.Model.empty
+    in
     case flagsResult of
         Ok flags ->
-            ( { situation = flags.situation
-              , rules = flags.rules
-              , simulationStep = flags.simulationStep
-              , ui = flags.ui
-              , personas = flags.personas
+            ( { emptyModel
+                | situation = flags.situation
+                , rules = flags.rules
+                , simulationStep = flags.simulationStep
+                , ui = flags.ui
+                , personas = flags.personas
+                , orderedCategories = UI.getOrderedCategories flags.ui.categories
+                , resultRules = Rules.getResultRules flags.rules
               }
             , Effect.none
             )
 
         Err _ ->
             -- TODO: handle error
-            ( Shared.Model.empty, Effect.none )
+            ( emptyModel, Effect.none )
 
 
 
@@ -92,6 +101,9 @@ type alias Msg =
 update : Route () -> Msg -> Model -> ( Model, Effect Msg )
 update _ msg model =
     case msg of
+        NoOp ->
+            ( model, Effect.none )
+
         PushNewPath stringPath ->
             let
                 path =
@@ -103,27 +115,75 @@ update _ msg model =
             )
 
         SetSituation newSituation ->
-            ( { model | situation = newSituation }
-            , Effect.none
-            )
+            evaluate
+                { model | situation = newSituation }
 
         SetSimulationStep newStep ->
-            ( { model | simulationStep = newStep }
-            , Effect.none
-            )
+            evaluate { model | simulationStep = newStep }
 
         ResetSimulation ->
             ( model
             , Effect.batch
                 [ Effect.setSituation Dict.empty
-                , Effect.setSimulationStep Shared.Model.Start
+                , Effect.setSimulationStep Shared.Model.NotStarted
+                , Effect.pushRoutePath Route.Path.Home_
                 ]
             )
 
-        NoOp ->
-            ( model
-            , Effect.none
-            )
+        NewEvaluations evaluations ->
+            let
+                newEvaluations =
+                    evaluations
+                        |> List.foldl
+                            (\( ruleName, evaluation ) ->
+                                Dict.insert ruleName evaluation
+                            )
+                            model.evaluations
+            in
+            ( { model | evaluations = newEvaluations }, Effect.none )
+
+        UpdateSituation ( name, value ) ->
+            let
+                newSituation =
+                    Dict.insert name value model.situation
+            in
+            evaluate
+                { model | situation = newSituation }
+
+        Evaluate ->
+            evaluate model
+
+
+{-| Evaluates rules to update according to the current simulation step.
+-}
+evaluate : Model -> ( Model, Effect Msg )
+evaluate model =
+    -- TODO: do we need to check if the shared.engineInitialized is true?
+    let
+        currentQuestions =
+            case model.simulationStep of
+                Category category ->
+                    Dict.get category model.ui.questions
+                        |> Maybe.withDefault []
+                        |> List.concat
+
+                _ ->
+                    []
+
+        _ =
+            Debug.log "currentQuestions" currentQuestions
+    in
+    ( model
+    , if model.simulationStep == Result then
+        [ Rules.userCost, Rules.userEmission ]
+            ++ model.resultRules
+            |> Effect.evaluateAll
+
+      else
+        currentQuestions
+            -- ++ TODO: not needed a priori model.orderedCategories
+            |> Effect.evaluateAll
+    )
 
 
 
@@ -134,4 +194,20 @@ subscriptions : Route () -> Model -> Sub Msg
 subscriptions _ _ =
     Sub.batch
         [ Effect.onReactLinkClicked Shared.Msg.PushNewPath
+        , Effect.onEvaluatedRules
+            (\encodedEvaluations ->
+                Shared.Msg.NewEvaluations (decodeEvaluations encodedEvaluations)
+            )
+        , Effect.onSituationUpdated (\_ -> Evaluate)
         ]
+
+
+decodeEvaluations : List ( RuleName, Json.Decode.Value ) -> List ( RuleName, Evaluation )
+decodeEvaluations evaluations =
+    List.filterMap
+        (\( ruleName, encodedEvaluation ) ->
+            Json.Decode.decodeValue Publicodes.evaluationDecoder encodedEvaluation
+                |> Result.toMaybe
+                |> Maybe.map (\evaluation -> ( ruleName, evaluation ))
+        )
+        evaluations

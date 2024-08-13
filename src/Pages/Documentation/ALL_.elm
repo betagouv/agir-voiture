@@ -7,6 +7,7 @@ import Json.Encode as Encode
 import Layouts
 import Page exposing (Page)
 import Publicodes
+import Publicodes.Helpers
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation
 import Route exposing (Route)
@@ -93,7 +94,7 @@ view shared model =
             Encode.encode 0 (Publicodes.Situation.encode shared.situation)
 
         ruleTitle =
-            Publicodes.getTitle shared.rules model.rule
+            Publicodes.Helpers.getTitle model.rule shared.rules
     in
     { title = ruleTitle ++ " | Documentation"
     , body =

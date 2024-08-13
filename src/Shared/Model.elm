@@ -2,16 +2,18 @@ module Shared.Model exposing
     ( Model
     , SimulationStep(..)
     , empty
+    , simulationStepDecode
     , simulationStepDecoder
     , simulationStepEncode
     )
 
 import Core.Personas exposing (Personas)
 import Core.UI as UI
-import Dict
+import Dict exposing (Dict)
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Publicodes exposing (RawRules)
+import Publicodes exposing (Evaluation, RawRules)
+import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
 
 
@@ -33,6 +35,9 @@ type alias Model =
     , personas : Personas
     , situation : Situation
     , simulationStep : SimulationStep
+    , evaluations : Dict RuleName Evaluation
+    , orderedCategories : List UI.Category
+    , resultRules : List RuleName
     }
 
 
@@ -41,8 +46,11 @@ empty =
     { situation = Dict.empty
     , ui = UI.empty
     , rules = Dict.empty
-    , simulationStep = Start
+    , simulationStep = NotStarted
     , personas = Dict.empty
+    , evaluations = Dict.empty
+    , orderedCategories = []
+    , resultRules = []
     }
 
 
@@ -52,13 +60,13 @@ empty =
 
 {-| Represents the current step of the simulation.
 
-For now, the `Start` step is not used and act like a `Nothing` value. We may
+For now, the `NotStarted` step is not used and act like a `Nothing` value. We may
 want to use it to display information about the questions that will be asked
 before starting.
 
 -}
 type SimulationStep
-    = Start
+    = NotStarted
     | Category UI.Category
     | Result
 
@@ -71,13 +79,18 @@ simulationStepDecoder =
                 "Result" ->
                     Result
 
-                "Start" ->
-                    Start
+                "NotStarted" ->
+                    NotStarted
 
                 _ ->
                     Category s
         )
         Decode.string
+
+
+simulationStepDecode : Encode.Value -> Result Decode.Error SimulationStep
+simulationStepDecode value =
+    Decode.decodeValue simulationStepDecoder value
 
 
 simulationStepEncode : SimulationStep -> Encode.Value
@@ -89,5 +102,5 @@ simulationStepEncode step =
         Result ->
             Encode.string "Result"
 
-        Start ->
-            Encode.string "Start"
+        NotStarted ->
+            Encode.string "NotStarted"

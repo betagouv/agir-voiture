@@ -1,5 +1,5 @@
 module Publicodes.NodeValue exposing
-    ( NodeValue
+    ( NodeValue(..)
     , decoder
     , encode
     , toFloat

@@ -2,6 +2,9 @@ module Shared.Msg exposing (Msg(..))
 
 {-| -}
 
+import Publicodes exposing (Evaluation)
+import Publicodes.NodeValue exposing (NodeValue)
+import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
 import Shared.Model
 
@@ -16,6 +19,9 @@ own file, so they can be imported by `Effect.elm`
 type Msg
     = NoOp
     | PushNewPath String
-    | SetSituation Situation
     | SetSimulationStep Shared.Model.SimulationStep
     | ResetSimulation
+    | NewEvaluations (List ( RuleName, Evaluation ))
+    | SetSituation Situation
+    | UpdateSituation ( RuleName, NodeValue )
+    | Evaluate

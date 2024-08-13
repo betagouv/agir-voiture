@@ -1,21 +1,37 @@
 module Pages.Simulateur exposing (Model, Msg, page)
 
+import Components.CategoryQuestions
+import Components.CategoryStepper
+import Core.UI as UI
+import Dict
 import Effect exposing (Effect)
-import Html
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Extra exposing (nothing, viewIfLazy)
+import Layouts
 import Page exposing (Page)
+import Publicodes.NodeValue as NodeValue exposing (NodeValue)
+import Publicodes.RuleName exposing (RuleName)
 import Route exposing (Route)
 import Shared
+import Shared.Model exposing (SimulationStep(..))
 import View exposing (View)
 
 
 page : Shared.Model -> Route () -> Page Model Msg
-page shared route =
+page shared _ =
     Page.new
-        { init = init
-        , update = update
+        { init = init shared
+        , update = update shared
         , subscriptions = subscriptions
-        , view = view
+        , view = view shared
         }
+        |> Page.withLayout toLayout
+
+
+toLayout : Model -> Layouts.Layout Msg
+toLayout _ =
+    Layouts.Header { showReactRoot = False }
 
 
 
@@ -26,11 +42,30 @@ type alias Model =
     {}
 
 
-init : () -> ( Model, Effect Msg )
-init () =
-    ( {}
-    , Effect.none
-    )
+init : Shared.Model -> () -> ( Model, Effect Msg )
+init shared () =
+    let
+        currentStep =
+            getSimulationStep shared.simulationStep shared.orderedCategories
+    in
+    ( {}, Effect.setSimulationStep currentStep )
+
+
+{-| Returns the simulation step to display.
+
+If it's \`NotStarted, it will return the first category of the list.
+
+-}
+getSimulationStep : SimulationStep -> List UI.Category -> SimulationStep
+getSimulationStep step orderedCategories =
+    case step of
+        NotStarted ->
+            List.head orderedCategories
+                |> Maybe.map Category
+                |> Maybe.withDefault NotStarted
+
+        _ ->
+            step
 
 
 
@@ -39,15 +74,21 @@ init () =
 
 type Msg
     = NoOp
+    | NewAnswer ( RuleName, NodeValue )
+    | NewStep SimulationStep
 
 
-update : Msg -> Model -> ( Model, Effect Msg )
-update msg model =
+update : Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
+update _ msg model =
     case msg of
         NoOp ->
-            ( model
-            , Effect.none
-            )
+            ( model, Effect.none )
+
+        NewAnswer input ->
+            ( model, Effect.updateSituation input )
+
+        NewStep step ->
+            ( model, Effect.setSimulationStep step )
 
 
 
@@ -63,8 +104,80 @@ subscriptions _ =
 -- VIEW
 
 
-view : Model -> View Msg
-view model =
-    { title = "Pages.Simulateur"
-    , body = [ Html.text "/simulateur" ]
+view : Shared.Model -> Model -> View Msg
+view shared _ =
+    let
+        inQuestions =
+            case shared.simulationStep of
+                Category _ ->
+                    True
+
+                _ ->
+                    False
+
+        -- FIXME: there is an issue with empty string
+        newAnswer : RuleName -> String -> Msg
+        newAnswer ruleName stringValue =
+            case String.toFloat stringValue of
+                Just value ->
+                    NewAnswer ( ruleName, NodeValue.Number value )
+
+                Nothing ->
+                    if String.isEmpty stringValue then
+                        NoOp
+
+                    else
+                        NewAnswer ( ruleName, NodeValue.Str stringValue )
+    in
+    { title = "Simulateur - Quelle voiture choisir ?"
+    , body =
+        [ div []
+            [ if Dict.isEmpty shared.evaluations then
+                div [ class "flex flex-col w-full h-full items-center" ]
+                    [ div [ class "text-primary my-4" ]
+                        [ -- NOTE: the loading is to fast to show a message
+                          nothing
+                        ]
+                    ]
+
+              else
+                div [ class "fr-container md:my-8" ]
+                    [ viewIfLazy inQuestions
+                        (\() ->
+                            Components.CategoryStepper.view
+                                { rules = shared.rules
+                                , categories = shared.orderedCategories
+                                , currentStep = shared.simulationStep
+                                }
+                        )
+                    , case shared.simulationStep of
+                        Category category ->
+                            case Dict.get category shared.ui.questions of
+                                Just questions ->
+                                    Components.CategoryQuestions.view
+                                        { category = category
+                                        , rules = shared.rules
+                                        , questions = questions
+                                        , categories = shared.orderedCategories
+                                        , situation = shared.situation
+                                        , evaluations = shared.evaluations
+                                        , onInput = newAnswer
+                                        , onNewStep = \step -> NewStep step
+                                        }
+
+                                Nothing ->
+                                    nothing
+
+                        Result ->
+                            nothing
+
+                        -- TODO: Components.Result.view
+                        --     {  = shared.simulationStep
+                        --     }
+                        NotStarted ->
+                            -- Should not happen
+                            nothing
+                    ]
+            ]
+        ]
     }

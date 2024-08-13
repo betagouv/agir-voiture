@@ -1,8 +1,9 @@
-import Engine, { Rule, Situation } from "publicodes";
+import Engine, { Rule, Situation as PublicodesSituation } from "publicodes";
 
 export type RuleName = string;
 export type PublicodeValue = string | number;
 export type RawRule = Omit<Rule, "nom"> | string | number;
+export type Situation = PublicodesSituation<RuleName>;
 
 /**
  * Instantiate a new publicodes engine with the given rules and situation.
@@ -15,7 +16,7 @@ export type RawRule = Omit<Rule, "nom"> | string | number;
  */
 export function createAsync(
   rules: Readonly<Record<RuleName, RawRule>>,
-  situation: Readonly<Situation<RuleName>>,
+  situation: Readonly<Situation>,
 ) {
   return new Promise<Engine>((resolve) => {
     const nbRules = Object.keys(rules).length;
