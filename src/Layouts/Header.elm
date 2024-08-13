@@ -92,8 +92,7 @@ view : Props -> Shared.Model -> { toContentMsg : Msg -> contentMsg, content : Vi
 view props shared { content, toContentMsg } =
     { title = content.title
     , body =
-        [ viewIf props.showReactRoot viewReactRoot
-        , Components.DSFR.Header.new
+        [ Components.DSFR.Header.new
             { onReset = ResetSimulation
             , onPersonasModalOpen = PersonasModalOpen
             }
@@ -103,6 +102,7 @@ view props shared { content, toContentMsg } =
             { title = "En cours de développement"
             , desc = text "Les résultats de ce simulateur ne sont pas stables et sont susceptibles de fortement évoluer."
             }
+        , viewIf props.showReactRoot viewReactRoot
         , Components.DSFR.Modal.view
             { id = Shared.Constants.personasModalId
             , title = "Choisissez un profil type"
