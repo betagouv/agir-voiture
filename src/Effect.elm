@@ -7,7 +7,7 @@ port module Effect exposing
     , loadExternalUrl, back
     , map, toCmd
     , -- CUSTOM
-      onReactLinkClicked, resetSimulation, setSimulationStep, setSituation
+      closePersonasModal, onReactLinkClicked, openPersonasModal, resetSimulation, setSimulationStep, setSituation
     )
 
 {-|
@@ -31,6 +31,7 @@ import Json.Encode
 import Publicodes.Situation as Situation exposing (Situation)
 import Route
 import Route.Path
+import Shared.Constants
 import Shared.Model
 import Shared.Msg
 import Task
@@ -93,6 +94,32 @@ port outgoing :
     , data : Json.Encode.Value
     }
     -> Cmd msg
+
+
+openPersonasModal : Effect msg
+openPersonasModal =
+    openModal Shared.Constants.personasModalId
+
+
+closePersonasModal : Effect msg
+closePersonasModal =
+    closeModal Shared.Constants.personasModalId
+
+
+openModal : String -> Effect msg
+openModal modalId =
+    SendToJs
+        { tag = "OPEN_MODAL"
+        , data = Json.Encode.string modalId
+        }
+
+
+closeModal : String -> Effect msg
+closeModal modalId =
+    SendToJs
+        { tag = "CLOSE_MODAL"
+        , data = Json.Encode.string modalId
+        }
 
 
 

@@ -11,14 +11,13 @@ import Html.Attributes.Extra exposing (role)
 type Header msg
     = Settings
         { onReset : msg
+        , onPersonasModalOpen : msg
         }
 
 
-new : { onReset : msg } -> Header msg
+new : { onReset : msg, onPersonasModalOpen : msg } -> Header msg
 new props =
-    Settings
-        { onReset = props.onReset
-        }
+    Settings props
 
 
 view : Header msg -> Html msg
@@ -56,7 +55,7 @@ view (Settings settings) =
                         [ div [ class "fr-header__tools-links" ]
                             [ [ Button.new
                                     { label = "Choisir un profil type"
-                                    , onClick = Nothing -- Just config.openPersonasModal
+                                    , onClick = Just settings.onPersonasModalOpen
                                     }
                                     |> Button.leftIcon Icons.user.accountCircleLine
                                     |> Button.withAttrs [ Aria.controls [ "personas-modal" ] ]

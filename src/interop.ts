@@ -40,6 +40,7 @@ export const onReady = async ({ app }: { app: any }) => {
   if (app.ports && app.ports.outgoing) {
     app.ports.outgoing.subscribe(({ tag, data }) => {
       switch (tag) {
+        // Publicodes
         case "SET_SITUATION": {
           localStorage.setItem("situation", JSON.stringify(data));
           engine.setSituation(data);
@@ -49,6 +50,27 @@ export const onReady = async ({ app }: { app: any }) => {
           localStorage.setItem("simulationStep", data);
           break;
         }
+
+        // Modal dialog
+        case "OPEN_MODAL": {
+          const dialog = document.getElementById(data) as HTMLDialogElement;
+          if (dialog) {
+            dialog.showModal();
+          } else {
+            console.error("Dialog not found: ", data);
+          }
+          break;
+        }
+        case "CLOSE_MODAL": {
+          const dialog = document.getElementById(data) as HTMLDialogElement;
+          if (dialog) {
+            dialog.close();
+          } else {
+            console.error("Dialog not found: ", data);
+          }
+          break;
+        }
+
         default: {
           console.error("Unknown outgoing tag: ", tag);
         }
