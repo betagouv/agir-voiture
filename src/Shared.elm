@@ -28,9 +28,16 @@ import Shared.Msg
 -- FLAGS
 
 
+{-| Contains the data passed to the page when it is created.
+
+Most of them are stored persistently in the local storage (see the `interop.ts`
+file to have more information about the data stored).
+
+-}
 type alias Flags =
     { rules : RawRules
     , situation : Situation
+    , simulationStep : Shared.Model.SimulationStep
     }
 
 
@@ -39,6 +46,7 @@ decoder =
     Json.Decode.succeed Flags
         |> Decode.required "rules" Publicodes.rawRulesDecoder
         |> Decode.required "situation" Situation.decoder
+        |> Decode.required "simulationStep" Shared.Model.simulationStepDecoder
 
 
 
@@ -55,6 +63,7 @@ init flagsResult _ =
         Ok flags ->
             ( { situation = flags.situation
               , rules = flags.rules
+              , simulationStep = flags.simulationStep
               }
             , Effect.none
             )

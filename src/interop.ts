@@ -9,7 +9,7 @@ import rules, { ui, personas } from "publicodes-voiture";
 import * as publicodes from "./ffi/publicodes";
 import * as publicodesRulePage from "./web-components/rule-page/define";
 
-const situation = JSON.parse(localStorage.getItem("situation") || "{}");
+const situation = JSON.parse(localStorage.getItem("situation") ?? "{}");
 
 /**
  * This function is called BEFORE the Elm app starts up.
@@ -22,7 +22,7 @@ export function flags() {
     ui,
     personas,
     situation,
-    simulationStep: localStorage.getItem("simulationStep") || "Start",
+    simulationStep: localStorage.getItem("simulationStep") ?? "Start",
   };
 }
 
