@@ -12,6 +12,8 @@ module Shared exposing
 
 -}
 
+import Core.Personas as Personas exposing (Personas)
+import Core.UI as UI
 import Dict
 import Effect exposing (Effect)
 import Json.Decode
@@ -36,6 +38,8 @@ file to have more information about the data stored).
 -}
 type alias Flags =
     { rules : RawRules
+    , ui : UI.Data
+    , personas : Personas
     , situation : Situation
     , simulationStep : Shared.Model.SimulationStep
     }
@@ -45,6 +49,8 @@ decoder : Json.Decode.Decoder Flags
 decoder =
     Json.Decode.succeed Flags
         |> Decode.required "rules" Publicodes.rawRulesDecoder
+        |> Decode.required "ui" UI.decode
+        |> Decode.required "personas" Personas.personasDecoder
         |> Decode.required "situation" Situation.decoder
         |> Decode.required "simulationStep" Shared.Model.simulationStepDecoder
 
@@ -64,6 +70,8 @@ init flagsResult _ =
             ( { situation = flags.situation
               , rules = flags.rules
               , simulationStep = flags.simulationStep
+              , ui = flags.ui
+              , personas = flags.personas
               }
             , Effect.none
             )

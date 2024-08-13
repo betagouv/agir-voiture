@@ -74,8 +74,8 @@ empty =
     }
 
 
-uiDecoder : Decoder Data
-uiDecoder =
+decode : Decoder Data
+decode =
     Decode.succeed Data
         |> required "categories" (dict decodeCategoryInfos)
         |> required "questions" (dict (list (list string)))

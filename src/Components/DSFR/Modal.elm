@@ -14,11 +14,15 @@ FIXME: using the `fr-modal` in dev mode isn't working.
 -}
 view : { id : String, title : String, content : Html msg, onClose : msg } -> Html msg
 view props =
+    let
+        titleId =
+            "modal-title-" ++ props.id
+    in
     node "dialog"
-        [ id props.id, class "fr-modal", labelledBy "modal-title", role "dialog" ]
-        [ div [ class "fr-container fr-container--fluid fr-container-md w-full" ]
+        [ id props.id, class "", labelledBy titleId, role "dialog" ]
+        [ div [ class "" ]
             [ div [ class "fr-grid-row fr-grid-row--center" ]
-                [ div [ class "fr-col-12 fr-col-md-8 fr-col-lg-6" ]
+                [ div [ class "" ]
                     [ div [ class "fr-modal__body" ]
                         [ div [ class "fr-modal__header" ]
                             [ Button.new
@@ -29,7 +33,7 @@ view props =
                                 |> Button.view
                             ]
                         , div [ class "fr-modal__content" ]
-                            [ h1 [ id "modal-title", class "fr-modal__title" ]
+                            [ h1 [ id titleId, class "fr-modal__title" ]
                                 [ span [ class "fr-icon-arrow-right-line fr-icon--lg" ] []
                                 , text props.title
                                 ]

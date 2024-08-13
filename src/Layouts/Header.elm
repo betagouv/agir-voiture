@@ -4,11 +4,14 @@ import BetaGouv.DSFR.Button as Button
 import Components.DSFR.Header
 import Components.DSFR.Modal
 import Components.DSFR.Notice
+import Core.Personas exposing (Personas)
+import Dict
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Extra exposing (viewIf)
 import Layout exposing (Layout)
+import Publicodes.Situation exposing (Situation)
 import Route exposing (Route)
 import Shared
 import Shared.Constants
@@ -22,11 +25,11 @@ type alias Props =
 
 
 layout : Props -> Shared.Model -> Route () -> Layout () Model Msg contentMsg
-layout props _ _ =
+layout props shared _ =
     Layout.new
         { init = init
         , update = update
-        , view = view props
+        , view = view props shared
         , subscriptions = subscriptions
         }
 
@@ -52,6 +55,7 @@ type Msg
     = ResetSimulation
     | PersonasModalOpen
     | PersonasModalClose
+    | SetPersonasSituation Situation
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -66,6 +70,14 @@ update msg model =
         PersonasModalClose ->
             ( model, Effect.closePersonasModal )
 
+        SetPersonasSituation situation ->
+            ( model
+            , Effect.batch
+                [ Effect.setSituation situation
+                , Effect.closePersonasModal
+                ]
+            )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
@@ -76,8 +88,8 @@ subscriptions _ =
 -- VIEW
 
 
-view : Props -> { toContentMsg : Msg -> contentMsg, content : View contentMsg, model : Model } -> View contentMsg
-view props { content, toContentMsg } =
+view : Props -> Shared.Model -> { toContentMsg : Msg -> contentMsg, content : View contentMsg, model : Model } -> View contentMsg
+view props shared { content, toContentMsg } =
     { title = content.title
     , body =
         [ viewIf props.showReactRoot viewReactRoot
@@ -93,8 +105,8 @@ view props { content, toContentMsg } =
             }
         , Components.DSFR.Modal.view
             { id = Shared.Constants.personasModalId
-            , title = "Personas"
-            , content = viewPersonas
+            , title = "Choisissez un profil type"
+            , content = viewPersonas shared.personas
             , onClose = PersonasModalClose
             }
             |> Html.map toContentMsg
@@ -111,29 +123,17 @@ viewReactRoot =
         ]
 
 
-
--- viewPersonas : Personas -> (P.Situation -> msg) -> Accessibility.Html msg
--- viewPersonas personas setPersonaSituation =
-
-
-viewPersonas : Html msg
-viewPersonas =
-    -- (personas
-    --     |> Dict.toList
-    --     |> List.map
-    --         (\( _, persona ) ->
-    --             Button.new
-    --                 { label = persona.titre
-    --                 , onClick = Just (setPersonaSituation persona.situation)
-    --                 }
-    --                 |> Button.secondary
-    --         )
-    -- )
-    [ Button.new
-        { label = "Famille"
-        , onClick = Nothing
-        }
-        |> Button.secondary
-    ]
+viewPersonas : Personas -> Html Msg
+viewPersonas personas =
+    personas
+        |> Dict.toList
+        |> List.map
+            (\( _, persona ) ->
+                Button.new
+                    { label = persona.titre
+                    , onClick = Just (SetPersonasSituation persona.situation)
+                    }
+                    |> Button.secondary
+            )
         |> Button.group
         |> Button.viewGroup

@@ -6,6 +6,7 @@ module Shared.Model exposing
     , simulationStepEncode
     )
 
+import Core.Personas exposing (Personas)
 import Core.UI as UI
 import Dict
 import Json.Decode as Decode
@@ -27,8 +28,10 @@ own file, so they can be imported by `Effect.elm`
 
 -}
 type alias Model =
-    { situation : Situation
-    , rules : RawRules
+    { rules : RawRules
+    , ui : UI.Data
+    , personas : Personas
+    , situation : Situation
     , simulationStep : SimulationStep
     }
 
@@ -36,8 +39,10 @@ type alias Model =
 empty : Model
 empty =
     { situation = Dict.empty
+    , ui = UI.empty
     , rules = Dict.empty
     , simulationStep = Start
+    , personas = Dict.empty
     }
 
 
