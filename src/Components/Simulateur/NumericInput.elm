@@ -72,9 +72,6 @@ view props =
 validationOnInput : Config msg -> String -> msg
 validationOnInput props str =
     let
-        _ =
-            Debug.log "rule" props.rule
-
         maybeMin =
             props.rule.plancher
                 |> Maybe.andThen
@@ -103,10 +100,6 @@ validationOnInput props str =
                 maybeMin
                     |> Maybe.andThen
                         (\min ->
-                            let
-                                _ =
-                                    Debug.log "min, num" ( min, num )
-                            in
                             if num < min then
                                 Just <|
                                     props.onInput props.ruleName
