@@ -15,11 +15,23 @@ type alias Props msg =
     { categories : List UI.Category
     , onNewStep : Shared.Model.SimulationStep -> msg
     , currentStep : Shared.Model.SimulationStep
+    , containsErrors : Bool
     }
 
 
 view : Props msg -> Html msg
 view props =
+    let
+        viewButton : Button.ButtonConfig msg -> Html msg
+        viewButton config =
+            Button.view
+                (if props.containsErrors then
+                    Button.disable config
+
+                 else
+                    config
+                )
+    in
     case props.currentStep of
         NotStarted ->
             nothing
@@ -51,7 +63,7 @@ view props =
                             |> Button.leftIcon Icons.system.arrowLeftSFill
                             |> Button.medium
                             |> Button.secondary
-                            |> Button.view
+                            |> viewButton
 
                     _ ->
                         div [] []
@@ -63,7 +75,7 @@ view props =
                             }
                             |> Button.rightIcon Icons.system.arrowRightSFill
                             |> Button.medium
-                            |> Button.view
+                            |> viewButton
 
                     _ ->
                         Button.new
@@ -72,7 +84,7 @@ view props =
                             }
                             |> Button.rightIcon Icons.system.arrowRightSFill
                             |> Button.medium
-                            |> Button.view
+                            |> viewButton
                 ]
 
         Result ->
@@ -89,5 +101,5 @@ view props =
                     |> Button.leftIcon Icons.system.arrowLeftSFill
                     |> Button.medium
                     |> Button.tertiary
-                    |> Button.view
+                    |> viewButton
                 ]

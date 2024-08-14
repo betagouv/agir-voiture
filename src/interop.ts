@@ -55,6 +55,7 @@ export const onReady = async ({ app }: { app: any }) => {
           break;
         }
         case "UPDATE_SITUATION": {
+          console.log("UPDATE_SITUATION", data);
           const newSituation = {
             ...engine.getSituation(),
             [data.name]: data.value,
@@ -67,7 +68,6 @@ export const onReady = async ({ app }: { app: any }) => {
           break;
         }
         case "EVALUATE_ALL": {
-          console.log("Evaluating all rules:", data);
           const evaluatedRules = data.map((rule: publicodes.RuleName) => {
             const result = engine.evaluate(rule);
             const isApplicable =
@@ -110,7 +110,7 @@ export const onReady = async ({ app }: { app: any }) => {
         }
 
         default: {
-          console.error("Unknown outgoing tag: ", tag);
+          console.error("Unknown message from Elm with tag: ", tag);
         }
       }
     });

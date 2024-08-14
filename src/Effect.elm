@@ -7,7 +7,7 @@ port module Effect exposing
     , loadExternalUrl, back
     , map, toCmd
     , -- CUSTOM
-      closePersonasModal, evaluate, evaluateAll, onEvaluatedRules, onReactLinkClicked, onSituationUpdated, openPersonasModal, resetSimulation, setSimulationStep, setSituation, updateSituation
+      closePersonasModal, evaluate, evaluateAll, newInputError, onEvaluatedRules, onReactLinkClicked, onSituationUpdated, openPersonasModal, removeInputError, resetSimulation, setSimulationStep, setSituation, updateSituation
     )
 
 {-|
@@ -68,6 +68,16 @@ evaluate =
 resetSimulation : Effect msg
 resetSimulation =
     SendSharedMsg Shared.Msg.ResetSimulation
+
+
+newInputError : ( RuleName, String ) -> Effect msg
+newInputError ( name, error ) =
+    SendSharedMsg (Shared.Msg.NewInputError ( name, error ))
+
+
+removeInputError : RuleName -> Effect msg
+removeInputError name =
+    SendSharedMsg (Shared.Msg.RemoveInputError name)
 
 
 setSituation : Situation -> Effect msg

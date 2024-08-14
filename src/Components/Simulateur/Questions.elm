@@ -29,6 +29,7 @@ type alias Config msg =
     , onInput : RuleName -> String -> msg
     , questions : List (List RuleName)
     , onNewStep : SimulationStep -> msg
+    , inputErrors : Dict RuleName String
     }
 
 
@@ -42,6 +43,7 @@ view props =
             { categories = props.categories
             , onNewStep = props.onNewStep
             , currentStep = Category props.category
+            , containsErrors = not (Dict.isEmpty props.inputErrors)
             }
         ]
 
@@ -131,6 +133,10 @@ viewNumericInput props question rule name value =
             , value = ""
             }
 
+        maybeError =
+            Dict.get name props.inputErrors
+                |> Maybe.map (\err -> [ text err ])
+
         config =
             case ( Dict.get name props.situation, value ) of
                 ( Just _, NodeValue.Number num ) ->
@@ -153,6 +159,7 @@ viewNumericInput props question rule name value =
     in
     config
         |> BetaGouv.DSFR.Input.withHint [ viewMaybe text rule.unite ]
+        |> BetaGouv.DSFR.Input.withError maybeError
         |> BetaGouv.DSFR.Input.numeric
         |> BetaGouv.DSFR.Input.view
 

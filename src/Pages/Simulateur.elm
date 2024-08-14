@@ -40,7 +40,7 @@ toLayout _ =
 
 
 type alias Model =
-    {}
+    ()
 
 
 init : Shared.Model -> () -> ( Model, Effect Msg )
@@ -49,7 +49,7 @@ init shared () =
         currentStep =
             getSimulationStep shared.simulationStep shared.orderedCategories
     in
-    ( {}, Effect.setSimulationStep currentStep )
+    ( (), Effect.setSimulationStep currentStep )
 
 
 {-| Returns the simulation step to display.
@@ -85,8 +85,17 @@ update _ msg model =
         NoOp ->
             ( model, Effect.none )
 
-        NewAnswer input ->
-            ( model, Effect.updateSituation input )
+        NewAnswer (( name, value ) as input) ->
+            let
+                manageError =
+                    case value of
+                        NodeValue.Str "" ->
+                            Effect.newInputError ( name, "Ce champ est obligatoire" )
+
+                        _ ->
+                            Effect.removeInputError name
+            in
+            ( model, Effect.batch [ manageError, Effect.updateSituation input ] )
 
         NewStep step ->
             ( model, Effect.setSimulationStep step )
@@ -159,6 +168,7 @@ view shared _ =
                                         , evaluations = shared.evaluations
                                         , onInput = newAnswer
                                         , onNewStep = \step -> NewStep step
+                                        , inputErrors = shared.inputErrors
                                         }
 
                                 Nothing ->

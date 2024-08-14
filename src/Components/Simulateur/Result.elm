@@ -68,6 +68,7 @@ view props =
                 { categories = props.categories
                 , onNewStep = props.onNewStep
                 , currentStep = Shared.Model.Result
+                , containsErrors = False
                 }
             , div [ class "flex flex-col gap-8" ]
                 [ h1 []

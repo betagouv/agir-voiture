@@ -25,3 +25,5 @@ type Msg
     | SetSituation Situation
     | UpdateSituation ( RuleName, NodeValue )
     | Evaluate
+    | NewInputError ( RuleName, String )
+    | RemoveInputError RuleName

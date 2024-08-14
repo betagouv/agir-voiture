@@ -38,6 +38,7 @@ type alias Model =
     , evaluations : Dict RuleName Evaluation
     , orderedCategories : List UI.Category
     , resultRules : List RuleName
+    , inputErrors : Dict RuleName String
     }
 
 
@@ -51,6 +52,7 @@ empty =
     , evaluations = Dict.empty
     , orderedCategories = []
     , resultRules = []
+    , inputErrors = Dict.empty
     }
 
 

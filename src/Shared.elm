@@ -122,7 +122,7 @@ update _ msg model =
             evaluate { model | simulationStep = newStep }
 
         ResetSimulation ->
-            ( model
+            ( { model | inputErrors = Dict.empty }
             , Effect.batch
                 [ Effect.setSituation Dict.empty
                 , Effect.setSimulationStep Shared.Model.NotStarted
@@ -151,6 +151,16 @@ update _ msg model =
 
         Evaluate ->
             evaluate model
+
+        NewInputError ( name, error ) ->
+            ( { model | inputErrors = Dict.insert name error model.inputErrors }
+            , Effect.none
+            )
+
+        RemoveInputError name ->
+            ( { model | inputErrors = Dict.remove name model.inputErrors }
+            , Effect.none
+            )
 
 
 {-| Evaluates rules to update according to the current simulation step.
