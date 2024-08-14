@@ -147,8 +147,7 @@ update _ msg model =
                 newSituation =
                     Dict.insert name value model.situation
             in
-            evaluate
-                { model | situation = newSituation }
+            ( { model | situation = newSituation }, Effect.none )
 
         Evaluate ->
             evaluate model
@@ -169,9 +168,6 @@ evaluate model =
 
                 _ ->
                     []
-
-        _ =
-            Debug.log "currentQuestions" currentQuestions
     in
     ( model
     , if model.simulationStep == Result then
