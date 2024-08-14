@@ -14,13 +14,13 @@ import Html.Attributes exposing (..)
 import Html.Extra exposing (viewMaybe)
 import Markdown
 import Publicodes exposing (Evaluation, Mecanism(..), RawRule, RawRules)
-import Publicodes.NodeValue as NodeValue
+import Publicodes.NodeValue as NodeValue exposing (NodeValue)
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
 import Shared.Model exposing (SimulationStep(..))
 
 
-type alias Props msg =
+type alias Config msg =
     { rules : RawRules
     , situation : Situation
     , evaluations : Dict RuleName Evaluation
@@ -32,7 +32,7 @@ type alias Props msg =
     }
 
 
-view : Props msg -> Html msg
+view : Config msg -> Html msg
 view props =
     div [ class "flex flex-col mb-6 opacity-100" ]
         [ viewCategoryDescription props.category props.rules
@@ -56,7 +56,7 @@ viewCategoryDescription currentCategory rawRules =
             )
 
 
-viewSubQuestions : Props msg -> List RuleName -> Html msg
+viewSubQuestions : Config msg -> List RuleName -> Html msg
 viewSubQuestions props subquestions =
     div [ class "max-w-md flex flex-col gap-3" ]
         (subquestions
@@ -72,7 +72,7 @@ viewSubQuestions props subquestions =
         )
 
 
-viewQuestion : Props msg -> ( RuleName, RawRule ) -> Bool -> Html msg
+viewQuestion : Config msg -> ( RuleName, RawRule ) -> Bool -> Html msg
 viewQuestion props ( name, rule ) isApplicable =
     rule.question
         |> Maybe.map
@@ -82,7 +82,7 @@ viewQuestion props ( name, rule ) isApplicable =
         |> viewMaybe identity
 
 
-viewInput : Props msg -> String -> ( RuleName, RawRule ) -> Bool -> Html msg
+viewInput : Config msg -> String -> ( RuleName, RawRule ) -> Bool -> Html msg
 viewInput props question ( name, rule ) isApplicable =
     let
         maybeNodeValue =
@@ -97,8 +97,6 @@ viewInput props question ( name, rule ) isApplicable =
             ( ( Just (ChainedMecanism { une_possibilite }), _ ), Just nodeValue ) ->
                 case une_possibilite of
                     Just { possibilites } ->
-                        -- TODO: use type alias to get named parameters
-                        -- TODO: extract in its own module/component
                         Components.Select.view
                             { label = question
                             , options =
@@ -116,35 +114,45 @@ viewInput props question ( name, rule ) isApplicable =
                     Nothing ->
                         viewDisabledInput props.onInput question name
 
-            ( _, Just (NodeValue.Number num) ) ->
-                viewNumericInput props question rule name num
+            ( _, Just value ) ->
+                viewNumericInput props question rule name value
 
             _ ->
                 viewDisabledInput props.onInput question name
 
 
-viewNumericInput : Props msg -> String -> RawRule -> RuleName -> Float -> Html msg
-viewNumericInput props question rule name num =
+viewNumericInput : Config msg -> String -> RawRule -> RuleName -> NodeValue -> Html msg
+viewNumericInput props question rule name value =
     let
-        config =
+        defaultConfig =
             { onInput = props.onInput name
             , label = text question
             , id = name
             , value = ""
             }
-    in
-    (case Dict.get name props.situation of
-        Just _ ->
-            BetaGouv.DSFR.Input.new { config | value = String.fromFloat num }
 
-        Nothing ->
-            BetaGouv.DSFR.Input.new config
-                |> BetaGouv.DSFR.Input.withInputAttrs
-                    [ placeholder (Core.Format.floatToFrenchLocale (Max 1) num) ]
-    )
-        |> BetaGouv.DSFR.Input.withHint
-            [ viewMaybe text rule.unite
-            ]
+        config =
+            case ( Dict.get name props.situation, value ) of
+                ( Just _, NodeValue.Number num ) ->
+                    -- Filled input
+                    BetaGouv.DSFR.Input.new { defaultConfig | value = String.fromFloat num }
+
+                ( Just _, NodeValue.Str "" ) ->
+                    -- Empty input (the user filled it and then removed the value)
+                    BetaGouv.DSFR.Input.new defaultConfig
+
+                ( Nothing, NodeValue.Number num ) ->
+                    -- Not touched input (the user didn't fill it)
+                    BetaGouv.DSFR.Input.new defaultConfig
+                        |> BetaGouv.DSFR.Input.withInputAttrs
+                            [ placeholder (Core.Format.floatToFrenchLocale (Max 1) num) ]
+
+                _ ->
+                    -- Should never happen
+                    BetaGouv.DSFR.Input.new defaultConfig
+    in
+    config
+        |> BetaGouv.DSFR.Input.withHint [ viewMaybe text rule.unite ]
         |> BetaGouv.DSFR.Input.numeric
         |> BetaGouv.DSFR.Input.view
 

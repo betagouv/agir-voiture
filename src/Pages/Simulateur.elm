@@ -116,7 +116,6 @@ view shared _ =
                 _ ->
                     False
 
-        -- FIXME: there is an issue with empty string
         newAnswer : RuleName -> String -> Msg
         newAnswer ruleName stringValue =
             case String.toFloat stringValue of
@@ -124,11 +123,7 @@ view shared _ =
                     NewAnswer ( ruleName, NodeValue.Number value )
 
                 Nothing ->
-                    if String.isEmpty stringValue then
-                        NoOp
-
-                    else
-                        NewAnswer ( ruleName, NodeValue.Str stringValue )
+                    NewAnswer ( ruleName, NodeValue.Str stringValue )
     in
     { title = "Simulateur - Quelle voiture choisir ?"
     , body =
