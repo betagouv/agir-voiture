@@ -50,12 +50,17 @@ view props =
 
 viewCategoryDescription : String -> RawRules -> Html msg
 viewCategoryDescription currentCategory rawRules =
-    Dict.get currentCategory rawRules
-        |> Maybe.andThen .description
-        |> viewMaybe
-            (\desc ->
-                BetaGouv.DSFR.CallOut.callout "" (div [] (Markdown.toHtml Nothing desc))
-            )
+    div [ class "fr-col-8" ]
+        [ Dict.get
+            currentCategory
+            rawRules
+            |> Maybe.andThen .description
+            |> viewMaybe
+                (\desc ->
+                    BetaGouv.DSFR.CallOut.callout ""
+                        (div [] (Markdown.toHtml Nothing desc))
+                )
+        ]
 
 
 viewSubQuestions : Config msg -> List RuleName -> Html msg

@@ -2,6 +2,7 @@ module Publicodes.RuleName exposing
     ( RuleName
     , SplitedRuleName
     , decodeFromPath
+    , encodeToPath
     , join
     , namespace
     , split
@@ -45,3 +46,17 @@ decodeFromPath urlPath =
         |> String.replace "-" " "
         |> --NOTE: it's [\u{2011}] but when formatted it's became [‑] (which is different from [-])
            String.replace "‑" "-"
+
+
+{-| Encode a rule name to a URL path.
+
+Elm implementation of `publicodes/utils.ts#encodeRuleName`
+
+-}
+encodeToPath : RuleName -> String
+encodeToPath ruleName =
+    ruleName
+        |> String.replace " . " "/"
+        |> String.replace " " "-"
+        |> --NOTE: it's [\u{2011}] but when formatted it's became [‑] (which is different from [-])
+           String.replace "-" "‑"

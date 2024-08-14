@@ -6,6 +6,7 @@ import BetaGouv.DSFR.Icons as Icons
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Attributes.Extra exposing (role)
+import Route.Path
 
 
 type Header msg
@@ -68,7 +69,8 @@ view (Settings settings) =
                                     { label = "Comprendre le calcul"
                                     , onClick = Nothing
                                     }
-                                    |> Button.linkButton "documentation"
+                                    |> Button.linkButton
+                                        (Route.Path.toString Route.Path.Documentation)
                                     |> Button.leftIcon Icons.document.fileTextLine
                               ]
                                 |> Button.group
