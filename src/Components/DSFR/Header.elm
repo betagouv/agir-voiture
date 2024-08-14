@@ -44,7 +44,7 @@ view (Settings settings) =
                         , div [ class "fr-header__service" ]
                             [ a [ href "/", title "Accueil - Comparateur Voiture - Agir" ]
                                 [ p [ class "fr-header__service-title" ]
-                                    [ text "Comparateur Voiture"
+                                    [ text "Quel véhicule pour changer le miens ?"
                                     ]
                                 ]
                             , p [ class "fr-header__service-description" ]
