@@ -4,6 +4,7 @@ import BetaGouv.DSFR.CallOut
 import BetaGouv.DSFR.Input
 import Components.Select
 import Components.Simulateur.Navigation
+import Components.Simulateur.NumericInput
 import Core.Format
 import Core.InputError as InputError exposing (InputError)
 import Core.Rules as Rules
@@ -136,84 +137,18 @@ viewInput props question ( name, rule ) isApplicable =
                         viewDisabledInput props.onInput question name
 
             ( _, Just value ) ->
-                viewNumericInput props question rule name value
+                Components.Simulateur.NumericInput.view
+                    { onInput = props.onInput
+                    , inputErrors = props.inputErrors
+                    , situation = props.situation
+                    , label = text question
+                    , rule = rule
+                    , ruleName = name
+                    , value = value
+                    }
 
             _ ->
                 viewDisabledInput props.onInput question name
-
-
-viewNumericInput : Config msg -> String -> RawRule -> RuleName -> NodeValue -> Html msg
-viewNumericInput props question rule name value =
-    let
-        onNumericInput str =
-            -- NOTE: could it be cleaner?
-            if String.endsWith "." str then
-                props.onInput name
-                    (NodeValue.Str str)
-                    (Just
-                        (InputError.InvalidInput
-                            ("Veuillez entrer un nombre valide (ex: " ++ String.dropRight 1 str ++ " ou " ++ str ++ "5)")
-                        )
-                    )
-
-            else
-                case String.toFloat str of
-                    Just num ->
-                        props.onInput name (NodeValue.Number num) Nothing
-
-                    Nothing ->
-                        props.onInput name
-                            (NodeValue.Str str)
-                            (case str of
-                                "" ->
-                                    Just InputError.Empty
-
-                                _ ->
-                                    Just
-                                        (InputError.InvalidInput
-                                            "Veuillez entrer un nombre valide (ex: 1234.56)"
-                                        )
-                            )
-
-        defaultConfig =
-            { onInput = onNumericInput
-            , label = text question
-            , id = name
-            , value = ""
-            }
-
-        maybeError =
-            Dict.get name props.inputErrors
-
-        config =
-            case ( Dict.get name props.situation, value, maybeError ) of
-                ( Nothing, NodeValue.Number num, Nothing ) ->
-                    -- Not touched input (the user didn't fill it)
-                    BetaGouv.DSFR.Input.new defaultConfig
-                        |> BetaGouv.DSFR.Input.withInputAttrs
-                            [ placeholder (Core.Format.floatToFrenchLocale (Max 1) num) ]
-
-                ( Just _, NodeValue.Number num, Nothing ) ->
-                    -- Filled input
-                    BetaGouv.DSFR.Input.new { defaultConfig | value = String.fromFloat num }
-
-                ( Just _, NodeValue.Str "", Nothing ) ->
-                    -- Empty input (the user filled it and then removed the value)
-                    BetaGouv.DSFR.Input.new defaultConfig
-
-                ( _, _, Just error ) ->
-                    -- Filled input with invalid value
-                    BetaGouv.DSFR.Input.new { defaultConfig | value = error.value }
-
-                _ ->
-                    -- Should never happen
-                    BetaGouv.DSFR.Input.new defaultConfig
-    in
-    config
-        |> BetaGouv.DSFR.Input.withHint [ viewMaybe text rule.unite ]
-        |> BetaGouv.DSFR.Input.withError
-            (maybeError |> Maybe.map (\{ msg } -> [ text msg ]))
-        |> BetaGouv.DSFR.Input.view
 
 
 viewDisabledInput :

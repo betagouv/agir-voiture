@@ -127,6 +127,8 @@ chainedMecanismsDecoder =
         |> optional "est défini" (nullable string) Nothing
 
 
+{-| TODO: correctly define RawRule as ChainedMecanism with a few extra fields
+-}
 type alias RawRule =
     { question : Maybe String
     , description : Maybe String
@@ -137,6 +139,7 @@ type alias RawRule =
     , valeur : Maybe Mecanism
     , titre : Maybe String
     , note : Maybe String
+    , plancher : Maybe Mecanism
     }
 
 
@@ -152,6 +155,7 @@ rawRuleDecoder =
         |> optional "valeur" (nullable mecanismDecoder) Nothing
         |> optional "titre" (nullable string) Nothing
         |> optional "note" (nullable string) Nothing
+        |> optional "plancher" (nullable mecanismDecoder) Nothing
 
 
 type alias RawRules =

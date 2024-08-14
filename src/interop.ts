@@ -22,7 +22,7 @@ export function flags() {
     ui,
     personas,
     situation,
-    simulationStep: localStorage.getItem("simulationStep") ?? "Start",
+    simulationStep: localStorage.getItem("simulationStep") ?? "NotStarted",
   };
 }
 
