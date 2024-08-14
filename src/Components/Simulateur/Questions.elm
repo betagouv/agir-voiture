@@ -1,9 +1,9 @@
-module Components.CategoryQuestions exposing (view)
+module Components.Simulateur.Questions exposing (view)
 
 import BetaGouv.DSFR.CallOut
 import BetaGouv.DSFR.Input
-import Components.CategoryNavigation
 import Components.Select
+import Components.Simulateur.Navigation
 import Core.Format
 import Core.Rules as Rules
 import Core.UI as UI exposing (Category)
@@ -38,7 +38,7 @@ view props =
         [ viewCategoryDescription props.category props.rules
         , div [ class "grid grid-cols-1 gap-6" ]
             (List.map (viewSubQuestions props) props.questions)
-        , Components.CategoryNavigation.view
+        , Components.Simulateur.Navigation.view
             { categories = props.categories
             , onNewStep = props.onNewStep
             , currentStep = Category props.category

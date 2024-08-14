@@ -1,4 +1,4 @@
-module Components.CategoryNavigation exposing (view)
+module Components.Simulateur.Navigation exposing (view)
 
 import BetaGouv.DSFR.Button as Button
 import BetaGouv.DSFR.Icons as Icons

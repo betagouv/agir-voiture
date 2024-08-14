@@ -1,7 +1,8 @@
 module Pages.Simulateur exposing (Model, Msg, page)
 
-import Components.CategoryQuestions
-import Components.CategoryStepper
+import Components.Simulateur.Questions
+import Components.Simulateur.Result
+import Components.Simulateur.Stepper
 import Core.UI as UI
 import Dict
 import Effect exposing (Effect)
@@ -144,7 +145,7 @@ view shared _ =
                 div [ class "fr-container md:my-8" ]
                     [ viewIfLazy inQuestions
                         (\() ->
-                            Components.CategoryStepper.view
+                            Components.Simulateur.Stepper.view
                                 { rules = shared.rules
                                 , categories = shared.orderedCategories
                                 , currentStep = shared.simulationStep
@@ -154,7 +155,7 @@ view shared _ =
                         Category category ->
                             case Dict.get category shared.ui.questions of
                                 Just questions ->
-                                    Components.CategoryQuestions.view
+                                    Components.Simulateur.Questions.view
                                         { category = category
                                         , rules = shared.rules
                                         , questions = questions
@@ -169,11 +170,14 @@ view shared _ =
                                     nothing
 
                         Result ->
-                            nothing
+                            Components.Simulateur.Result.view
+                                { categories = shared.orderedCategories
+                                , onNewStep = \step -> NewStep step
+                                , evaluations = shared.evaluations
+                                , resultRules = shared.resultRules
+                                , rules = shared.rules
+                                }
 
-                        -- TODO: Components.Result.view
-                        --     {  = shared.simulationStep
-                        --     }
                         NotStarted ->
                             -- Should not happen
                             nothing

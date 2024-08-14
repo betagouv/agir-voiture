@@ -1,4 +1,4 @@
-module Components.CategoryStepper exposing (view)
+module Components.Simulateur.Stepper exposing (view)
 
 import Core.UI as UI
 import Html exposing (..)
