@@ -1,31 +1,16 @@
 {
+  "include": [
+    "src/"
+  ],
   "compilerOptions": {
     "jsx": "react",
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-    "module": "ESNext",
     "lib": [
-      "ES2020",
-      "DOM",
-      "DOM.Iterable"
+      "es6",
+      "dom"
     ],
-    "skipLibCheck": true,
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
-    "isolatedModules": true,
+    "esModuleInterop": true,
     "noEmit": true,
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "paths": {
-      "@/*": [
-        "./src"
-      ]
-    }
-  },
-  "include": [
-    "src"
-  ]
+    "skipLibCheck": true
+  }
 }

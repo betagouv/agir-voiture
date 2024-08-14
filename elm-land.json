@@ -1,0 +1,42 @@
+{
+  "app": {
+    "elm": {
+      "development": { "debugger": true },
+      "production": { "debugger": false }
+    },
+    "env": [],
+    "html": {
+      "attributes": {
+        "html": { "lang": "fr" },
+        "head": {}
+      },
+      "title": "Quel véhicule pour changer le miens ?",
+      "meta": [
+        { "charset": "UTF-8" },
+        { "http-equiv": "X-UA-Compatible", "content": "IE=edge" },
+        {
+          "name": "viewport",
+          "content": "width=device-width, initial-scale=1.0"
+        },
+        {
+          "name": "description",
+          "content": "Découvrez les coûts et les alternatives à votre véhicule actuel."
+        },
+        {
+          "name": "og:title",
+          "content": "Quel véhicule pour changer le miens ?"
+        },
+        {
+          "name": "og:description",
+          "content": "Découvrez les coûts et les alternatives à votre véhicule actuel."
+        },
+        { "name": "og:type", "content": "website" }
+      ],
+      "link": [{ "rel": "icon", "href": "/favicon.png" }]
+    },
+    "router": {
+      "useHashRouting": false
+    },
+    "proxy": null
+  }
+}

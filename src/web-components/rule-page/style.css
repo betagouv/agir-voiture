@@ -1,0 +1,52 @@
+#documentation-rule-root {
+  min-height: 80vh;
+  text-align: left;
+  padding-top: 2rem;
+}
+
+#documentation-rule-root nav {
+}
+
+#documentation-search-item-name {
+  text-align: left;
+}
+
+#documentation-search-input {
+}
+
+#documentation-search-results {
+  width: 350px;
+}
+
+#documentation-rule-root header h1 {
+}
+
+#documentation-rule-root article {
+}
+
+#documentation-rule-root h3 {
+}
+
+#documentation-rule-root p {
+}
+
+#documentation-rule-root br {
+}
+
+#documentation-rule-root button {
+  text-align: left;
+}
+
+.publicodes_btn-small {
+}
+
+.publicodes_btn-small:hover {
+}
+
+.node-value-pointer {
+}
+
+.markdown {
+  @apply prose max-w-none my-2;
+  @apply prose-table:max-w-[80%];
+}

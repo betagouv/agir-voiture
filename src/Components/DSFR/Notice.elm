@@ -1,4 +1,4 @@
-module Components.DSFR.Notice exposing (..)
+module Components.DSFR.Notice exposing (view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)

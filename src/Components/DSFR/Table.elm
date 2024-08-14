@@ -1,4 +1,4 @@
-module Components.DSFR.Table exposing (..)
+module Components.DSFR.Table exposing (view)
 
 -- TODO: use the new DSFR Table module
 
