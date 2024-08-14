@@ -6,7 +6,7 @@ import Publicodes exposing (Evaluation)
 import Publicodes.NodeValue exposing (NodeValue)
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
-import Shared.Model
+import Shared.SimulationStep exposing (SimulationStep)
 
 
 {-| Normally, this value would live in "Shared.elm"
@@ -19,11 +19,11 @@ own file, so they can be imported by `Effect.elm`
 type Msg
     = NoOp
     | PushNewPath String
-    | SetSimulationStep Shared.Model.SimulationStep
+    | SetSimulationStep SimulationStep
     | ResetSimulation
     | NewEvaluations (List ( RuleName, Evaluation ))
     | SetSituation Situation
     | UpdateSituation ( RuleName, NodeValue )
     | Evaluate
-    | NewInputError ( RuleName, String )
+    | NewInputError { name : RuleName, value : String, msg : String }
     | RemoveInputError RuleName

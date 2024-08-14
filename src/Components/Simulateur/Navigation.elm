@@ -8,13 +8,13 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Extra exposing (nothing)
 import List.Extra
-import Shared.Model exposing (SimulationStep(..))
+import Shared.SimulationStep as SimulationStep exposing (SimulationStep)
 
 
 type alias Props msg =
     { categories : List UI.Category
-    , onNewStep : Shared.Model.SimulationStep -> msg
-    , currentStep : Shared.Model.SimulationStep
+    , onNewStep : SimulationStep -> msg
+    , currentStep : SimulationStep
     , containsErrors : Bool
     }
 
@@ -33,10 +33,10 @@ view props =
                 )
     in
     case props.currentStep of
-        NotStarted ->
+        SimulationStep.NotStarted ->
             nothing
 
-        Category category ->
+        SimulationStep.Category category ->
             let
                 nextList =
                     Helper.dropUntilNext ((==) category) ("empty" :: props.categories)
@@ -57,7 +57,7 @@ view props =
                 [ case maybePrevCategory of
                     Just prevCategory ->
                         Button.new
-                            { onClick = Just (props.onNewStep (Category prevCategory))
+                            { onClick = Just (props.onNewStep (SimulationStep.Category prevCategory))
                             , label = "Retour"
                             }
                             |> Button.leftIcon Icons.system.arrowLeftSFill
@@ -70,7 +70,7 @@ view props =
                 , case maybeNextCategory of
                     Just nextCategory ->
                         Button.new
-                            { onClick = Just (props.onNewStep (Category nextCategory))
+                            { onClick = Just (props.onNewStep (SimulationStep.Category nextCategory))
                             , label = "Suivant"
                             }
                             |> Button.rightIcon Icons.system.arrowRightSFill
@@ -79,7 +79,7 @@ view props =
 
                     _ ->
                         Button.new
-                            { onClick = Just (props.onNewStep Result)
+                            { onClick = Just (props.onNewStep SimulationStep.Result)
                             , label = "Voir le résultat"
                             }
                             |> Button.rightIcon Icons.system.arrowRightSFill
@@ -87,7 +87,7 @@ view props =
                             |> viewButton
                 ]
 
-        Result ->
+        SimulationStep.Result ->
             let
                 lastCategory =
                     List.Extra.last props.categories
@@ -95,7 +95,7 @@ view props =
             in
             div [ class "flex justify-between mb-6" ]
                 [ Button.new
-                    { onClick = Just (props.onNewStep (Category lastCategory))
+                    { onClick = Just (props.onNewStep (SimulationStep.Category lastCategory))
                     , label = "Retourner aux questions"
                     }
                     |> Button.leftIcon Icons.system.arrowLeftSFill

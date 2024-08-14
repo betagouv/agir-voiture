@@ -36,6 +36,7 @@ import Route.Path exposing (Path(..))
 import Shared.Constants
 import Shared.Model
 import Shared.Msg
+import Shared.SimulationStep as SimulationStep exposing (SimulationStep)
 import Task
 import Url exposing (Url)
 
@@ -70,9 +71,9 @@ resetSimulation =
     SendSharedMsg Shared.Msg.ResetSimulation
 
 
-newInputError : ( RuleName, String ) -> Effect msg
-newInputError ( name, error ) =
-    SendSharedMsg (Shared.Msg.NewInputError ( name, error ))
+newInputError : { name : RuleName, value : String, msg : String } -> Effect msg
+newInputError error =
+    SendSharedMsg (Shared.Msg.NewInputError error)
 
 
 removeInputError : RuleName -> Effect msg
@@ -91,13 +92,13 @@ setSituation situation =
         ]
 
 
-setSimulationStep : Shared.Model.SimulationStep -> Effect msg
+setSimulationStep : SimulationStep -> Effect msg
 setSimulationStep step =
     batch
         [ SendSharedMsg (Shared.Msg.SetSimulationStep step)
         , SendToJs
             { tag = "SET_SIMULATION_STEP"
-            , data = Shared.Model.simulationStepEncode step
+            , data = SimulationStep.encode step
             }
         ]
 

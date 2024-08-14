@@ -11,7 +11,7 @@ import Pages.Simulateur exposing (Msg)
 import Route exposing (Route)
 import Route.Path
 import Shared
-import Shared.Model exposing (SimulationStep(..))
+import Shared.SimulationStep exposing (SimulationStep(..))
 import View exposing (View)
 
 

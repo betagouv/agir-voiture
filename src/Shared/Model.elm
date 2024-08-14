@@ -1,20 +1,12 @@
-module Shared.Model exposing
-    ( Model
-    , SimulationStep(..)
-    , empty
-    , simulationStepDecode
-    , simulationStepDecoder
-    , simulationStepEncode
-    )
+module Shared.Model exposing (Model, empty)
 
 import Core.Personas exposing (Personas)
 import Core.UI as UI
 import Dict exposing (Dict)
-import Json.Decode as Decode
-import Json.Encode as Encode
 import Publicodes exposing (Evaluation, RawRules)
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
+import Shared.SimulationStep exposing (SimulationStep(..))
 
 
 {-| Contains all the data shared between the different pages of the application.
@@ -38,7 +30,7 @@ type alias Model =
     , evaluations : Dict RuleName Evaluation
     , orderedCategories : List UI.Category
     , resultRules : List RuleName
-    , inputErrors : Dict RuleName String
+    , inputErrors : Dict RuleName { msg : String, value : String }
     }
 
 
@@ -54,55 +46,3 @@ empty =
     , resultRules = []
     , inputErrors = Dict.empty
     }
-
-
-
--- SIMULATION STEP
-
-
-{-| Represents the current step of the simulation.
-
-For now, the `NotStarted` step is not used and act like a `Nothing` value. We may
-want to use it to display information about the questions that will be asked
-before starting.
-
--}
-type SimulationStep
-    = NotStarted
-    | Category UI.Category
-    | Result
-
-
-simulationStepDecoder : Decode.Decoder SimulationStep
-simulationStepDecoder =
-    Decode.map
-        (\s ->
-            case s of
-                "Result" ->
-                    Result
-
-                "NotStarted" ->
-                    NotStarted
-
-                _ ->
-                    Category s
-        )
-        Decode.string
-
-
-simulationStepDecode : Encode.Value -> Result Decode.Error SimulationStep
-simulationStepDecode value =
-    Decode.decodeValue simulationStepDecoder value
-
-
-simulationStepEncode : SimulationStep -> Encode.Value
-simulationStepEncode step =
-    case step of
-        Category category ->
-            Encode.string category
-
-        Result ->
-            Encode.string "Result"
-
-        NotStarted ->
-            Encode.string "NotStarted"

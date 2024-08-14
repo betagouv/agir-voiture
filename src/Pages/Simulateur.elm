@@ -3,6 +3,7 @@ module Pages.Simulateur exposing (Model, Msg, page)
 import Components.Simulateur.Questions
 import Components.Simulateur.Result
 import Components.Simulateur.Stepper
+import Core.InputError exposing (InputError)
 import Core.UI as UI
 import Dict
 import Effect exposing (Effect)
@@ -15,7 +16,7 @@ import Publicodes.NodeValue as NodeValue exposing (NodeValue)
 import Publicodes.RuleName exposing (RuleName)
 import Route exposing (Route)
 import Shared
-import Shared.Model exposing (SimulationStep(..))
+import Shared.SimulationStep as SimulationStep exposing (SimulationStep)
 import View exposing (View)
 
 
@@ -60,10 +61,10 @@ If it's \`NotStarted, it will return the first category of the list.
 getSimulationStep : SimulationStep -> List UI.Category -> SimulationStep
 getSimulationStep step orderedCategories =
     case step of
-        NotStarted ->
+        SimulationStep.NotStarted ->
             List.head orderedCategories
-                |> Maybe.map Category
-                |> Maybe.withDefault NotStarted
+                |> Maybe.map SimulationStep.Category
+                |> Maybe.withDefault SimulationStep.NotStarted
 
         _ ->
             step
@@ -75,7 +76,7 @@ getSimulationStep step orderedCategories =
 
 type Msg
     = NoOp
-    | NewAnswer ( RuleName, NodeValue )
+    | NewAnswer ( RuleName, NodeValue, Maybe InputError )
     | NewStep SimulationStep
 
 
@@ -85,17 +86,24 @@ update _ msg model =
         NoOp ->
             ( model, Effect.none )
 
-        NewAnswer (( name, value ) as input) ->
-            let
-                manageError =
-                    case value of
-                        NodeValue.Str "" ->
-                            Effect.newInputError ( name, "Ce champ est obligatoire" )
+        NewAnswer ( name, value, Nothing ) ->
+            ( model
+            , Effect.batch
+                [ Effect.removeInputError name
+                , Effect.updateSituation ( name, value )
+                ]
+            )
 
-                        _ ->
-                            Effect.removeInputError name
-            in
-            ( model, Effect.batch [ manageError, Effect.updateSituation input ] )
+        NewAnswer ( name, value, Just error ) ->
+            ( model
+            , Effect.batch
+                [ Effect.newInputError
+                    { name = name
+                    , value = NodeValue.toString value
+                    , msg = Core.InputError.toMessage error
+                    }
+                ]
+            )
 
         NewStep step ->
             ( model, Effect.setSimulationStep step )
@@ -119,20 +127,11 @@ view shared _ =
     let
         inQuestions =
             case shared.simulationStep of
-                Category _ ->
+                SimulationStep.Category _ ->
                     True
 
                 _ ->
                     False
-
-        newAnswer : RuleName -> String -> Msg
-        newAnswer ruleName stringValue =
-            case String.toFloat stringValue of
-                Just value ->
-                    NewAnswer ( ruleName, NodeValue.Number value )
-
-                Nothing ->
-                    NewAnswer ( ruleName, NodeValue.Str stringValue )
     in
     { title = "Simulateur - Quelle voiture choisir ?"
     , body =
@@ -156,7 +155,7 @@ view shared _ =
                                 }
                         )
                     , case shared.simulationStep of
-                        Category category ->
+                        SimulationStep.Category category ->
                             case Dict.get category shared.ui.questions of
                                 Just questions ->
                                     Components.Simulateur.Questions.view
@@ -166,7 +165,9 @@ view shared _ =
                                         , categories = shared.orderedCategories
                                         , situation = shared.situation
                                         , evaluations = shared.evaluations
-                                        , onInput = newAnswer
+                                        , onInput =
+                                            \name value error ->
+                                                NewAnswer ( name, value, error )
                                         , onNewStep = \step -> NewStep step
                                         , inputErrors = shared.inputErrors
                                         }
@@ -174,7 +175,7 @@ view shared _ =
                                 Nothing ->
                                     nothing
 
-                        Result ->
+                        SimulationStep.Result ->
                             Components.Simulateur.Result.view
                                 { categories = shared.orderedCategories
                                 , onNewStep = \step -> NewStep step
@@ -183,7 +184,7 @@ view shared _ =
                                 , rules = shared.rules
                                 }
 
-                        NotStarted ->
+                        SimulationStep.NotStarted ->
                             -- Should not happen
                             nothing
                     ]

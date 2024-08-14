@@ -15,12 +15,12 @@ import Html.Attributes exposing (..)
 import List.Extra
 import Publicodes exposing (Evaluation, RawRules)
 import Publicodes.RuleName exposing (RuleName)
-import Shared.Model exposing (SimulationStep(..))
+import Shared.SimulationStep exposing (SimulationStep)
 
 
 type alias Config msg =
     { categories : List UI.Category
-    , onNewStep : Shared.Model.SimulationStep -> msg
+    , onNewStep : SimulationStep -> msg
     , evaluations : Dict RuleName Evaluation
     , resultRules : List RuleName
     , rules : RawRules
@@ -67,7 +67,7 @@ view props =
             [ Components.Simulateur.Navigation.view
                 { categories = props.categories
                 , onNewStep = props.onNewStep
-                , currentStep = Shared.Model.Result
+                , currentStep = Shared.SimulationStep.Result
                 , containsErrors = False
                 }
             , div [ class "flex flex-col gap-8" ]

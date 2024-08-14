@@ -55,7 +55,6 @@ export const onReady = async ({ app }: { app: any }) => {
           break;
         }
         case "UPDATE_SITUATION": {
-          console.log("UPDATE_SITUATION", data);
           const newSituation = {
             ...engine.getSituation(),
             [data.name]: data.value,

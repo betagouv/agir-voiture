@@ -24,8 +24,9 @@ import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation as Situation exposing (Situation)
 import Route exposing (Route)
 import Route.Path
-import Shared.Model exposing (SimulationStep(..))
+import Shared.Model
 import Shared.Msg exposing (Msg(..))
+import Shared.SimulationStep as SimulationStep exposing (SimulationStep)
 
 
 
@@ -43,7 +44,7 @@ type alias Flags =
     , ui : UI.Data
     , personas : Personas
     , situation : Situation
-    , simulationStep : Shared.Model.SimulationStep
+    , simulationStep : SimulationStep
     }
 
 
@@ -54,7 +55,7 @@ decoder =
         |> Decode.required "ui" UI.decode
         |> Decode.required "personas" Personas.personasDecoder
         |> Decode.required "situation" Situation.decoder
-        |> Decode.required "simulationStep" Shared.Model.simulationStepDecoder
+        |> Decode.required "simulationStep" SimulationStep.decoder
 
 
 
@@ -125,7 +126,7 @@ update _ msg model =
             ( { model | inputErrors = Dict.empty }
             , Effect.batch
                 [ Effect.setSituation Dict.empty
-                , Effect.setSimulationStep Shared.Model.NotStarted
+                , Effect.setSimulationStep SimulationStep.NotStarted
                 , Effect.pushRoutePath Route.Path.Home_
                 ]
             )
@@ -152,13 +153,21 @@ update _ msg model =
         Evaluate ->
             evaluate model
 
-        NewInputError ( name, error ) ->
-            ( { model | inputErrors = Dict.insert name error model.inputErrors }
+        NewInputError error ->
+            ( { model
+                | inputErrors =
+                    Dict.insert error.name
+                        { value = error.value, msg = error.msg }
+                        model.inputErrors
+              }
             , Effect.none
             )
 
         RemoveInputError name ->
-            ( { model | inputErrors = Dict.remove name model.inputErrors }
+            ( { model
+                | inputErrors =
+                    Dict.remove name model.inputErrors
+              }
             , Effect.none
             )
 
@@ -171,7 +180,7 @@ evaluate model =
     let
         currentQuestions =
             case model.simulationStep of
-                Category category ->
+                SimulationStep.Category category ->
                     Dict.get category model.ui.questions
                         |> Maybe.withDefault []
                         |> List.concat
@@ -180,7 +189,7 @@ evaluate model =
                     []
     in
     ( model
-    , if model.simulationStep == Result then
+    , if model.simulationStep == SimulationStep.Result then
         [ Rules.userCost, Rules.userEmission ]
             ++ model.resultRules
             |> Effect.evaluateAll

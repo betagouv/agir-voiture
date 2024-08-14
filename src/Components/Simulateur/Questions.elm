@@ -5,8 +5,9 @@ import BetaGouv.DSFR.Input
 import Components.Select
 import Components.Simulateur.Navigation
 import Core.Format
+import Core.InputError as InputError exposing (InputError)
 import Core.Rules as Rules
-import Core.UI as UI exposing (Category)
+import Core.UI as UI
 import Dict exposing (Dict)
 import FormatNumber.Locales exposing (Decimals(..))
 import Html exposing (..)
@@ -17,7 +18,7 @@ import Publicodes exposing (Evaluation, Mecanism(..), RawRule, RawRules)
 import Publicodes.NodeValue as NodeValue exposing (NodeValue)
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
-import Shared.Model exposing (SimulationStep(..))
+import Shared.SimulationStep as SimulationStep exposing (SimulationStep)
 
 
 type alias Config msg =
@@ -26,15 +27,28 @@ type alias Config msg =
     , evaluations : Dict RuleName Evaluation
     , categories : List UI.Category
     , category : UI.Category
-    , onInput : RuleName -> String -> msg
+    , onInput : RuleName -> NodeValue -> Maybe InputError -> msg
     , questions : List (List RuleName)
     , onNewStep : SimulationStep -> msg
-    , inputErrors : Dict RuleName String
+    , inputErrors : Dict RuleName { msg : String, value : String }
     }
 
 
 view : Config msg -> Html msg
 view props =
+    let
+        containsErrorsForApplicableQuestions =
+            props.inputErrors
+                |> Dict.toList
+                |> List.filter
+                    (\( name, _ ) ->
+                        Dict.get name props.evaluations
+                            |> Maybe.map .isApplicable
+                            |> Maybe.withDefault False
+                    )
+                |> List.isEmpty
+                |> not
+    in
     div [ class "flex flex-col mb-6 opacity-100" ]
         [ viewCategoryDescription props.category props.rules
         , div [ class "grid grid-cols-1 gap-6" ]
@@ -42,8 +56,8 @@ view props =
         , Components.Simulateur.Navigation.view
             { categories = props.categories
             , onNewStep = props.onNewStep
-            , currentStep = Category props.category
-            , containsErrors = not (Dict.isEmpty props.inputErrors)
+            , currentStep = SimulationStep.Category props.category
+            , containsErrors = containsErrorsForApplicableQuestions
             }
         ]
 
@@ -114,7 +128,7 @@ viewInput props question ( name, rule ) isApplicable =
                                             , Rules.getOptionTitle name possibilite props.rules
                                             )
                                         )
-                            , onInput = props.onInput name
+                            , onInput = \str -> props.onInput name (NodeValue.Str str) Nothing
                             , selected = Rules.getStringFromSituation nodeValue
                             }
 
@@ -131,8 +145,38 @@ viewInput props question ( name, rule ) isApplicable =
 viewNumericInput : Config msg -> String -> RawRule -> RuleName -> NodeValue -> Html msg
 viewNumericInput props question rule name value =
     let
+        onNumericInput str =
+            -- NOTE: could it be cleaner?
+            if String.endsWith "." str then
+                props.onInput name
+                    (NodeValue.Str str)
+                    (Just
+                        (InputError.InvalidInput
+                            ("Veuillez entrer un nombre valide (ex: " ++ String.dropRight 1 str ++ " ou " ++ str ++ "5)")
+                        )
+                    )
+
+            else
+                case String.toFloat str of
+                    Just num ->
+                        props.onInput name (NodeValue.Number num) Nothing
+
+                    Nothing ->
+                        props.onInput name
+                            (NodeValue.Str str)
+                            (case str of
+                                "" ->
+                                    Just InputError.Empty
+
+                                _ ->
+                                    Just
+                                        (InputError.InvalidInput
+                                            "Veuillez entrer un nombre valide (ex: 1234.56)"
+                                        )
+                            )
+
         defaultConfig =
-            { onInput = props.onInput name
+            { onInput = onNumericInput
             , label = text question
             , id = name
             , value = ""
@@ -140,23 +184,26 @@ viewNumericInput props question rule name value =
 
         maybeError =
             Dict.get name props.inputErrors
-                |> Maybe.map (\err -> [ text err ])
 
         config =
-            case ( Dict.get name props.situation, value ) of
-                ( Just _, NodeValue.Number num ) ->
-                    -- Filled input
-                    BetaGouv.DSFR.Input.new { defaultConfig | value = String.fromFloat num }
-
-                ( Just _, NodeValue.Str "" ) ->
-                    -- Empty input (the user filled it and then removed the value)
-                    BetaGouv.DSFR.Input.new defaultConfig
-
-                ( Nothing, NodeValue.Number num ) ->
+            case ( Dict.get name props.situation, value, maybeError ) of
+                ( Nothing, NodeValue.Number num, Nothing ) ->
                     -- Not touched input (the user didn't fill it)
                     BetaGouv.DSFR.Input.new defaultConfig
                         |> BetaGouv.DSFR.Input.withInputAttrs
                             [ placeholder (Core.Format.floatToFrenchLocale (Max 1) num) ]
+
+                ( Just _, NodeValue.Number num, Nothing ) ->
+                    -- Filled input
+                    BetaGouv.DSFR.Input.new { defaultConfig | value = String.fromFloat num }
+
+                ( Just _, NodeValue.Str "", Nothing ) ->
+                    -- Empty input (the user filled it and then removed the value)
+                    BetaGouv.DSFR.Input.new defaultConfig
+
+                ( _, _, Just error ) ->
+                    -- Filled input with invalid value
+                    BetaGouv.DSFR.Input.new { defaultConfig | value = error.value }
 
                 _ ->
                     -- Should never happen
@@ -164,15 +211,19 @@ viewNumericInput props question rule name value =
     in
     config
         |> BetaGouv.DSFR.Input.withHint [ viewMaybe text rule.unite ]
-        |> BetaGouv.DSFR.Input.withError maybeError
-        |> BetaGouv.DSFR.Input.numeric
+        |> BetaGouv.DSFR.Input.withError
+            (maybeError |> Maybe.map (\{ msg } -> [ text msg ]))
         |> BetaGouv.DSFR.Input.view
 
 
-viewDisabledInput : (RuleName -> String -> msg) -> String -> RuleName -> Html msg
+viewDisabledInput :
+    (RuleName -> NodeValue -> Maybe InputError -> msg)
+    -> String
+    -> RuleName
+    -> Html msg
 viewDisabledInput onInput question name =
     BetaGouv.DSFR.Input.new
-        { onInput = \_ -> onInput name ""
+        { onInput = \_ -> onInput name NodeValue.Empty Nothing
         , label = text question
         , id = name
         , value = ""

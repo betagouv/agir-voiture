@@ -6,13 +6,13 @@ import Html.Attributes exposing (..)
 import Html.Extra exposing (nothing)
 import Publicodes
 import Publicodes.Helpers
-import Shared.Model exposing (SimulationStep(..))
+import Shared.SimulationStep as SimulationStep exposing (SimulationStep)
 
 
 type alias Props =
     { rules : Publicodes.RawRules
     , categories : List UI.Category
-    , currentStep : Shared.Model.SimulationStep
+    , currentStep : SimulationStep
     }
 
 
@@ -21,7 +21,7 @@ view props =
     let
         currentTab =
             case props.currentStep of
-                Category category ->
+                SimulationStep.Category category ->
                     category
 
                 _ ->
@@ -40,13 +40,13 @@ view props =
     div [ class "fr-stepper" ]
         [ h2 [ class "fr-stepper__title" ]
             [ case props.currentStep of
-                NotStarted ->
+                SimulationStep.NotStarted ->
                     text "Démarrer"
 
-                Category _ ->
+                SimulationStep.Category _ ->
                     text (Maybe.withDefault "" maybeCurrentTitle)
 
-                Result ->
+                SimulationStep.Result ->
                     text "Résultat"
             ]
         , span [ class "fr-stepper__state" ]
