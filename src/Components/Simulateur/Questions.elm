@@ -1,12 +1,11 @@
 module Components.Simulateur.Questions exposing (view)
 
-import BetaGouv.DSFR.CallOut
 import BetaGouv.DSFR.Input
 import Components.Select
+import Components.Simulateur.BooleanInput
 import Components.Simulateur.Navigation
 import Components.Simulateur.NumericInput
-import Core.Format
-import Core.InputError as InputError exposing (InputError)
+import Core.InputError exposing (InputError)
 import Core.Rules as Rules
 import Core.UI as UI
 import Dict exposing (Dict)
@@ -16,7 +15,7 @@ import Html.Attributes exposing (..)
 import Html.Extra exposing (viewMaybe)
 import Markdown
 import Publicodes exposing (Evaluation, Mecanism(..), RawRule, RawRules)
-import Publicodes.NodeValue as NodeValue exposing (NodeValue)
+import Publicodes.NodeValue as NodeValue exposing (NodeValue(..))
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
 import Shared.SimulationStep as SimulationStep exposing (SimulationStep)
@@ -50,8 +49,9 @@ view props =
                 |> List.isEmpty
                 |> not
     in
-    div [ class "flex flex-col mb-6 opacity-100" ]
+    div [ class "flex flex-col opacity-100" ]
         [ viewCategoryDescription props.category props.rules
+        , hr [] []
         , div [ class "grid grid-cols-1 gap-6" ]
             (List.map (viewSubQuestions props) props.questions)
         , Components.Simulateur.Navigation.view
@@ -65,22 +65,18 @@ view props =
 
 viewCategoryDescription : String -> RawRules -> Html msg
 viewCategoryDescription currentCategory rawRules =
-    div [ class "fr-col-8" ]
+    div [ class "text-[var(--text-mention-grey)]" ]
         [ Dict.get
             currentCategory
             rawRules
             |> Maybe.andThen .description
-            |> viewMaybe
-                (\desc ->
-                    BetaGouv.DSFR.CallOut.callout ""
-                        (div [] (Markdown.toHtml Nothing desc))
-                )
+            |> viewMaybe (\desc -> div [] (Markdown.toHtml Nothing desc))
         ]
 
 
 viewSubQuestions : Config msg -> List RuleName -> Html msg
 viewSubQuestions props subquestions =
-    div [ class "max-w-md flex flex-col gap-3" ]
+    div [ class "fr-col-8 flex flex-col gap-3" ]
         (subquestions
             |> List.filterMap
                 (\name ->
@@ -135,6 +131,14 @@ viewInput props question ( name, rule ) isApplicable =
 
                     Nothing ->
                         viewDisabledInput props.onInput question name
+
+            ( _, Just ((Boolean _) as nodeValue) ) ->
+                Components.Simulateur.BooleanInput.view
+                    { id = name
+                    , label = text question
+                    , current = nodeValue
+                    , onChecked = \value -> props.onInput name value Nothing
+                    }
 
             ( _, Just value ) ->
                 Components.Simulateur.NumericInput.view

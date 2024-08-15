@@ -5,7 +5,7 @@ application.
 -}
 
 import FormatNumber exposing (format)
-import FormatNumber.Locales exposing (Decimals(..), frenchLocale)
+import FormatNumber.Locales exposing (Decimals(..), base, frenchLocale)
 
 
 {-| Format a number to a "displayable" pair (formatedValue, formatedUnit).
@@ -57,3 +57,8 @@ percent pct =
 floatToFrenchLocale : Decimals -> Float -> String
 floatToFrenchLocale decimals =
     format { frenchLocale | decimals = decimals }
+
+
+withPrecision : Decimals -> Float -> String
+withPrecision decimals =
+    format { base | decimals = decimals }

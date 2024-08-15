@@ -44,7 +44,7 @@ view props =
                     -- Not touched input (the user didn't fill it)
                     BetaGouv.DSFR.Input.new defaultConfig
                         |> BetaGouv.DSFR.Input.withInputAttrs
-                            [ placeholder (Core.Format.floatToFrenchLocale (Max 1) num) ]
+                            [ placeholder (Core.Format.withPrecision (Max 2) num) ]
 
                 ( Just _, NodeValue.Number num, Nothing ) ->
                     -- Filled input
