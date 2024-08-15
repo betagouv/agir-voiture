@@ -2,14 +2,13 @@ module Pages.Simulateur exposing (Model, Msg, page)
 
 import Components.Simulateur.Questions
 import Components.Simulateur.Result
-import Components.Simulateur.Stepper
 import Core.InputError exposing (InputError)
 import Core.UI as UI
 import Dict
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Extra exposing (nothing, viewIfLazy)
+import Html.Extra exposing (nothing)
 import Layouts
 import Page exposing (Page)
 import Publicodes.NodeValue as NodeValue exposing (NodeValue)
@@ -33,7 +32,7 @@ page shared _ =
 
 toLayout : Model -> Layouts.Layout Msg
 toLayout _ =
-    Layouts.Header { showReactRoot = False }
+    Layouts.Header { showReactRoot = False, contrastBg = True }
 
 
 
@@ -96,13 +95,11 @@ update _ msg model =
 
         NewAnswer ( name, value, Just error ) ->
             ( model
-            , Effect.batch
-                [ Effect.newInputError
-                    { name = name
-                    , value = NodeValue.toString value
-                    , msg = Core.InputError.toMessage error
-                    }
-                ]
+            , Effect.newInputError
+                { name = name
+                , value = NodeValue.toString value
+                , msg = Core.InputError.toMessage error
+                }
             )
 
         NewStep step ->
@@ -145,48 +142,48 @@ view shared _ =
                     ]
 
               else
-                div [ class "fr-container md:my-8" ]
-                    [ viewIfLazy inQuestions
-                        (\() ->
-                            Components.Simulateur.Stepper.view
-                                { rules = shared.rules
-                                , categories = shared.orderedCategories
-                                , currentStep = shared.simulationStep
-                                }
-                        )
-                    , case shared.simulationStep of
-                        SimulationStep.Category category ->
-                            case Dict.get category shared.ui.questions of
-                                Just questions ->
-                                    Components.Simulateur.Questions.view
-                                        { category = category
-                                        , rules = shared.rules
-                                        , questions = questions
-                                        , categories = shared.orderedCategories
-                                        , situation = shared.situation
-                                        , evaluations = shared.evaluations
-                                        , onInput =
-                                            \name value error ->
-                                                NewAnswer ( name, value, error )
+                div [ class "fr-container" ]
+                    [ div [ class "fr-grid-row fr-grid-row--center" ]
+                        [ div
+                            [ classList [ ( "fr-col-8", inQuestions ) ]
+                            , class "fr-p-12v bg-[var(--background-default-grey)] rounded border-[1px] border-border-main"
+                            ]
+                            [ case shared.simulationStep of
+                                SimulationStep.Category category ->
+                                    case Dict.get category shared.ui.questions of
+                                        Just questions ->
+                                            Components.Simulateur.Questions.view
+                                                { category = category
+                                                , rules = shared.rules
+                                                , questions = questions
+                                                , categories = shared.orderedCategories
+                                                , situation = shared.situation
+                                                , evaluations = shared.evaluations
+                                                , onInput =
+                                                    \name value error ->
+                                                        NewAnswer ( name, value, error )
+                                                , onNewStep = \step -> NewStep step
+                                                , inputErrors = shared.inputErrors
+                                                , currentStep = shared.simulationStep
+                                                }
+
+                                        Nothing ->
+                                            nothing
+
+                                SimulationStep.Result ->
+                                    Components.Simulateur.Result.view
+                                        { categories = shared.orderedCategories
                                         , onNewStep = \step -> NewStep step
-                                        , inputErrors = shared.inputErrors
+                                        , evaluations = shared.evaluations
+                                        , resultRules = shared.resultRules
+                                        , rules = shared.rules
                                         }
 
-                                Nothing ->
+                                SimulationStep.NotStarted ->
+                                    -- Should not happen
                                     nothing
-
-                        SimulationStep.Result ->
-                            Components.Simulateur.Result.view
-                                { categories = shared.orderedCategories
-                                , onNewStep = \step -> NewStep step
-                                , evaluations = shared.evaluations
-                                , resultRules = shared.resultRules
-                                , rules = shared.rules
-                                }
-
-                        SimulationStep.NotStarted ->
-                            -- Should not happen
-                            nothing
+                            ]
+                        ]
                     ]
             ]
         ]

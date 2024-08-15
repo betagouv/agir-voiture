@@ -54,7 +54,7 @@ The questions are grouped by sections. Each section is a list of questions.
 
 -}
 type alias Questions =
-    Dict Category (List (List RuleName))
+    Dict Category (List RuleName)
 
 
 {-| Iso between with the
@@ -78,7 +78,7 @@ decode : Decoder Data
 decode =
     Decode.succeed Data
         |> required "categories" (dict decodeCategoryInfos)
-        |> required "questions" (dict (list (list string)))
+        |> required "questions" (dict (list string))
 
 
 

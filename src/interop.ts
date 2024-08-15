@@ -4,7 +4,7 @@ import "./ffi/dsfr.css";
 import "./ffi/dsfr";
 
 // Import publicodes model
-import rules, { ui, personas } from "publicodes-voiture";
+import rules, { ui, personas } from "../node_modules/publicodes-voiture";
 
 import * as publicodes from "./ffi/publicodes";
 import * as publicodesRulePage from "./web-components/rule-page/define";

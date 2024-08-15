@@ -6,7 +6,6 @@ import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Layouts
-import Markdown
 import Page exposing (Page)
 import Publicodes exposing (RawRules)
 import Publicodes.Helpers
@@ -30,7 +29,7 @@ page shared _ =
 
 toLayout : Model -> Layouts.Layout Msg
 toLayout _ =
-    Layouts.Header { showReactRoot = False }
+    Layouts.Header { showReactRoot = False, contrastBg = False }
 
 
 

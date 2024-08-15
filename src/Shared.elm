@@ -182,7 +182,6 @@ evaluate model =
                 SimulationStep.Category category ->
                     Dict.get category model.ui.questions
                         |> Maybe.withDefault []
-                        |> List.concat
 
                 _ ->
                     []

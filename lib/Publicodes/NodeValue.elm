@@ -72,10 +72,10 @@ toString nodeValue =
 
         Boolean bool ->
             if bool then
-                "oui"
+                "Oui"
 
             else
-                "non"
+                "Non"
 
         Empty ->
             ""

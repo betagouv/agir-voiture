@@ -6,7 +6,6 @@ import Html.Attributes exposing (attribute)
 import Json.Encode as Encode
 import Layouts
 import Page exposing (Page)
-import Publicodes
 import Publicodes.Helpers
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation
@@ -29,7 +28,7 @@ page shared route =
 
 toLayout : Model -> Layouts.Layout Msg
 toLayout _ =
-    Layouts.Header { showReactRoot = True }
+    Layouts.Header { showReactRoot = True, contrastBg = False }
 
 
 

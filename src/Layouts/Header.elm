@@ -19,8 +19,11 @@ import Shared.Msg exposing (Msg(..))
 import View exposing (View)
 
 
+{-| TODO: should be two different layouts
+-}
 type alias Props =
     { showReactRoot : Bool
+    , contrastBg : Bool
     }
 
 
@@ -110,7 +113,11 @@ view props shared { content, toContentMsg } =
             , onClose = PersonasModalClose
             }
             |> Html.map toContentMsg
-        , div [] content.body
+        , div
+            [ classList [ ( "bg-background-main", props.contrastBg ) ]
+            , class "fr-py-12v"
+            ]
+            content.body
         ]
     }
 
@@ -125,15 +132,18 @@ viewReactRoot =
 
 viewPersonas : Personas -> Html Msg
 viewPersonas personas =
-    personas
-        |> Dict.toList
-        |> List.map
-            (\( _, persona ) ->
-                Button.new
-                    { label = persona.titre
-                    , onClick = Just (SetPersonasSituation persona.situation)
-                    }
-                    |> Button.secondary
-            )
-        |> Button.group
-        |> Button.viewGroup
+    div [ class "" ]
+        [ personas
+            |> Dict.toList
+            |> List.map
+                (\( _, persona ) ->
+                    Button.new
+                        { label = persona.titre
+                        , onClick = Just (SetPersonasSituation persona.situation)
+                        }
+                        |> Button.secondary
+                )
+            |> Button.group
+            |> Button.inline
+            |> Button.viewGroup
+        ]

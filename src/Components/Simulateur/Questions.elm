@@ -5,6 +5,7 @@ import Components.Select
 import Components.Simulateur.BooleanInput
 import Components.Simulateur.Navigation
 import Components.Simulateur.NumericInput
+import Components.Simulateur.Stepper
 import Core.InputError exposing (InputError)
 import Core.Rules as Rules
 import Core.UI as UI
@@ -13,11 +14,10 @@ import FormatNumber.Locales exposing (Decimals(..))
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Extra exposing (viewMaybe)
-import List.Extra exposing (last)
 import Markdown
 import Publicodes exposing (Evaluation, Mecanism(..), RawRule, RawRules)
 import Publicodes.NodeValue as NodeValue exposing (NodeValue(..))
-import Publicodes.RuleName as RuleName exposing (RuleName)
+import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
 import Shared.SimulationStep as SimulationStep exposing (SimulationStep)
 
@@ -29,9 +29,10 @@ type alias Config msg =
     , categories : List UI.Category
     , category : UI.Category
     , onInput : RuleName -> NodeValue -> Maybe InputError -> msg
-    , questions : List (List RuleName)
+    , questions : List RuleName
     , onNewStep : SimulationStep -> msg
     , inputErrors : Dict RuleName { msg : String, value : String }
+    , currentStep : SimulationStep
     }
 
 
@@ -50,11 +51,15 @@ view props =
                 |> List.isEmpty
                 |> not
     in
-    div [ class "flex flex-col opacity-100" ]
-        [ viewCategoryDescription props.category props.rules
+    div []
+        [ Components.Simulateur.Stepper.view
+            { rules = props.rules
+            , categories = props.categories
+            , currentStep = props.currentStep
+            }
+        , viewCategoryDescription props.category props.rules
         , hr [] []
-        , div [ class "grid grid-cols-1 gap-6" ]
-            (List.map (viewSubQuestions props) props.questions)
+        , viewQuestions props
         , Components.Simulateur.Navigation.view
             { categories = props.categories
             , onNewStep = props.onNewStep
@@ -75,20 +80,24 @@ viewCategoryDescription currentCategory rawRules =
         ]
 
 
-viewSubQuestions : Config msg -> List RuleName -> Html msg
-viewSubQuestions props subquestions =
-    div [ class "fr-col-8 flex flex-col gap-3" ]
-        (subquestions
-            |> List.filterMap
-                (\name ->
-                    Maybe.map2
-                        (\rule eval ->
-                            viewQuestion props ( name, rule ) eval.isApplicable
-                        )
-                        (Dict.get name props.rules)
-                        (Dict.get name props.evaluations)
-                )
-        )
+viewQuestions : Config msg -> Html msg
+viewQuestions props =
+    div [ class "fr-container--fluid" ]
+        [ div [ class "fr-grid-row gap-6" ]
+            (props.questions
+                |> List.filterMap
+                    (\name ->
+                        Maybe.map2
+                            (\rule eval ->
+                                div [ class "fr-col-8" ]
+                                    [ viewQuestion props ( name, rule ) eval.isApplicable
+                                    ]
+                            )
+                            (Dict.get name props.rules)
+                            (Dict.get name props.evaluations)
+                    )
+            )
+        ]
 
 
 viewQuestion : Config msg -> ( RuleName, RawRule ) -> Bool -> Html msg

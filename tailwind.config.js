@@ -12,12 +12,16 @@ export default {
       screens: {
         xsm: "400px",
       },
+      colors: {
+        "background-main": "#f7f8f8",
+        "border-main": "#e7e7e7",
+      },
     },
     typography: {
       DEFAULT: {
         css: {
           a: {
-            "text-decoration": "underline",
+            "text-decoration": "none",
           },
           blockquote: {
             "font-style": "normal",
