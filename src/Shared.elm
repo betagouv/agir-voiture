@@ -116,8 +116,7 @@ update _ msg model =
             )
 
         SetSituation newSituation ->
-            evaluate
-                { model | situation = newSituation }
+            ( { model | situation = newSituation }, Effect.none )
 
         SetSimulationStep newStep ->
             evaluate { model | simulationStep = newStep }
