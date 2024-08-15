@@ -13,10 +13,11 @@ import FormatNumber.Locales exposing (Decimals(..))
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Extra exposing (viewMaybe)
+import List.Extra exposing (last)
 import Markdown
 import Publicodes exposing (Evaluation, Mecanism(..), RawRule, RawRules)
 import Publicodes.NodeValue as NodeValue exposing (NodeValue(..))
-import Publicodes.RuleName exposing (RuleName)
+import Publicodes.RuleName as RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
 import Shared.SimulationStep as SimulationStep exposing (SimulationStep)
 
@@ -117,16 +118,19 @@ viewInput props question ( name, rule ) isApplicable =
                     Just { possibilites } ->
                         Components.Select.view
                             { label = question
-                            , options =
-                                possibilites
-                                    |> List.map
-                                        (\possibilite ->
-                                            ( possibilite
-                                            , Rules.getOptionTitle name possibilite props.rules
-                                            )
-                                        )
+                            , options = possibilites
                             , onInput = \str -> props.onInput name (NodeValue.Str str) Nothing
+                            , toValue = identity
                             , selected = Rules.getStringFromSituation nodeValue
+                            , toLabel =
+                                \pos ->
+                                    text
+                                        (Rules.getOptionTitle
+                                            { rules = props.rules
+                                            , namespace = Just name
+                                            , optionValue = pos
+                                            }
+                                        )
                             }
 
                     Nothing ->

@@ -8,6 +8,7 @@ It's not intended to be generic to all Publicodes models.
 -}
 
 import Dict exposing (Dict)
+import List.Extra
 import Publicodes exposing (Evaluation, RawRules)
 import Publicodes.NodeValue exposing (NodeValue)
 import Publicodes.RuleName exposing (RuleName, namespace, split)
@@ -133,10 +134,44 @@ getStringFromSituation stringValue =
 
 
 {-| Get the title of a `possibilite` value from the `contexte` and `optionVal`.
+
+For now, it expects that the `optionVal` is a full rule name, or a relative
+rule name from the `contexte`.
+
+TODO: simply use the disambiguate function from the publicodes library.
+
 -}
-getOptionTitle : RuleName -> RuleName -> RawRules -> String
-getOptionTitle contexte optionVal rules =
-    rules
-        |> Dict.get (contexte ++ " . " ++ optionVal)
-        |> Maybe.andThen (\r -> r.titre)
-        |> Maybe.withDefault optionVal
+getOptionTitle :
+    { rules : RawRules
+    , namespace : Maybe RuleName
+    , optionValue : RuleName
+    }
+    -> String
+getOptionTitle props =
+    case props.namespace of
+        Nothing ->
+            props.rules
+                |> Dict.get props.optionValue
+                |> Maybe.andThen .titre
+                |> Maybe.withDefault props.optionValue
+
+        Just contexte ->
+            props.rules
+                |> Dict.get (contexte ++ " . " ++ props.optionValue)
+                |> Maybe.andThen .titre
+                |> Maybe.withDefault
+                    (getOptionTitle { props | namespace = Nothing })
+
+
+{-| Get the string value of a item in a `possibilité` mechanism.
+
+    getOptionValue "voiture . gabarit . moyenne" == "moyenne"
+
+    getOptionValue "gabarit" == "gabarit"
+
+-}
+getOptionValue : RuleName -> String
+getOptionValue val =
+    split val
+        |> List.Extra.last
+        |> Maybe.withDefault val

@@ -33,6 +33,7 @@ export function flags() {
 export const onReady = async ({ app }: { app: any }) => {
   // TODO: it's really beneficial to have the engine initialized asynchronously
   // if we await it directly?
+  // FIXME: manage the error case
   const engine = await publicodes.createAsync(rules, situation);
 
   const setSituation = (app: any, newSituation: publicodes.Situation) => {

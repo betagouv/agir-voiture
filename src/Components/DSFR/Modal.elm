@@ -19,7 +19,7 @@ view props =
             "modal-title-" ++ props.id
     in
     node "dialog"
-        [ id props.id, class "", labelledBy titleId, role "dialog" ]
+        [ id props.id, class "max-w-xl", labelledBy titleId, role "dialog" ]
         [ div [ class "" ]
             [ div [ class "fr-grid-row fr-grid-row--center" ]
                 [ div [ class "" ]

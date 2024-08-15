@@ -5,15 +5,15 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
 
 
-type alias Props msg =
+view :
     { label : String
     , onInput : String -> msg
-    , options : List ( String, String )
-    , selected : String
+    , options : List option
+    , selected : option
+    , toValue : option -> String
+    , toLabel : option -> Html msg
     }
-
-
-view : Props msg -> Html msg
+    -> Html msg
 view props =
     div [ class "fr-select-group" ]
         [ Html.label [ class "fr-label", for "select" ]
@@ -26,12 +26,12 @@ view props =
             ]
             (props.options
                 |> List.map
-                    (\( optionValue, optionLabel ) ->
+                    (\val ->
                         option
-                            [ value optionValue
-                            , selected (props.selected == optionValue)
+                            [ value (props.toValue val)
+                            , selected (props.selected == val)
                             ]
-                            [ text optionLabel ]
+                            [ props.toLabel val ]
                     )
             )
         ]
