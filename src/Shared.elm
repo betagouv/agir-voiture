@@ -24,6 +24,7 @@ import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation as Situation exposing (Situation)
 import Route exposing (Route)
 import Route.Path
+import Shared.EngineStatus as EngineStatus
 import Shared.Model
 import Shared.Msg exposing (Msg(..))
 import Shared.SimulationStep as SimulationStep exposing (SimulationStep)
@@ -126,6 +127,7 @@ update _ msg model =
             , Effect.batch
                 [ Effect.setSituation Dict.empty
                 , Effect.setSimulationStep SimulationStep.NotStarted
+                , Effect.restartEngine
                 , Effect.pushRoutePath Route.Path.Home_
                 ]
             )
@@ -140,7 +142,12 @@ update _ msg model =
                             )
                             model.evaluations
             in
-            ( { model | evaluations = newEvaluations }, Effect.none )
+            ( { model
+                | engineStatus = EngineStatus.Done
+                , evaluations = newEvaluations
+              }
+            , Effect.none
+            )
 
         UpdateSituation ( name, value ) ->
             let
@@ -170,33 +177,54 @@ update _ msg model =
             , Effect.none
             )
 
+        EngineInitialized Nothing ->
+            case model.engineStatus of
+                EngineStatus.NotInitialized ->
+                    ( { model | engineStatus = EngineStatus.Done }
+                    , Effect.none
+                    )
+
+                _ ->
+                    ( model, Effect.none )
+
+        EngineInitialized (Just errorMsg) ->
+            ( { model | engineStatus = EngineStatus.WithError errorMsg }
+            , Effect.none
+            )
+
 
 {-| Evaluates rules to update according to the current simulation step.
 -}
 evaluate : Model -> ( Model, Effect Msg )
 evaluate model =
-    -- TODO: do we need to check if the shared.engineInitialized is true?
-    let
-        currentQuestions =
-            case model.simulationStep of
-                SimulationStep.Category category ->
-                    Dict.get category model.ui.questions
-                        |> Maybe.withDefault []
+    case model.engineStatus of
+        EngineStatus.WithError _ ->
+            -- We don't want to evaluate rules if the engine is in error
+            ( model, Effect.none )
 
-                _ ->
-                    []
-    in
-    ( model
-    , if model.simulationStep == SimulationStep.Result then
-        [ Rules.userCost, Rules.userEmission ]
-            ++ model.resultRules
-            |> Effect.evaluateAll
+        _ ->
+            -- TODO: do we need to check if the shared.engineInitialized is true?
+            let
+                currentQuestions =
+                    case model.simulationStep of
+                        SimulationStep.Category category ->
+                            Dict.get category model.ui.questions
+                                |> Maybe.withDefault []
 
-      else
-        currentQuestions
-            -- ++ TODO: not needed a priori model.orderedCategories
-            |> Effect.evaluateAll
-    )
+                        _ ->
+                            []
+            in
+            ( { model | engineStatus = EngineStatus.Evaluating }
+            , if model.simulationStep == SimulationStep.Result then
+                [ Rules.userCost, Rules.userEmission ]
+                    ++ model.resultRules
+                    |> Effect.evaluateAll
+
+              else
+                currentQuestions
+                    -- ++ TODO: not needed a priori model.orderedCategories
+                    |> Effect.evaluateAll
+            )
 
 
 
@@ -212,6 +240,7 @@ subscriptions _ _ =
                 Shared.Msg.NewEvaluations (decodeEvaluations encodedEvaluations)
             )
         , Effect.onSituationUpdated (\_ -> Evaluate)
+        , Effect.onEngineInitialized EngineInitialized
         ]
 
 

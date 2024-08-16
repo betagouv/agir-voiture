@@ -1,5 +1,7 @@
 module Pages.Simulateur exposing (Model, Msg, page)
 
+import BetaGouv.DSFR.Button
+import BetaGouv.DSFR.Icons
 import Components.Simulateur.Questions
 import Components.Simulateur.Result
 import Core.InputError exposing (InputError)
@@ -15,6 +17,8 @@ import Publicodes.NodeValue as NodeValue exposing (NodeValue)
 import Publicodes.RuleName exposing (RuleName)
 import Route exposing (Route)
 import Shared
+import Shared.EngineStatus as EngineStatus
+import Shared.Msg
 import Shared.SimulationStep as SimulationStep exposing (SimulationStep)
 import View exposing (View)
 
@@ -77,6 +81,7 @@ type Msg
     = NoOp
     | NewAnswer ( RuleName, NodeValue, Maybe InputError )
     | NewStep SimulationStep
+    | ResetSimulation
 
 
 update : Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
@@ -105,6 +110,9 @@ update _ msg model =
         NewStep step ->
             ( model, Effect.setSimulationStep step )
 
+        ResetSimulation ->
+            ( model, Effect.resetSimulation )
+
 
 
 -- SUBSCRIPTIONS
@@ -132,23 +140,18 @@ view shared _ =
     in
     { title = "Simulateur - Quelle voiture choisir ?"
     , body =
-        [ div []
-            [ if Dict.isEmpty shared.evaluations then
-                div [ class "flex flex-col w-full h-full items-center" ]
-                    [ div [ class "text-primary my-4" ]
-                        [ -- NOTE: the loading is to fast to show a message
-                          nothing
-                        ]
+        [ div [ class "fr-container" ]
+            [ div [ class "fr-grid-row fr-grid-row--center" ]
+                [ div
+                    [ classList [ ( "fr-col-8", inQuestions ) ]
+                    , class "fr-p-12v bg-[var(--background-default-grey)] rounded border-[1px] border-border-main"
                     ]
+                    [ case shared.engineStatus of
+                        EngineStatus.WithError msg ->
+                            viewEngineError msg
 
-              else
-                div [ class "fr-container" ]
-                    [ div [ class "fr-grid-row fr-grid-row--center" ]
-                        [ div
-                            [ classList [ ( "fr-col-8", inQuestions ) ]
-                            , class "fr-p-12v bg-[var(--background-default-grey)] rounded border-[1px] border-border-main"
-                            ]
-                            [ case shared.simulationStep of
+                        _ ->
+                            case shared.simulationStep of
                                 SimulationStep.Category category ->
                                     case Dict.get category shared.ui.questions of
                                         Just questions ->
@@ -177,14 +180,41 @@ view shared _ =
                                         , evaluations = shared.evaluations
                                         , resultRules = shared.resultRules
                                         , rules = shared.rules
+                                        , engineStatus = shared.engineStatus
                                         }
 
                                 SimulationStep.NotStarted ->
                                     -- Should not happen
                                     nothing
-                            ]
-                        ]
                     ]
+                ]
             ]
         ]
     }
+
+
+viewEngineError : String -> Html Msg
+viewEngineError msg =
+    div [ class "fr-text-red-600" ]
+        [ EngineStatus.viewError msg
+        , p [ class "fr-pt-4v text-[var(--text-default-error)]" ]
+            [ text """
+            Un problème est survenu. Nous vous invitons à réintialiser la
+            simulation (vos réponses seront perdues).
+            """
+            ]
+        , p [ class "text-[var(--text-default-error)]" ]
+            [ text """
+            Si le problème persiste, nous vous invitons à réassyer plus tard.
+            Désolé pour la gêne occasionnée.
+            """
+            ]
+        , BetaGouv.DSFR.Button.new
+            { label = "Réinitialiser la simulation"
+            , onClick = Just ResetSimulation
+            }
+            |> BetaGouv.DSFR.Button.primary
+            |> BetaGouv.DSFR.Button.leftIcon
+                BetaGouv.DSFR.Icons.system.refreshLine
+            |> BetaGouv.DSFR.Button.view
+        ]

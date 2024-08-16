@@ -12,9 +12,11 @@ import Core.UI as UI
 import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Extra exposing (nothing)
 import List.Extra
 import Publicodes exposing (Evaluation, RawRules)
 import Publicodes.RuleName exposing (RuleName)
+import Shared.EngineStatus as EngineStatus exposing (EngineStatus(..))
 import Shared.SimulationStep exposing (SimulationStep)
 
 
@@ -24,6 +26,7 @@ type alias Config msg =
     , evaluations : Dict RuleName Evaluation
     , resultRules : List RuleName
     , rules : RawRules
+    , engineStatus : EngineStatus
     }
 
 
@@ -74,8 +77,15 @@ view props =
                 [ h1 []
                     [ text "Résultat" ]
                 , section []
-                    [ Components.Simulateur.UserTotal.viewParagraph
-                        { cost = userCost, emission = userEmission }
+                    [ case props.engineStatus of
+                        EngineStatus.Done ->
+                            Components.Simulateur.UserTotal.viewParagraph
+                                { cost = userCost, emission = userEmission }
+
+                        _ ->
+                            p []
+                                [ text "Veuillez patienter, nous calculons votre empreinte carbone et le coût associé à votre usage de la voiture."
+                                ]
                     , CallOut.callout "L'objectif des 2 tonnes"
                         (div []
                             [ p []

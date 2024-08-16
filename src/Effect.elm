@@ -6,8 +6,7 @@ port module Effect exposing
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
     , map, toCmd
-    , -- CUSTOM
-      closePersonasModal, evaluate, evaluateAll, newInputError, onEvaluatedRules, onReactLinkClicked, onSituationUpdated, openPersonasModal, removeInputError, resetSimulation, setSimulationStep, setSituation, updateSituation
+    , closePersonasModal, evaluate, evaluateAll, newInputError, onEngineInitialized, onEvaluatedRules, onReactLinkClicked, onSituationUpdated, openPersonasModal, removeInputError, resetSimulation, restartEngine, setSimulationStep, setSituation, updateSituation
     )
 
 {-|
@@ -126,6 +125,14 @@ updateSituation ( name, value ) =
         ]
 
 
+restartEngine : Effect msg
+restartEngine =
+    SendToJs
+        { tag = "RESTART_ENGINE"
+        , data = Json.Encode.null
+        }
+
+
 
 -- PORTS
 
@@ -183,6 +190,11 @@ port onEvaluatedRules : (List ( RuleName, Json.Encode.Value ) -> msg) -> Sub msg
 {-| The situation has correctly been updated in the JS side.
 -}
 port onSituationUpdated : (() -> msg) -> Sub msg
+
+
+{-| The engine has been initialized.
+-}
+port onEngineInitialized : (Maybe String -> msg) -> Sub msg
 
 
 

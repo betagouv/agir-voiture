@@ -27,3 +27,4 @@ type Msg
     | Evaluate
     | NewInputError { name : RuleName, value : String, msg : String }
     | RemoveInputError RuleName
+    | EngineInitialized (Maybe String)

@@ -6,7 +6,8 @@ import Dict exposing (Dict)
 import Publicodes exposing (Evaluation, RawRules)
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
-import Shared.SimulationStep exposing (SimulationStep(..))
+import Shared.EngineStatus as EngineStatus exposing (EngineStatus(..))
+import Shared.SimulationStep as SimulationStep exposing (SimulationStep(..))
 
 
 {-| Contains all the data shared between the different pages of the application.
@@ -31,6 +32,7 @@ type alias Model =
     , orderedCategories : List UI.Category
     , resultRules : List RuleName
     , inputErrors : Dict RuleName { msg : String, value : String }
+    , engineStatus : EngineStatus
     }
 
 
@@ -39,10 +41,11 @@ empty =
     { situation = Dict.empty
     , ui = UI.empty
     , rules = Dict.empty
-    , simulationStep = NotStarted
+    , simulationStep = SimulationStep.NotStarted
     , personas = Dict.empty
     , evaluations = Dict.empty
     , orderedCategories = []
     , resultRules = []
     , inputErrors = Dict.empty
+    , engineStatus = EngineStatus.NotInitialized
     }

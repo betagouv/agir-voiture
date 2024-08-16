@@ -26,31 +26,55 @@ export function flags() {
   };
 }
 
+// TODO: it's really beneficial to have the engine initialized asynchronously
+// if we await it directly?
+async function safeInitEngine(
+  app: any,
+  rules: publicodes.RawRules,
+  situation: publicodes.Situation,
+): Promise<publicodes.Engine | undefined> {
+  try {
+    const engine = await publicodes.createAsync(rules, situation);
+    app.ports.onEngineInitialized.send(null);
+    return engine;
+  } catch (error) {
+    app.ports.onEngineInitialized.send(error.message);
+  }
+}
+
 /**
  * This function is called AFTER the Elm app starts up and is used to
  * receive/send messages to/from Elm via ports.
  */
 export const onReady = async ({ app }: { app: any }) => {
-  // TODO: it's really beneficial to have the engine initialized asynchronously
-  // if we await it directly?
-  // FIXME: manage the error case
-  const engine = await publicodes.createAsync(rules, situation);
+  let engine: publicodes.Engine | undefined;
 
-  const setSituation = (app: any, newSituation: publicodes.Situation) => {
-    localStorage.setItem("situation", JSON.stringify(newSituation));
-    engine.setSituation(newSituation);
+  engine = await safeInitEngine(app, rules, situation);
+
+  const setSituation = (
+    app: any,
+    newSituation: publicodes.Situation | null,
+  ) => {
+    localStorage.setItem("situation", JSON.stringify(newSituation ?? {}));
+    engine?.setSituation(newSituation);
     app.ports.onSituationUpdated.send(null);
   };
 
-  // Defines the custom component <publicodes-rule-page> to be used in the Elm
-  // app to render the React component <RulePage> used for the documentation.
-  publicodesRulePage.defineCustomElementWith(engine, app);
+  if (engine) {
+    // Defines the custom component <publicodes-rule-page> to be used in the Elm
+    // app to render the React component <RulePage> used for the documentation.
+    publicodesRulePage.defineCustomElementWith(engine, app);
+  }
 
   // Subscribes to outgoing messages from Elm and handles them
   if (app.ports && app.ports.outgoing) {
-    app.ports.outgoing.subscribe(({ tag, data }) => {
+    app.ports.outgoing.subscribe(async ({ tag, data }) => {
       switch (tag) {
         // Publicodes
+        case "RESTART_ENGINE": {
+          // Try to reinitialize the engine with an empty situation
+          engine = await safeInitEngine(app, rules, {});
+        }
         case "SET_SITUATION": {
           setSituation(app, data);
           break;
@@ -68,6 +92,9 @@ export const onReady = async ({ app }: { app: any }) => {
           break;
         }
         case "EVALUATE_ALL": {
+          if (!engine) {
+            return;
+          }
           const evaluatedRules = data.map((rule: publicodes.RuleName) => {
             const result = engine.evaluate(rule);
             const isApplicable =
