@@ -28,7 +28,7 @@ page shared route =
 
 toLayout : Model -> Layouts.Layout Msg
 toLayout _ =
-    Layouts.Header { showReactRoot = True, contrastBg = False }
+    Layouts.HeaderAndFooter { showReactRoot = True, contrastBg = False }
 
 
 

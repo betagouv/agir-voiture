@@ -1,6 +1,7 @@
-module Layouts.Header exposing (Model, Msg, Props, layout)
+module Layouts.HeaderAndFooter exposing (Model, Msg, Props, layout)
 
 import BetaGouv.DSFR.Button as Button
+import Components.DSFR.Footer
 import Components.DSFR.Header
 import Components.DSFR.Modal
 import Components.DSFR.Notice
@@ -115,9 +116,10 @@ view props shared { content, toContentMsg } =
             |> Html.map toContentMsg
         , div
             [ classList [ ( "bg-background-main", props.contrastBg ) ]
-            , class "fr-py-12v"
+            , class "fr-py-12v min-h-[80vh]"
             ]
             content.body
+        , Components.DSFR.Footer.view
         ]
     }
 
