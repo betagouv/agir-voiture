@@ -48,10 +48,6 @@ view { rulesToCompare, userCost, userEmission } =
                     )
                 |> List.map
                     (\result ->
-                        let
-                            _ =
-                                Debug.log "result" result
-                        in
                         case result of
                             AlternativeCar infos ->
                                 [ text infos.motorisation
