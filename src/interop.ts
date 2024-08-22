@@ -106,8 +106,9 @@ export const onReady = async ({ app }: { app: any }) => {
             return [
               rule,
               {
-                nodeValue: result.nodeValue ?? null,
                 isApplicable,
+                nodeValue: result.nodeValue ?? null,
+                unit: publicodes.getSerializedUnit(result),
               },
             ];
           });

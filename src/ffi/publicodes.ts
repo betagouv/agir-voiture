@@ -1,6 +1,8 @@
 import PublicodesEngine, {
   Rule,
   Situation as PublicodesSituation,
+  serializeUnit,
+  EvaluatedNode,
 } from "publicodes";
 
 export type RuleName = string;
@@ -30,4 +32,14 @@ export function createAsync(
     console.timeEnd(`[publicodes:parsing] ${nbRules} rules`);
     resolve(engine);
   });
+}
+
+/**
+ * Returns the formatted unit of the given node value if it exists.
+ */
+export function getSerializedUnit(nodeValue: EvaluatedNode): string | null {
+  if (nodeValue?.unit) {
+    return serializeUnit(nodeValue?.unit);
+  }
+  return null;
 }

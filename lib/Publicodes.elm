@@ -168,13 +168,15 @@ decodeRawRules =
 
 
 type alias Evaluation =
-    { nodeValue : NodeValue
-    , isApplicable : Bool
+    { isApplicable : Bool
+    , nodeValue : NodeValue
+    , unit : Maybe String
     }
 
 
 evaluationDecoder : Decode.Decoder Evaluation
 evaluationDecoder =
     Decode.succeed Evaluation
-        |> required "nodeValue" NodeValue.decoder
         |> required "isApplicable" Decode.bool
+        |> required "nodeValue" NodeValue.decoder
+        |> required "unit" (nullable Decode.string)
