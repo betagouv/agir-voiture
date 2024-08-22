@@ -8,9 +8,6 @@ import Html.Attributes.Extra exposing (role)
 
 
 {-| Minimal modal component for the DSFR.
-
-FIXME: using the `fr-modal` in dev mode isn't working.
-
 -}
 view : { id : String, title : String, content : Html msg, onClose : msg } -> Html msg
 view props =

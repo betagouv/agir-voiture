@@ -9,36 +9,78 @@ module Components.Simulateur.UserTotal exposing (view, viewParagraph)
 
 import Components.Simulateur.TotalCard as TotalCard
 import Core.Format
-import Core.Rules
+import Core.Rules as Rules
 import Dict exposing (Dict)
 import FormatNumber.Locales exposing (Decimals(..))
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Extra exposing (nothing)
 import Publicodes exposing (Evaluation, RawRules)
+import Publicodes.NodeValue as NodeValue
 import Publicodes.RuleName exposing (RuleName)
 
 
 view :
     { rules : RawRules
-    , evaluation : Dict RuleName Evaluation
+    , evaluations : Dict RuleName Evaluation
     , cost : Maybe Float
     , emission : Maybe Float
     }
     -> Html msg
-view { rules, evaluation, cost, emission } =
+view { rules, evaluations, cost, emission } =
     case ( cost, emission ) of
         ( Just costVal, Just emissionVal ) ->
+            let
+                contextValues =
+                    Rules.userContext
+                        |> List.filterMap
+                            (\name ->
+                                Dict.get name evaluations
+                                    |> Maybe.andThen
+                                        (\{ nodeValue, unit } ->
+                                            case nodeValue of
+                                                NodeValue.Str optionValue ->
+                                                    Just
+                                                        { unit = unit
+                                                        , value =
+                                                            Rules.getOptionTitle
+                                                                { rules = rules
+                                                                , namespace = Just name
+                                                                , optionValue = optionValue
+                                                                }
+                                                        }
+
+                                                NodeValue.Number num ->
+                                                    Just
+                                                        { unit = unit
+                                                        , value =
+                                                            Core.Format.floatToFrenchLocale
+                                                                (Max 2)
+                                                                num
+                                                        }
+
+                                                NodeValue.Boolean bool ->
+                                                    Just
+                                                        { unit = unit
+                                                        , value =
+                                                            if bool then
+                                                                "Oui"
+
+                                                            else
+                                                                "Non"
+                                                        }
+
+                                                _ ->
+                                                    Nothing
+                                        )
+                            )
+            in
             TotalCard.new
                 { title = "Votre voiture"
                 , cost = costVal
                 , emission = emissionVal
-                , rules = rules
                 }
-                |> TotalCard.withContext
-                    { rules = Core.Rules.userContext
-                    , evaluation = evaluation
-                    }
+                |> TotalCard.withContext contextValues
                 |> TotalCard.view
 
         _ ->

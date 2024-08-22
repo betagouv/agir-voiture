@@ -19,9 +19,10 @@ type ComputedResult
 {-| Fully resolved informations about a car that can be compared.
 -}
 type alias ComputedResultInfos =
-    { motorisation : String
+    { title : String
+    , motorisation : String
     , gabarit : String
-    , carburant : String
+    , carburant : Maybe String
     , cost : Float
     , emission : Float
     }
@@ -148,7 +149,44 @@ getComputedResults props =
                 case RuleName.split name of
                     namespace :: rest ->
                         if List.member namespace Rules.resultNamespaces then
-                            Just rest
+                            case
+                                ( getCostValueOf rest props.evaluations
+                                , getEmissionValueOf rest props.evaluations
+                                )
+                            of
+                                ( Just cost, Just emission ) ->
+                                    case rest of
+                                        motorisation :: gabarit :: maybeCarburant ->
+                                            Just <|
+                                                AlternativeCar
+                                                    { title = Helpers.getTitle name props.rules
+                                                    , motorisation =
+                                                        getMotorisationTitle motorisation props.rules
+                                                    , gabarit =
+                                                        getGabaritTitle gabarit props.rules
+                                                    , carburant =
+                                                        case maybeCarburant of
+                                                            carburant :: [] ->
+                                                                Just (getCarburantTitle carburant props.rules)
+
+                                                            _ ->
+                                                                Nothing
+                                                    , cost = cost
+                                                    , emission = emission
+                                                    }
+
+                                        [ "voiture" ] ->
+                                            Just <|
+                                                CurrentUserCar
+                                                    { cost = cost
+                                                    , emission = emission
+                                                    }
+
+                                        _ ->
+                                            Nothing
+
+                                _ ->
+                                    Nothing
 
                         else
                             Nothing
@@ -157,43 +195,3 @@ getComputedResults props =
                         Nothing
             )
         |> List.Extra.unique
-        |> List.filterMap
-            (\name ->
-                case
-                    ( getCostValueOf name props.evaluations
-                    , getEmissionValueOf name props.evaluations
-                    )
-                of
-                    ( Just cost, Just emission ) ->
-                        case name of
-                            motorisation :: gabarit :: rest ->
-                                Just <|
-                                    AlternativeCar
-                                        { motorisation =
-                                            getMotorisationTitle motorisation props.rules
-                                        , gabarit =
-                                            getGabaritTitle gabarit props.rules
-                                        , carburant =
-                                            case rest of
-                                                carburant :: [] ->
-                                                    getCarburantTitle carburant props.rules
-
-                                                _ ->
-                                                    "Électricité"
-                                        , cost = cost
-                                        , emission = emission
-                                        }
-
-                            [ "voiture" ] ->
-                                Just <|
-                                    CurrentUserCar
-                                        { cost = cost
-                                        , emission = emission
-                                        }
-
-                            _ ->
-                                Nothing
-
-                    _ ->
-                        Nothing
-            )

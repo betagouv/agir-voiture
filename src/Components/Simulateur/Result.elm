@@ -7,13 +7,14 @@ import Components.DSFR.Card as Card
 import Components.LoadingCard
 import Components.Simulateur.ComparisonTable
 import Components.Simulateur.Navigation
+import Components.Simulateur.TotalCard as TotalCard
 import Components.Simulateur.UserTotal
-import Core.Result
+import Core.Result exposing (ComputedResult(..))
 import Core.UI as UI
 import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import List.Extra
+import Html.Extra exposing (viewMaybe)
 import Publicodes exposing (Evaluation, RawRules)
 import Publicodes.RuleName exposing (RuleName)
 import Shared.EngineStatus as EngineStatus exposing (EngineStatus(..))
@@ -43,6 +44,65 @@ view props =
                 , rules = props.rules
                 }
 
+        cheapest =
+            -- TODO: use the targeted gabarit to compare
+            computedResults
+                |> List.sortWith
+                    (Core.Result.compareWith
+                        (\a b -> Basics.compare a.cost b.cost)
+                    )
+                |> List.head
+
+        greenest =
+            computedResults
+                |> List.sortWith
+                    (Core.Result.compareWith
+                        (\a b -> Basics.compare a.emission b.emission)
+                    )
+                |> List.head
+
+        viewAlternative : String -> Core.Result.ComputedResult -> Html msg
+        viewAlternative title computedResult =
+            case props.engineStatus of
+                EngineStatus.Evaluating ->
+                    Components.LoadingCard.view
+
+                _ ->
+                    div []
+                        [ h3 [] [ text title ]
+                        , case computedResult of
+                            AlternativeCar infos ->
+                                TotalCard.new
+                                    { title = infos.title
+                                    , cost = infos.cost
+                                    , emission = infos.emission
+                                    }
+                                    |> TotalCard.withContext
+                                        ([ infos.gabarit
+                                         , infos.motorisation
+                                         , Maybe.withDefault "" infos.carburant
+                                         ]
+                                            |> List.filterMap
+                                                (\value ->
+                                                    if String.isEmpty value then
+                                                        Nothing
+
+                                                    else
+                                                        Just { value = value, unit = Nothing }
+                                                )
+                                        )
+                                    |> TotalCard.withComparison
+                                        { costToCompare = userCost
+                                        , emissionToCompare = userEmission
+                                        }
+                                    |> TotalCard.view
+
+                            CurrentUserCar _ ->
+                                -- TODO
+                                p [ class "rounded border fr-p-4v" ]
+                                    [ text "Vous avez déjà la meilleure alternative !" ]
+                        ]
+
         viewCard ( title, link, desc ) =
             Card.card
                 (text title)
@@ -67,17 +127,19 @@ view props =
                 [ h1 []
                     [ text "Résultat" ]
                 , section []
-                    [ case props.engineStatus of
-                        EngineStatus.Done ->
-                            Components.Simulateur.UserTotal.view
-                                { cost = userCost
-                                , emission = userEmission
-                                , evaluation = props.evaluations
-                                , rules = props.rules
-                                }
+                    [ div [ class "fr-col-8" ]
+                        [ case props.engineStatus of
+                            EngineStatus.Done ->
+                                Components.Simulateur.UserTotal.view
+                                    { cost = userCost
+                                    , emission = userEmission
+                                    , evaluations = props.evaluations
+                                    , rules = props.rules
+                                    }
 
-                        _ ->
-                            Components.LoadingCard.view
+                            _ ->
+                                Components.LoadingCard.view
+                        ]
 
                     -- TODO: move it to a tooltip or accordion
                     -- , CallOut.callout "L'objectif des 2 tonnes"
@@ -108,16 +170,25 @@ view props =
                     , p []
                         [ text "Pour le même usage de votre voiture, voici une comparaison de ce que cela pourrait donner avec d'autres types de véhicules."
                         ]
+                    , div [ class "grid grid-cols-2 gap-6" ]
+                        [ viewMaybe (viewAlternative "La plus économique") cheapest
+                        , viewMaybe (viewAlternative "La plus écologique") greenest
+                        ]
                     , case ( userEmission, userCost ) of
                         ( Just emission, Just cost ) ->
-                            Components.Simulateur.ComparisonTable.view
-                                { rulesToCompare = computedResults
-                                , userEmission = emission
-                                , userCost = cost
-                                }
+                            case props.engineStatus of
+                                EngineStatus.Evaluating ->
+                                    Components.LoadingCard.view
+
+                                _ ->
+                                    Components.Simulateur.ComparisonTable.view
+                                        { rulesToCompare = computedResults
+                                        , userEmission = emission
+                                        , userCost = cost
+                                        }
 
                         _ ->
-                            text "No user emission or cost"
+                            Components.LoadingCard.view
                     ]
                 , section []
                     [ h2 [] [ text "Les aides financières" ]

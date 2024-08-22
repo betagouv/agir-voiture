@@ -224,7 +224,6 @@ evaluate model =
 
               else
                 currentQuestions
-                    -- ++ TODO: not needed a priori model.orderedCategories
                     |> Effect.evaluateAll
             )
 

@@ -43,6 +43,7 @@ userCost =
 
 
 {-| Returns the user situation to show in the results.
+TODO: resultContext?
 -}
 userContext : List RuleName
 userContext =
@@ -50,6 +51,10 @@ userContext =
     , "voiture . motorisation"
     , "voiture . thermique . carburant"
     , "voiture . thermique . consommation"
+    , "voiture . thermique . prix carburant"
+    , "voiture . prix d'achat"
+
+    -- TODO: manage boolean,        "voiture . occasion"
     , "usage . km annuels"
     ]
 
