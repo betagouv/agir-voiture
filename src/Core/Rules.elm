@@ -15,6 +15,11 @@ import Publicodes.RuleName exposing (RuleName, namespace, split)
 import Regex
 
 
+
+-- FIXME: all hardcoded values should be moved to the publicodes-voiture model
+-- to be reused and type checked.
+
+
 {-| The namespace of the rules that corresponds to all the combined
 results in term of carbon emissions.
 -}
@@ -35,6 +40,18 @@ userEmission =
 userCost : RuleName
 userCost =
     "coût . voiture"
+
+
+{-| Returns the user situation to show in the results.
+-}
+userContext : List RuleName
+userContext =
+    [ "voiture . gabarit"
+    , "voiture . motorisation"
+    , "voiture . thermique . carburant"
+    , "voiture . thermique . consommation"
+    , "usage . km annuels"
+    ]
 
 
 getNumValue : Dict RuleName Evaluation -> RuleName -> Maybe Float

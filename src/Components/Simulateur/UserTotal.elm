@@ -1,4 +1,4 @@
-module Components.Simulateur.UserTotal exposing (viewParagraph)
+module Components.Simulateur.UserTotal exposing (view, viewParagraph)
 
 {-|
 
@@ -7,10 +7,42 @@ module Components.Simulateur.UserTotal exposing (viewParagraph)
 
 -}
 
+import Components.Simulateur.TotalCard as TotalCard
 import Core.Format
+import Core.Rules
+import Dict exposing (Dict)
 import FormatNumber.Locales exposing (Decimals(..))
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Extra exposing (nothing)
+import Publicodes exposing (Evaluation, RawRules)
+import Publicodes.RuleName exposing (RuleName)
+
+
+view :
+    { rules : RawRules
+    , evaluation : Dict RuleName Evaluation
+    , cost : Maybe Float
+    , emission : Maybe Float
+    }
+    -> Html msg
+view { rules, evaluation, cost, emission } =
+    case ( cost, emission ) of
+        ( Just costVal, Just emissionVal ) ->
+            TotalCard.new
+                { title = "Votre voiture"
+                , cost = costVal
+                , emission = emissionVal
+                , rules = rules
+                }
+                |> TotalCard.withContext
+                    { rules = Core.Rules.userContext
+                    , evaluation = evaluation
+                    }
+                |> TotalCard.view
+
+        _ ->
+            nothing
 
 
 viewParagraph : { cost : Maybe Float, emission : Maybe Float } -> Html msg

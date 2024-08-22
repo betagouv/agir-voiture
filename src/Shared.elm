@@ -217,6 +217,7 @@ evaluate model =
             ( { model | engineStatus = EngineStatus.Evaluating }
             , if model.simulationStep == SimulationStep.Result then
                 [ Rules.userCost, Rules.userEmission ]
+                    ++ Rules.userContext
                     ++ model.resultRules
                     |> Effect.evaluateAll
 

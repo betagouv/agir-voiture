@@ -79,8 +79,12 @@ view props =
                 , section []
                     [ case props.engineStatus of
                         EngineStatus.Done ->
-                            Components.Simulateur.UserTotal.viewParagraph
-                                { cost = userCost, emission = userEmission }
+                            Components.Simulateur.UserTotal.view
+                                { cost = userCost
+                                , emission = userEmission
+                                , evaluation = props.evaluations
+                                , rules = props.rules
+                                }
 
                         _ ->
                             p []
