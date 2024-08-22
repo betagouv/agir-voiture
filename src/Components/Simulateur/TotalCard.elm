@@ -3,13 +3,14 @@ module Components.Simulateur.TotalCard exposing (new, view, withContext)
 {-| Component to display the total cost and emission of a car.
 -}
 
+import BetaGouv.DSFR.Icons as Icons
 import Core.Format as Format
 import Core.Rules as Rules
 import Dict exposing (Dict)
 import FormatNumber.Locales exposing (Decimals(..))
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Extra exposing (viewMaybe)
+import Html.Extra exposing (nothing, viewIf, viewMaybe)
 import Publicodes exposing (Evaluation, RawRules)
 import Publicodes.NodeValue as NodeValue exposing (NodeValue)
 import Publicodes.RuleName exposing (RuleName)
@@ -56,13 +57,13 @@ view config =
     in
     div [ class "border rounded fr-col-8 fr-my-4v" ]
         [ div [ class "fr-px-4v fr-py-2v fr-pt-4v flex flex-col gap-2" ]
-            [ h5 [ class "m-0" ] [ text "Votre voiture" ]
+            [ h5 [ class "m-0" ] [ text config.title ]
             , div []
                 [ div [ class "flex gap-2 h-fit items-center" ]
                     [ text "Coût annuel estimé :"
                     , viewValue
                         { value = NodeValue.Number (round config.cost)
-                        , unit = "€"
+                        , unit = Just "€"
                         , bgColor = "bg-[var(--background-alt-purple-glycine)]"
                         , textColor = "text-[var(--text-label-purple-glycine)]"
                         , size = Normal
@@ -72,7 +73,7 @@ view config =
                     [ text "Émissions annuelles estimées :"
                     , viewValue
                         { value = NodeValue.Number (round config.emission)
-                        , unit = "kgCO2e"
+                        , unit = Just "kgCO2e"
                         , bgColor = "bg-[var(--background-alt-green-bourgeon)]"
                         , textColor = "text-[var(--text-label-green-bourgeon)]"
                         , size = Normal
@@ -99,7 +100,7 @@ type ViewValueSize
 
 viewValue :
     { value : NodeValue
-    , unit : String
+    , unit : Maybe String
     , bgColor : String
     , textColor : String
     , size : ViewValueSize
@@ -127,7 +128,23 @@ viewValue props =
                 ]
             ]
             [ text textValue ]
-        , viewUnit props.unit
+        , props.unit
+            |> Maybe.map viewUnit
+            |> Maybe.withDefault
+                -- FIXME: should not be hardcoded like this
+                (case props.value of
+                    NodeValue.Str "Thermique" ->
+                        Icons.iconSM Icons.map.gasStationFill
+
+                    NodeValue.Str "Électrique" ->
+                        Icons.iconSM Icons.map.chargingPile2Fill
+
+                    NodeValue.Str "Hybride" ->
+                        Icons.iconSM Icons.map.chargingPile2Line
+
+                    _ ->
+                        nothing
+                )
         ]
 
 
@@ -177,13 +194,15 @@ viewContext { evaluations, context, rules } =
             (contextValues
                 |> List.map
                     (\{ nodeValue, unit } ->
-                        viewValue
-                            { value = nodeValue
-                            , unit = Maybe.withDefault "" unit
-                            , bgColor = "bg-[var(--background-default-grey)]"
-                            , textColor = "text-slate-600"
-                            , size = Small
-                            }
+                        viewIf (nodeValue /= NodeValue.Empty)
+                            (viewValue
+                                { value = nodeValue
+                                , bgColor = "bg-[var(--background-default-grey)]"
+                                , textColor = "text-slate-600"
+                                , size = Small
+                                , unit = unit
+                                }
+                            )
                     )
             )
         ]

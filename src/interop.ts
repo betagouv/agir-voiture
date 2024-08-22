@@ -56,7 +56,7 @@ export const onReady = async ({ app }: { app: any }) => {
     newSituation: publicodes.Situation | null,
   ) => {
     localStorage.setItem("situation", JSON.stringify(newSituation ?? {}));
-    engine?.setSituation(newSituation);
+    engine?.setSituation(newSituation ?? {});
     app.ports.onSituationUpdated.send(null);
   };
 

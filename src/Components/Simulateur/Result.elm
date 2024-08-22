@@ -4,6 +4,7 @@ import BetaGouv.DSFR.Button as Button
 import BetaGouv.DSFR.CallOut as CallOut
 import BetaGouv.DSFR.Icons as Icons
 import Components.DSFR.Card as Card
+import Components.LoadingCard
 import Components.Simulateur.ComparisonTable
 import Components.Simulateur.Navigation
 import Components.Simulateur.UserTotal
@@ -12,7 +13,6 @@ import Core.UI as UI
 import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Extra exposing (nothing)
 import List.Extra
 import Publicodes exposing (Evaluation, RawRules)
 import Publicodes.RuleName exposing (RuleName)
@@ -87,9 +87,7 @@ view props =
                                 }
 
                         _ ->
-                            p []
-                                [ text "Veuillez patienter, nous calculons votre empreinte carbone et le coût associé à votre usage de la voiture."
-                                ]
+                            Components.LoadingCard.view
                     , CallOut.callout "L'objectif des 2 tonnes"
                         (div []
                             [ p []
