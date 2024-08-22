@@ -18,7 +18,6 @@ import Publicodes.RuleName exposing (RuleName)
 import Route exposing (Route)
 import Shared
 import Shared.EngineStatus as EngineStatus
-import Shared.Msg
 import Shared.SimulationStep as SimulationStep exposing (SimulationStep)
 import View exposing (View)
 

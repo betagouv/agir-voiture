@@ -2,51 +2,62 @@ module Components.Simulateur.ComparisonTable exposing (view)
 
 import Components.DSFR.Table
 import Core.Format
-import Core.Rules
-import Dict exposing (Dict)
+import Core.Result exposing (ComputedResult(..))
 import FormatNumber.Locales exposing (Decimals(..))
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Extra exposing (nothing)
-import Publicodes exposing (Evaluation, RawRules)
-import Publicodes.Helpers
-import Publicodes.RuleName as RuleName exposing (RuleName, SplitedRuleName)
 
 
 type alias Config =
-    { rawRules : RawRules
-    , evaluations : Dict RuleName Evaluation
-    , rulesToCompare : List SplitedRuleName
+    { rulesToCompare : List ComputedResult
     , userCost : Float
     , userEmission : Float
     }
 
 
 view : Config -> Html msg
-view { rawRules, evaluations, rulesToCompare, userCost, userEmission } =
+view { rulesToCompare, userCost, userEmission } =
     let
-        getTitle rule =
-            Publicodes.Helpers.getTitle rule rawRules
+        compare a b =
+            -- Compare on emission first
+            -- TODO: add a way to choose the comparison
+            if a.emission == b.emission then
+                Basics.compare b.cost a.cost
+
+            else
+                Basics.compare a.emission b.emission
 
         rows =
-            getSortedValues evaluations rulesToCompare
-                |> List.map
-                    (\( name, { cost, emission } ) ->
-                        case name of
-                            motorisation :: gabarit :: rest ->
-                                [ text <| getTitle <| RuleName.join [ "voiture", "motorisation", motorisation ]
-                                , text <| getTitle <| RuleName.join [ "voiture", "gabarit", gabarit ]
-                                , case rest of
-                                    carburant :: [] ->
-                                        text <| getTitle <| RuleName.join <| [ "voiture", "thermique", "carburant", carburant ]
+            rulesToCompare
+                |> List.sortWith
+                    (\a b ->
+                        case ( a, b ) of
+                            ( AlternativeCar carA, AlternativeCar carB ) ->
+                                compare carA carB
 
-                                    _ ->
-                                        text "Électricité"
-                                , viewValuePlusDiff emission userEmission "kg"
-                                , viewValuePlusDiff cost userCost "€"
+                            ( CurrentUserCar user, AlternativeCar car ) ->
+                                compare user car
+
+                            ( AlternativeCar car, CurrentUserCar user ) ->
+                                compare car user
+
+                            ( CurrentUserCar userA, CurrentUserCar userB ) ->
+                                -- Should not happen
+                                compare userA userB
+                    )
+                |> List.map
+                    (\result ->
+                        case result of
+                            AlternativeCar infos ->
+                                [ text infos.motorisation
+                                , text infos.gabarit
+                                , text infos.carburant
+                                , viewValuePlusDiff infos.emission userEmission "kg"
+                                , viewValuePlusDiff infos.cost userCost "€"
                                 ]
 
-                            [ "voiture" ] ->
+                            CurrentUserCar { emission, cost } ->
                                 [ span [ class "italic" ]
                                     [ text "Votre voiture actuelle" ]
                                 , span [ class "italic" ]
@@ -54,13 +65,10 @@ view { rawRules, evaluations, rulesToCompare, userCost, userEmission } =
                                 , span [ class "italic" ]
                                     [ viewValuePlusDiff cost userCost "€" ]
                                 ]
-
-                            _ ->
-                                []
                     )
     in
     Components.DSFR.Table.view
-        { caption = Just "Comparaison avec les différentes alternatives"
+        { caption = Just "Toutes les alternatives"
         , headers =
             [ "Motorisation"
             , "Taille"
@@ -70,47 +78,6 @@ view { rawRules, evaluations, rulesToCompare, userCost, userEmission } =
             ]
         , rows = rows
         }
-
-
-getCostValueOf : Dict RuleName Evaluation -> SplitedRuleName -> Maybe Float
-getCostValueOf evaluations name =
-    ("coût" :: name)
-        |> RuleName.join
-        |> Core.Rules.getNumValue evaluations
-
-
-getEmissionValueOf : Dict RuleName Evaluation -> SplitedRuleName -> Maybe Float
-getEmissionValueOf evaluations name =
-    ("empreinte" :: name)
-        |> RuleName.join
-        |> Core.Rules.getNumValue evaluations
-
-
-getSortedValues :
-    Dict RuleName Evaluation
-    -> List SplitedRuleName
-    -> List ( SplitedRuleName, { cost : Float, emission : Float } )
-getSortedValues evaluations rulesToCompare =
-    rulesToCompare
-        |> List.filterMap
-            (\name ->
-                case ( getCostValueOf evaluations name, getEmissionValueOf evaluations name ) of
-                    ( Just cost, Just emission ) ->
-                        Just ( name, { cost = cost, emission = emission } )
-
-                    _ ->
-                        Nothing
-            )
-        |> List.sortWith
-            (\( _, a ) ( _, b ) ->
-                -- Compare on emission first
-                -- TODO: add a way to choose the comparison
-                if a.emission == b.emission then
-                    Basics.compare b.cost a.cost
-
-                else
-                    Basics.compare a.emission b.emission
-            )
 
 
 viewValuePlusDiff : Float -> Float -> String -> Html msg

@@ -9,7 +9,7 @@ It's not intended to be generic to all Publicodes models.
 
 import Dict exposing (Dict)
 import List.Extra
-import Publicodes exposing (Evaluation, RawRules)
+import Publicodes exposing (RawRules)
 import Publicodes.NodeValue exposing (NodeValue)
 import Publicodes.RuleName exposing (RuleName, namespace, split)
 import Regex
@@ -52,52 +52,6 @@ userContext =
     , "voiture . thermique . consommation"
     , "usage . km annuels"
     ]
-
-
-getNumValue : Dict RuleName Evaluation -> RuleName -> Maybe Float
-getNumValue evaluations ruleName =
-    evaluations
-        |> Dict.get ruleName
-        |> Maybe.andThen (\{ nodeValue } -> Just nodeValue)
-        |> Maybe.andThen Publicodes.NodeValue.toFloat
-
-
-getUserEmission : Dict RuleName Evaluation -> Maybe Float
-getUserEmission evaluations =
-    getNumValue evaluations userEmission
-
-
-getUserCost : Dict RuleName Evaluation -> Maybe Float
-getUserCost evaluations =
-    getNumValue evaluations userCost
-
-
-{-| Returns the user values for the emission and the cost.
--}
-getUserValues :
-    Dict RuleName Evaluation
-    -> { userEmission : Maybe Float, userCost : Maybe Float }
-getUserValues evaluations =
-    { userEmission = getUserEmission evaluations, userCost = getUserCost evaluations }
-
-
-getResultRules : RawRules -> List RuleName
-getResultRules rules =
-    rules
-        |> Dict.keys
-        |> List.filterMap
-            (\name ->
-                case split name of
-                    namespace :: _ ->
-                        if List.member namespace resultNamespaces then
-                            Just name
-
-                        else
-                            Nothing
-
-                    _ ->
-                        Nothing
-            )
 
 
 getQuestions : RawRules -> List String -> Dict String (List RuleName)

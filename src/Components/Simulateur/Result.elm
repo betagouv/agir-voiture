@@ -8,7 +8,7 @@ import Components.LoadingCard
 import Components.Simulateur.ComparisonTable
 import Components.Simulateur.Navigation
 import Components.Simulateur.UserTotal
-import Core.Rules
+import Core.Result
 import Core.UI as UI
 import Dict exposing (Dict)
 import Html exposing (..)
@@ -34,24 +34,14 @@ view : Config msg -> Html msg
 view props =
     let
         { userEmission, userCost } =
-            Core.Rules.getUserValues props.evaluations
+            Core.Result.getUserValues props.evaluations
 
-        rulesToCompare =
-            props.resultRules
-                |> List.filterMap
-                    (\name ->
-                        case Publicodes.RuleName.split name of
-                            namespace :: rest ->
-                                if List.member namespace Core.Rules.resultNamespaces then
-                                    Just rest
-
-                                else
-                                    Nothing
-
-                            _ ->
-                                Nothing
-                    )
-                |> List.Extra.unique
+        computedResults =
+            Core.Result.getComputedResults
+                { resultRules = props.resultRules
+                , evaluations = props.evaluations
+                , rules = props.rules
+                }
 
         viewCard ( title, link, desc ) =
             Card.card
@@ -88,26 +78,28 @@ view props =
 
                         _ ->
                             Components.LoadingCard.view
-                    , CallOut.callout "L'objectif des 2 tonnes"
-                        (div []
-                            [ p []
-                                [ text """
-                            Pour essayer de maintenir l'augmentation
-                            de la température moyenne de la planète en
-                            dessous de 2 °C par rapport aux niveaux
-                            préindustriels, il faudrait arriver à atteindre la """
-                                , a [ href "https://fr.wikipedia.org/wiki/Neutralit%C3%A9_carbone", target "_blank" ] [ text "neutralité carbone" ]
-                                , text "."
-                                ]
-                            , br [] []
-                            , p []
-                                [ text "Pour cela, un objectif de 2 tonnes de CO2e par an et par personne a été fixé pour 2050 ("
-                                , a [ href "https://nosgestesclimat.fr/empreinte-climat", target "_blank" ]
-                                    [ text "en savoir plus" ]
-                                , text ")."
-                                ]
-                            ]
-                        )
+
+                    -- TODO: move it to a tooltip or accordion
+                    -- , CallOut.callout "L'objectif des 2 tonnes"
+                    --     (div []
+                    --         [ p []
+                    --             [ text """
+                    --         Pour essayer de maintenir l'augmentation
+                    --         de la température moyenne de la planète en
+                    --         dessous de 2 °C par rapport aux niveaux
+                    --         préindustriels, il faudrait arriver à atteindre la """
+                    --             , a [ href "https://fr.wikipedia.org/wiki/Neutralit%C3%A9_carbone", target "_blank" ] [ text "neutralité carbone" ]
+                    --             , text "."
+                    --             ]
+                    --         , br [] []
+                    --         , p []
+                    --             [ text "Pour cela, un objectif de 2 tonnes de CO2e par an et par personne a été fixé pour 2050 ("
+                    --             , a [ href "https://nosgestesclimat.fr/empreinte-climat", target "_blank" ]
+                    --                 [ text "en savoir plus" ]
+                    --             , text ")."
+                    --             ]
+                    --         ]
+                    --     )
                     ]
                 , section []
                     [ h2 []
@@ -119,9 +111,7 @@ view props =
                     , case ( userEmission, userCost ) of
                         ( Just emission, Just cost ) ->
                             Components.Simulateur.ComparisonTable.view
-                                { rawRules = props.rules
-                                , evaluations = props.evaluations
-                                , rulesToCompare = rulesToCompare
+                                { rulesToCompare = computedResults
                                 , userEmission = emission
                                 , userCost = cost
                                 }

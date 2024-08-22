@@ -13,7 +13,8 @@ module Shared exposing
 -}
 
 import Core.Personas as Personas exposing (Personas)
-import Core.Rules as Rules
+import Core.Result
+import Core.Rules
 import Core.UI as UI
 import Dict
 import Effect exposing (Effect)
@@ -82,7 +83,7 @@ init flagsResult _ =
                 , ui = flags.ui
                 , personas = flags.personas
                 , orderedCategories = UI.getOrderedCategories flags.ui.categories
-                , resultRules = Rules.getResultRules flags.rules
+                , resultRules = Core.Result.getResultRules flags.rules
               }
             , Effect.none
             )
@@ -216,8 +217,8 @@ evaluate model =
             in
             ( { model | engineStatus = EngineStatus.Evaluating }
             , if model.simulationStep == SimulationStep.Result then
-                [ Rules.userCost, Rules.userEmission ]
-                    ++ Rules.userContext
+                [ Core.Rules.userCost, Core.Rules.userEmission ]
+                    ++ Core.Rules.userContext
                     ++ model.resultRules
                     |> Effect.evaluateAll
 
