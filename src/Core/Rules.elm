@@ -42,6 +42,16 @@ userCost =
     "coût . voiture"
 
 
+userGabarit : RuleName
+userGabarit =
+    "voiture . gabarit"
+
+
+userMotorisation : RuleName
+userMotorisation =
+    "voiture . motorisation"
+
+
 {-| Returns the user situation to show in the results.
 TODO: resultContext?
 -}
@@ -57,6 +67,20 @@ userContext =
     -- TODO: manage boolean,        "voiture . occasion"
     , "usage . km annuels"
     ]
+
+
+{-| Size of the car considered.
+-}
+targetGabarit : RuleName
+targetGabarit =
+    "voiture . cible . gabarit"
+
+
+{-| Ability to have a charging station.
+-}
+targetChargingStation : RuleName
+targetChargingStation =
+    "voiture . cible . borne de recharge"
 
 
 getQuestions : RawRules -> List String -> Dict String (List RuleName)

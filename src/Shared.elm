@@ -217,7 +217,11 @@ evaluate model =
             in
             ( { model | engineStatus = EngineStatus.Evaluating }
             , if model.simulationStep == SimulationStep.Result then
-                [ Core.Rules.userCost, Core.Rules.userEmission ]
+                [ Core.Rules.userCost
+                , Core.Rules.userEmission
+                , Core.Rules.targetGabarit
+                , Core.Rules.targetChargingStation
+                ]
                     ++ Core.Rules.userContext
                     ++ model.resultRules
                     |> Effect.evaluateAll

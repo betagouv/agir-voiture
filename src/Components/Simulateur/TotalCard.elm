@@ -123,7 +123,7 @@ viewValue :
     -> Html msg
 viewValue props =
     span
-        [ class "rounded rounded-full fr-px-3v fr-py-1v flex gap-1 items-baseline"
+        [ class "rounded rounded-full fr-px-3v fr-py-1v flex gap-1 items-center"
         , class props.bgColor
         , class props.textColor
         ]

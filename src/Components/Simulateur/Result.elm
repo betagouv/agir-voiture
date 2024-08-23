@@ -10,11 +10,12 @@ import Components.Simulateur.Navigation
 import Components.Simulateur.TotalCard as TotalCard
 import Components.Simulateur.UserTotal
 import Core.Result exposing (ComputedResult(..))
+import Core.Rules as Rules
 import Core.UI as UI
 import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Extra exposing (viewMaybe)
+import Html.Extra exposing (nothing, viewMaybe)
 import Publicodes exposing (Evaluation, RawRules)
 import Publicodes.RuleName exposing (RuleName)
 import Shared.EngineStatus as EngineStatus exposing (EngineStatus(..))
@@ -44,21 +45,66 @@ view props =
                 , rules = props.rules
                 }
 
-        cheapest =
-            -- TODO: use the targeted gabarit to compare
+        targetGabaritTitle =
+            props.evaluations
+                |> Core.Result.getStringValue Rules.targetGabarit
+                |> Maybe.map
+                    (\gabarit ->
+                        Core.Result.getGabaritTitle gabarit props.rules
+                    )
+                |> Maybe.withDefault ""
+
+        hasChargingStation =
+            props.evaluations
+                |> Core.Result.getBooleanValue Rules.targetChargingStation
+                |> Maybe.withDefault True
+
+        -- Sorts the computed results on the given attribute
+        computedResultsSortedOn attr =
             computedResults
                 |> List.sortWith
                     (Core.Result.compareWith
-                        (\a b -> Basics.compare a.cost b.cost)
+                        (\a b -> Basics.compare (attr a) (attr b))
                     )
-                |> List.head
+
+        -- Filters the computed results on the given target (size, charging station)
+        filterTarget =
+            List.filter
+                (\result ->
+                    case result of
+                        AlternativeCar infos ->
+                            -- Only keep the results with the same target gabarit
+                            -- TODO: use a +1/-1 comparison to be more flexible?
+                            (infos.gabarit == targetGabaritTitle)
+                                && -- Only keep the results with a charging station if the user has an electric car
+                                   -- FIXME: "électrique" is hardcoded
+                                   (hasChargingStation || infos.motorisation /= "Électrique")
+
+                        CurrentUserCar _ ->
+                            -- We ignre the user car
+                            False
+                )
+
+        computedResultsSortedOnCost =
+            computedResultsSortedOn .cost
+
+        computedResultsSortedOnEmission =
+            computedResultsSortedOn .emission
+
+        cheapest =
+            List.head computedResultsSortedOnCost
 
         greenest =
-            computedResults
-                |> List.sortWith
-                    (Core.Result.compareWith
-                        (\a b -> Basics.compare a.emission b.emission)
-                    )
+            List.head computedResultsSortedOnEmission
+
+        targetCheapest =
+            computedResultsSortedOnCost
+                |> filterTarget
+                |> List.head
+
+        targetGreenest =
+            computedResultsSortedOnEmission
+                |> filterTarget
                 |> List.head
 
         viewAlternative : String -> Core.Result.ComputedResult -> Html msg
@@ -69,7 +115,7 @@ view props =
 
                 _ ->
                     div []
-                        [ h3 [] [ text title ]
+                        [ h4 [] [ text title ]
                         , case computedResult of
                             AlternativeCar infos ->
                                 TotalCard.new
@@ -98,10 +144,24 @@ view props =
                                     |> TotalCard.view
 
                             CurrentUserCar _ ->
-                                -- TODO
                                 p [ class "rounded border fr-p-4v" ]
                                     [ text "Vous avez déjà la meilleure alternative !" ]
                         ]
+
+        viewAlternatives args =
+            case ( args.cheapest, args.greenest ) of
+                ( Just cheapestAlternative, Just greenestAlternative ) ->
+                    section [ class "fr-mt-12v" ]
+                        [ h3 [] [ text args.title ]
+                        , p [ class "fr-col-8" ] args.desc
+                        , div [ class "grid grid-cols-2 gap-6" ]
+                            [ viewAlternative "La plus économique" cheapestAlternative
+                            , viewAlternative "La plus écologique" greenestAlternative
+                            ]
+                        ]
+
+                _ ->
+                    nothing
 
         viewCard ( title, link, desc ) =
             Card.card
@@ -142,38 +202,61 @@ view props =
                         ]
 
                     -- TODO: move it to a tooltip or accordion
-                    -- , CallOut.callout "L'objectif des 2 tonnes"
-                    --     (div []
-                    --         [ p []
-                    --             [ text """
-                    --         Pour essayer de maintenir l'augmentation
-                    --         de la température moyenne de la planète en
-                    --         dessous de 2 °C par rapport aux niveaux
-                    --         préindustriels, il faudrait arriver à atteindre la """
-                    --             , a [ href "https://fr.wikipedia.org/wiki/Neutralit%C3%A9_carbone", target "_blank" ] [ text "neutralité carbone" ]
-                    --             , text "."
-                    --             ]
-                    --         , br [] []
-                    --         , p []
-                    --             [ text "Pour cela, un objectif de 2 tonnes de CO2e par an et par personne a été fixé pour 2050 ("
-                    --             , a [ href "https://nosgestesclimat.fr/empreinte-climat", target "_blank" ]
-                    --                 [ text "en savoir plus" ]
-                    --             , text ")."
-                    --             ]
-                    --         ]
-                    --     )
+                    , CallOut.callout "L'objectif des 2 tonnes"
+                        (div []
+                            [ p []
+                                [ text """
+                            Pour essayer de maintenir l'augmentation
+                            de la température moyenne de la planète en
+                            dessous de 2 °C par rapport aux niveaux
+                            préindustriels, il faudrait arriver à atteindre la """
+                                , a [ href "https://fr.wikipedia.org/wiki/Neutralit%C3%A9_carbone", target "_blank" ] [ text "neutralité carbone" ]
+                                , text "."
+                                ]
+                            , br [] []
+                            , p []
+                                [ text "Pour cela, un objectif de 2 tonnes de CO2e par an et par personne a été fixé pour 2050 ("
+                                , a [ href "https://nosgestesclimat.fr/empreinte-climat", target "_blank" ]
+                                    [ text "en savoir plus" ]
+                                , text ")."
+                                ]
+                            ]
+                        )
                     ]
                 , section []
                     [ h2 []
                         [ text "Comparaison avec les différentes alternatives"
                         ]
-                    , p []
+                    , p [ class "fr-col-8" ]
                         [ text "Pour le même usage de votre voiture, voici une comparaison de ce que cela pourrait donner avec d'autres types de véhicules."
                         ]
-                    , div [ class "grid grid-cols-2 gap-6" ]
-                        [ viewMaybe (viewAlternative "La plus économique") cheapest
-                        , viewMaybe (viewAlternative "La plus écologique") greenest
-                        ]
+                    , viewAlternatives
+                        { title = "Les meilleures alternatives pour votre usage"
+                        , desc =
+                            [ text "Parmi les véhicules de gabarit "
+                            , span [ class "font-medium" ] [ text targetGabaritTitle ]
+                            , text ", voici les meilleures alternatives pour votre usage."
+                            , text " Sachant que vous "
+                            , span [ class "font-medium" ]
+                                [ if hasChargingStation then
+                                    text "avez"
+
+                                  else
+                                    text "n'avez pas"
+                                , text " la possibilité d'avoir une borne de recharge."
+                                ]
+                            ]
+                        , cheapest = targetCheapest
+                        , greenest = targetGreenest
+                        }
+                    , viewAlternatives
+                        { title = "Les meilleures alternatives"
+                        , desc =
+                            [ text "Parmi toutes les alternatives, voici les meilleures pour votre usage."
+                            ]
+                        , cheapest = cheapest
+                        , greenest = greenest
+                        }
                     , case ( userEmission, userCost ) of
                         ( Just emission, Just cost ) ->
                             case props.engineStatus of
@@ -190,7 +273,7 @@ view props =
                         _ ->
                             Components.LoadingCard.view
                     ]
-                , section []
+                , section [ class "fr-mt-12v fr-col-8" ]
                     [ h2 [] [ text "Les aides financières" ]
                     , p []
                         [ text """
@@ -223,7 +306,7 @@ view props =
                         |> Button.rightIcon Icons.system.arrowRightFill
                         |> Button.view
                     ]
-                , section [ class "mt-8" ]
+                , section [ class "fr-mt-12v" ]
                     [ h2 []
                         [ text "Les ressources pour aller plus loin"
                         ]

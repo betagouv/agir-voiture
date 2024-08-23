@@ -5,14 +5,18 @@ import Dict exposing (Dict)
 import List.Extra
 import Publicodes exposing (Evaluation, RawRules)
 import Publicodes.Helpers as Helpers
-import Publicodes.NodeValue
+import Publicodes.NodeValue as NodeValue
 import Publicodes.RuleName as RuleName exposing (RuleName, SplitedRuleName, split)
 
 
 {-| A comparison item that represents a car with its cost and its carbon emissions.
 -}
 type ComputedResult
-    = CurrentUserCar { cost : Float, emission : Float }
+    = CurrentUserCar
+        { cost : Float
+        , emission : Float
+        , gabarit : String
+        }
     | AlternativeCar ComputedResultInfos
 
 
@@ -20,78 +24,78 @@ type ComputedResult
 -}
 type alias ComputedResultInfos =
     { title : String
-    , motorisation : String
-    , gabarit : String
     , carburant : Maybe String
     , cost : Float
     , emission : Float
+    , gabarit : String
+    , motorisation : String
     }
 
 
 getMotorisationTitle : String -> RawRules -> String
-getMotorisationTitle motorisation rules =
+getMotorisationTitle motorisation =
     Helpers.getTitle
         (RuleName.join [ "voiture", "motorisation", motorisation ])
-        rules
 
 
 getGabaritTitle : String -> RawRules -> String
-getGabaritTitle gabarit rules =
+getGabaritTitle gabarit =
     Helpers.getTitle
         (RuleName.join [ "voiture", "gabarit", gabarit ])
-        rules
 
 
 getCarburantTitle : String -> RawRules -> String
-getCarburantTitle carburant rules =
+getCarburantTitle carburant =
     Helpers.getTitle
         (RuleName.join [ "voiture", "thermique", "carburant", carburant ])
-        rules
 
 
 compareWith :
-    ({ cost : Float, emission : Float } -> { cost : Float, emission : Float } -> Order)
+    ({ cost : Float, emission : Float, gabarit : String }
+     -> { cost : Float, emission : Float, gabarit : String }
+     -> Order
+    )
     -> ComputedResult
     -> ComputedResult
     -> Order
 compareWith compare a b =
     let
         -- NOTE: Only needed because of a bug in the compiler that doesn't allow to
-        -- resolve ComputedResultInfos into { a | cost : Float, emission : Float }.
-        toCostEmission { cost, emission } =
-            { cost = cost, emission = emission }
+        -- resolve ComputedResultInfos into { a | cost : Float, emission : Float, ... }.
+        map { cost, emission, gabarit } =
+            { cost = cost, emission = emission, gabarit = gabarit }
     in
     case ( a, b ) of
         ( AlternativeCar carA, AlternativeCar carB ) ->
-            compare (toCostEmission carA) (toCostEmission carB)
+            compare (map carA) (map carB)
 
         ( CurrentUserCar user, AlternativeCar car ) ->
-            compare user (toCostEmission car)
+            compare user (map car)
 
         ( AlternativeCar car, CurrentUserCar user ) ->
-            compare (toCostEmission car) user
+            compare (map car) user
 
         ( CurrentUserCar userA, CurrentUserCar userB ) ->
             -- Should not happen
             compare userA userB
 
 
-getNumValue : Dict RuleName Evaluation -> RuleName -> Maybe Float
-getNumValue evaluations ruleName =
+getNumValue : RuleName -> Dict RuleName Evaluation -> Maybe Float
+getNumValue ruleName evaluations =
     evaluations
         |> Dict.get ruleName
-        |> Maybe.andThen (\{ nodeValue } -> Just nodeValue)
-        |> Maybe.andThen Publicodes.NodeValue.toFloat
+        |> Maybe.map .nodeValue
+        |> Maybe.andThen NodeValue.toFloat
 
 
 getUserEmission : Dict RuleName Evaluation -> Maybe Float
-getUserEmission evaluations =
-    getNumValue evaluations Rules.userEmission
+getUserEmission =
+    getNumValue Rules.userEmission
 
 
 getUserCost : Dict RuleName Evaluation -> Maybe Float
-getUserCost evaluations =
-    getNumValue evaluations Rules.userCost
+getUserCost =
+    getNumValue Rules.userCost
 
 
 {-| Returns the user values for the emission and the cost.
@@ -104,17 +108,37 @@ getUserValues evaluations =
 
 
 getCostValueOf : SplitedRuleName -> Dict RuleName Evaluation -> Maybe Float
-getCostValueOf name evaluations =
-    ("coût" :: name)
-        |> RuleName.join
-        |> getNumValue evaluations
+getCostValueOf name =
+    getNumValue (RuleName.join ("coût" :: name))
 
 
 getEmissionValueOf : SplitedRuleName -> Dict RuleName Evaluation -> Maybe Float
-getEmissionValueOf name evaluations =
-    ("empreinte" :: name)
-        |> RuleName.join
-        |> getNumValue evaluations
+getEmissionValueOf name =
+    getNumValue (RuleName.join ("empreinte" :: name))
+
+
+getStringValue : RuleName -> Dict RuleName Evaluation -> Maybe String
+getStringValue name evaluations =
+    evaluations
+        |> Dict.get name
+        |> Maybe.map .nodeValue
+        |> Maybe.map NodeValue.toString
+
+
+getBooleanValue : RuleName -> Dict RuleName Evaluation -> Maybe Bool
+getBooleanValue name evaluations =
+    evaluations
+        |> Dict.get name
+        |> Maybe.map .nodeValue
+        |> Maybe.andThen
+            (\value ->
+                case value of
+                    NodeValue.Boolean b ->
+                        Just b
+
+                    _ ->
+                        Nothing
+            )
 
 
 getResultRules : RawRules -> List RuleName
@@ -176,10 +200,21 @@ getComputedResults props =
                                                     }
 
                                         [ "voiture" ] ->
+                                            let
+                                                userGabarit =
+                                                    props.evaluations
+                                                        |> getStringValue Rules.userGabarit
+                                                        |> Maybe.map
+                                                            (\gabarit ->
+                                                                getGabaritTitle gabarit props.rules
+                                                            )
+                                                        |> Maybe.withDefault ""
+                                            in
                                             Just <|
                                                 CurrentUserCar
                                                     { cost = cost
                                                     , emission = emission
+                                                    , gabarit = userGabarit
                                                     }
 
                                         _ ->
