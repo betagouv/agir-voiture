@@ -68,7 +68,7 @@ view { rulesToCompare, userCost, userEmission } =
                     )
     in
     Components.DSFR.Table.view
-        { caption = Just "Toutes les alternatives"
+        { caption = Just "Tableau comparatif des toutes les alternatives"
         , headers =
             [ "Motorisation"
             , "Taille"
@@ -115,6 +115,7 @@ viewValuePlusDiff value base unit =
           else
             p [ class ("rounded-full text-xs flex items-center " ++ tagColor) ]
                 [ text tagPrefix
-                , text formattedDiff
+                , span [ title "Différence par rapport à votre situation actuelle" ]
+                    [ text formattedDiff ]
                 ]
         ]

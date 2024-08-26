@@ -1,5 +1,6 @@
 module Components.Simulateur.Result exposing (view)
 
+import BetaGouv.DSFR.Accordion
 import BetaGouv.DSFR.Button as Button
 import BetaGouv.DSFR.CallOut as CallOut
 import BetaGouv.DSFR.Icons as Icons
@@ -15,7 +16,7 @@ import Core.UI as UI
 import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Extra exposing (nothing, viewMaybe)
+import Html.Extra exposing (nothing)
 import Publicodes exposing (Evaluation, RawRules)
 import Publicodes.RuleName exposing (RuleName)
 import Shared.EngineStatus as EngineStatus exposing (EngineStatus(..))
@@ -29,6 +30,8 @@ type alias Config msg =
     , resultRules : List RuleName
     , rules : RawRules
     , engineStatus : EngineStatus
+    , comparisonTableIsOpen : Bool
+    , onToggleComparisonTable : msg
     }
 
 
@@ -151,8 +154,8 @@ view props =
         viewAlternatives args =
             case ( args.cheapest, args.greenest ) of
                 ( Just cheapestAlternative, Just greenestAlternative ) ->
-                    section [ class "fr-mt-12v" ]
-                        [ h3 [] [ text args.title ]
+                    section []
+                        [ h2 [] [ text args.title ]
                         , p [ class "fr-col-8" ] args.desc
                         , div [ class "grid grid-cols-2 gap-6" ]
                             [ viewAlternative "La plus économique" cheapestAlternative
@@ -183,11 +186,12 @@ view props =
                 , currentStep = Shared.SimulationStep.Result
                 , containsErrors = False
                 }
-            , div [ class "flex flex-col gap-8" ]
-                [ h1 []
-                    [ text "Résultat" ]
-                , section []
-                    [ div [ class "fr-col-8" ]
+            , div [ class "flex flex-col gap-8 md:gap-16" ]
+                [ section []
+                    [ h2 []
+                        [ text "Récapitulatif de votre situation"
+                        ]
+                    , div [ class "fr-col-8" ]
                         [ case props.engineStatus of
                             EngineStatus.Done ->
                                 Components.Simulateur.UserTotal.view
@@ -200,80 +204,79 @@ view props =
                             _ ->
                                 Components.LoadingCard.view
                         ]
+                    ]
 
-                    -- TODO: move it to a tooltip or accordion
-                    , CallOut.callout "L'objectif des 2 tonnes"
-                        (div []
-                            [ p []
-                                [ text """
+                -- TODO: move it to a tooltip or accordion
+                , CallOut.callout "L'objectif des 2 tonnes"
+                    (div []
+                        [ p []
+                            [ text """
                             Pour essayer de maintenir l'augmentation
                             de la température moyenne de la planète en
                             dessous de 2 °C par rapport aux niveaux
                             préindustriels, il faudrait arriver à atteindre la """
-                                , a [ href "https://fr.wikipedia.org/wiki/Neutralit%C3%A9_carbone", target "_blank" ] [ text "neutralité carbone" ]
-                                , text "."
-                                ]
-                            , br [] []
-                            , p []
-                                [ text "Pour cela, un objectif de 2 tonnes de CO2e par an et par personne a été fixé pour 2050 ("
-                                , a [ href "https://nosgestesclimat.fr/empreinte-climat", target "_blank" ]
-                                    [ text "en savoir plus" ]
-                                , text ")."
-                                ]
+                            , a [ href "https://fr.wikipedia.org/wiki/Neutralit%C3%A9_carbone", target "_blank" ] [ text "neutralité carbone" ]
+                            , text "."
                             ]
-                        )
-                    ]
-                , section []
-                    [ h2 []
-                        [ text "Comparaison avec les différentes alternatives"
+                        , br [] []
+                        , p []
+                            [ text "Pour cela, un objectif de 2 tonnes de CO2e par an et par personne a été fixé pour 2050 ("
+                            , a [ href "https://nosgestesclimat.fr/empreinte-climat", target "_blank" ]
+                                [ text "en savoir plus" ]
+                            , text ")."
+                            ]
                         ]
-                    , p [ class "fr-col-8" ]
-                        [ text "Pour le même usage de votre voiture, voici une comparaison de ce que cela pourrait donner avec d'autres types de véhicules."
+                    )
+                , viewAlternatives
+                    { title = "Les meilleures alternatives pour le gabarit " ++ targetGabaritTitle
+                    , desc =
+                        [ text "Parmi les véhicules de gabarit "
+                        , span [ class "font-medium" ] [ text targetGabaritTitle ]
+                        , text ", voici les meilleures alternatives pour votre usage."
+                        , text " Sachant que vous "
+                        , span [ class "font-medium" ]
+                            [ if hasChargingStation then
+                                text "avez"
+
+                              else
+                                text "n'avez pas"
+                            , text " la possibilité d'avoir une borne de recharge."
+                            ]
                         ]
-                    , viewAlternatives
-                        { title = "Les meilleures alternatives pour votre usage"
-                        , desc =
-                            [ text "Parmi les véhicules de gabarit "
-                            , span [ class "font-medium" ] [ text targetGabaritTitle ]
-                            , text ", voici les meilleures alternatives pour votre usage."
-                            , text " Sachant que vous "
-                            , span [ class "font-medium" ]
-                                [ if hasChargingStation then
-                                    text "avez"
+                    , cheapest = targetCheapest
+                    , greenest = targetGreenest
+                    }
+                , viewAlternatives
+                    { title = "Les meilleures alternatives toutes catégories confondues"
+                    , desc =
+                        [ text "Parmi toutes les alternatives, voici les meilleures pour votre usage."
+                        ]
+                    , cheapest = cheapest
+                    , greenest = greenest
+                    }
+                , BetaGouv.DSFR.Accordion.single
+                    { header = text "Voir toutes les alternatives"
+                    , id = "accordion-comparison-table"
+                    , onClick = props.onToggleComparisonTable
+                    , open = props.comparisonTableIsOpen
+                    , content =
+                        case ( userEmission, userCost ) of
+                            ( Just emission, Just cost ) ->
+                                case props.engineStatus of
+                                    EngineStatus.Evaluating ->
+                                        Components.LoadingCard.view
 
-                                  else
-                                    text "n'avez pas"
-                                , text " la possibilité d'avoir une borne de recharge."
-                                ]
-                            ]
-                        , cheapest = targetCheapest
-                        , greenest = targetGreenest
-                        }
-                    , viewAlternatives
-                        { title = "Les meilleures alternatives"
-                        , desc =
-                            [ text "Parmi toutes les alternatives, voici les meilleures pour votre usage."
-                            ]
-                        , cheapest = cheapest
-                        , greenest = greenest
-                        }
-                    , case ( userEmission, userCost ) of
-                        ( Just emission, Just cost ) ->
-                            case props.engineStatus of
-                                EngineStatus.Evaluating ->
-                                    Components.LoadingCard.view
+                                    _ ->
+                                        Components.Simulateur.ComparisonTable.view
+                                            { rulesToCompare = computedResults
+                                            , userEmission = emission
+                                            , userCost = cost
+                                            }
 
-                                _ ->
-                                    Components.Simulateur.ComparisonTable.view
-                                        { rulesToCompare = computedResults
-                                        , userEmission = emission
-                                        , userCost = cost
-                                        }
-
-                        _ ->
-                            Components.LoadingCard.view
-                    ]
-                , section [ class "fr-mt-12v fr-col-8" ]
+                            _ ->
+                                Components.LoadingCard.view
+                    }
+                , section [ class "fr-col-8" ]
                     [ h2 [] [ text "Les aides financières" ]
                     , p []
                         [ text """
@@ -306,7 +309,7 @@ view props =
                         |> Button.rightIcon Icons.system.arrowRightFill
                         |> Button.view
                     ]
-                , section [ class "fr-mt-12v" ]
+                , section []
                     [ h2 []
                         [ text "Les ressources pour aller plus loin"
                         ]

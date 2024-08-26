@@ -43,7 +43,8 @@ toLayout _ =
 
 
 type alias Model =
-    ()
+    { comparisonTableIsOpen : Bool
+    }
 
 
 init : Shared.Model -> () -> ( Model, Effect Msg )
@@ -52,7 +53,9 @@ init shared () =
         currentStep =
             getSimulationStep shared.simulationStep shared.orderedCategories
     in
-    ( (), Effect.setSimulationStep currentStep )
+    ( { comparisonTableIsOpen = False }
+    , Effect.setSimulationStep currentStep
+    )
 
 
 {-| Returns the simulation step to display.
@@ -81,6 +84,7 @@ type Msg
     | NewAnswer ( RuleName, NodeValue, Maybe InputError )
     | NewStep SimulationStep
     | ResetSimulation
+    | ToggleComparisonTable
 
 
 update : Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
@@ -117,6 +121,9 @@ update _ msg model =
         ResetSimulation ->
             ( model, Effect.resetSimulation )
 
+        ToggleComparisonTable ->
+            ( { model | comparisonTableIsOpen = not model.comparisonTableIsOpen }, Effect.none )
+
 
 
 -- SUBSCRIPTIONS
@@ -132,7 +139,7 @@ subscriptions _ =
 
 
 view : Shared.Model -> Model -> View Msg
-view shared _ =
+view shared model =
     let
         inQuestions =
             case shared.simulationStep of
@@ -185,6 +192,8 @@ view shared _ =
                                         , resultRules = shared.resultRules
                                         , rules = shared.rules
                                         , engineStatus = shared.engineStatus
+                                        , comparisonTableIsOpen = model.comparisonTableIsOpen
+                                        , onToggleComparisonTable = ToggleComparisonTable
                                         }
 
                                 SimulationStep.NotStarted ->
