@@ -137,6 +137,13 @@ export const onReady = async ({ app }: { app: any }) => {
           break;
         }
 
+        // Common JS functions
+        case "SCROLL_TO_TOP": {
+          console.log("Scrolling to top");
+          window.scrollTo(0, 0);
+          break;
+        }
+
         default: {
           console.error("Unknown message from Elm with tag: ", tag);
         }

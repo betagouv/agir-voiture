@@ -40,6 +40,7 @@ export default function ({ engine, app, rulePath, documentationPath }: Props) {
             className="link"
             onClick={(e) => {
               e.preventDefault();
+              window.scrollTo(0, 0);
               app.ports.onReactLinkClicked.send(to);
             }}
           >

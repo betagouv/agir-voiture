@@ -107,7 +107,12 @@ update _ msg model =
             )
 
         NewStep step ->
-            ( model, Effect.setSimulationStep step )
+            ( model
+            , Effect.batch
+                [ Effect.setSimulationStep step
+                , Effect.scrollToTop
+                ]
+            )
 
         ResetSimulation ->
             ( model, Effect.resetSimulation )

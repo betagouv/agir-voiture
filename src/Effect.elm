@@ -6,7 +6,7 @@ port module Effect exposing
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
     , map, toCmd
-    , closePersonasModal, evaluate, evaluateAll, newInputError, onEngineInitialized, onEvaluatedRules, onReactLinkClicked, onSituationUpdated, openPersonasModal, removeInputError, resetSimulation, restartEngine, setSimulationStep, setSituation, updateSituation
+    , closePersonasModal, evaluate, evaluateAll, newInputError, onEngineInitialized, onEvaluatedRules, onReactLinkClicked, onSituationUpdated, openPersonasModal, removeInputError, resetSimulation, restartEngine, scrollToTop, setSimulationStep, setSituation, updateSituation
     )
 
 {-|
@@ -167,6 +167,14 @@ closeModal modalId =
     SendToJs
         { tag = "CLOSE_MODAL"
         , data = Json.Encode.string modalId
+        }
+
+
+scrollToTop : Effect msg
+scrollToTop =
+    SendToJs
+        { tag = "SCROLL_TO_TOP"
+        , data = Json.Encode.null
         }
 
 
