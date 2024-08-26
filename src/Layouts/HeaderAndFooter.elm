@@ -43,12 +43,12 @@ layout props shared _ =
 
 
 type alias Model =
-    ()
+    { headerMenuIsOpen : Bool }
 
 
 init : () -> ( Model, Effect Msg )
 init _ =
-    ( (), Effect.none )
+    ( { headerMenuIsOpen = False }, Effect.none )
 
 
 
@@ -60,11 +60,15 @@ type Msg
     | PersonasModalOpen
     | PersonasModalClose
     | SetPersonasSituation Situation
+    | ToggleHeaderMenu
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
+        ToggleHeaderMenu ->
+            ( { model | headerMenuIsOpen = not model.headerMenuIsOpen }, Effect.none )
+
         ResetSimulation ->
             ( model, Effect.resetSimulation )
 
@@ -93,12 +97,14 @@ subscriptions _ =
 
 
 view : Props -> Shared.Model -> { toContentMsg : Msg -> contentMsg, content : View contentMsg, model : Model } -> View contentMsg
-view props shared { content, toContentMsg } =
+view props shared { content, toContentMsg, model } =
     { title = content.title
     , body =
         [ Components.DSFR.Header.new
             { onReset = ResetSimulation
             , onPersonasModalOpen = PersonasModalOpen
+            , onToggleHeaderMenu = ToggleHeaderMenu
+            , headerMenuIsOpen = model.headerMenuIsOpen
             }
             |> Components.DSFR.Header.view
             |> Html.map toContentMsg
@@ -115,8 +121,13 @@ view props shared { content, toContentMsg } =
             }
             |> Html.map toContentMsg
         , div
-            [ classList [ ( "bg-background-main", props.contrastBg ) ]
-            , class "fr-py-12v min-h-[80vh]"
+            [ class "fr-py-12v min-h-[80vh]"
+            , classList
+                [ ( "bg-background-main", props.contrastBg )
+                , -- FIXME: should not be hardcoded like this?
+                  ( "overflow-hidden", model.headerMenuIsOpen )
+                , ( "fixed", model.headerMenuIsOpen )
+                ]
             ]
             content.body
         , Components.DSFR.Footer.view
