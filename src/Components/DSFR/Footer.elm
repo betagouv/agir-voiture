@@ -32,7 +32,7 @@ view =
                         [ text "Ce site est développé dans le câdre du projet "
                         , a [ href "https://agir.beta.gouv.fr", target "_blank", rel "noopener external" ]
                             [ text "France Nation Verte / Agir" ]
-                        , text " au sien de  "
+                        , text " au sein de "
                         , a [ href "https://beta.gouv.fr/incubateurs/dinum", target "_blank", rel "noopener external" ]
                             [ text "L'Incubateur du Service Numérique (DINUM)" ]
                         , text ". Il est financé par le Secrétariat général à la planification écologique (SGPE) via le "
