@@ -14,7 +14,7 @@ import FormatNumber.Locales exposing (Decimals(..))
 import Helper exposing (viewMarkdown)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Extra exposing (viewMaybe)
+import Html.Extra exposing (nothing, viewMaybe)
 import Markdown
 import Publicodes exposing (Evaluation, Mecanism(..), RawRule, RawRules)
 import Publicodes.NodeValue as NodeValue exposing (NodeValue(..))
@@ -119,7 +119,7 @@ viewInput props question ( name, rule ) isApplicable =
                 |> Maybe.map .nodeValue
     in
     if not isApplicable then
-        viewDisabledInput props.onInput question name
+        nothing
 
     else
         case ( ( rule.formule, rule.unite ), maybeNodeValue ) of
@@ -145,7 +145,7 @@ viewInput props question ( name, rule ) isApplicable =
                             }
 
                     Nothing ->
-                        viewDisabledInput props.onInput question name
+                        nothing
 
             ( _, Just ((Boolean _) as nodeValue) ) ->
                 Components.Simulateur.BooleanInput.view
@@ -168,20 +168,4 @@ viewInput props question ( name, rule ) isApplicable =
                     }
 
             _ ->
-                viewDisabledInput props.onInput question name
-
-
-viewDisabledInput :
-    (RuleName -> NodeValue -> Maybe InputError -> msg)
-    -> String
-    -> RuleName
-    -> Html msg
-viewDisabledInput onInput question name =
-    BetaGouv.DSFR.Input.new
-        { onInput = \_ -> onInput name NodeValue.Empty Nothing
-        , label = text question
-        , id = name
-        , value = ""
-        }
-        |> BetaGouv.DSFR.Input.withDisabled True
-        |> BetaGouv.DSFR.Input.view
+                nothing
