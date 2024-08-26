@@ -16,6 +16,9 @@ export default {
         "background-main": "#f7f8f8",
         "border-main": "#e7e7e7",
       },
+      boxShadow: {
+        "input-border": "inset 0 -2px 0 0 #3a3a3a",
+      },
     },
     typography: {
       DEFAULT: {

@@ -11,6 +11,7 @@ view :
     , label : Html msg
     , current : NodeValue.NodeValue
     , onChecked : NodeValue.NodeValue -> msg
+    , hint : Maybe String
     }
     -> Html msg
 view props =
@@ -24,4 +25,5 @@ view props =
         , toValue = NodeValue.toString
         , onChecked = props.onChecked
         }
+        |> BetaGouv.DSFR.Radio.withLegendExtra (Maybe.map text props.hint)
         |> BetaGouv.DSFR.Radio.view

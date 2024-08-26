@@ -2,6 +2,10 @@ module Helper exposing (..)
 
 {-| -}
 
+import Html exposing (Html, div)
+import Html.Attributes exposing (class)
+import Markdown
+
 
 {-| Drops elements from [list] until the next element satisfies [predicate].
 
@@ -42,3 +46,8 @@ dropUntilNext predicate list =
 
         _ ->
             []
+
+
+viewMarkdown : String -> Html msg
+viewMarkdown markdown =
+    div [ class "markdown" ] (Markdown.toHtml Nothing markdown)
