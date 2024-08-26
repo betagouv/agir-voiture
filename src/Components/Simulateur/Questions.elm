@@ -11,6 +11,7 @@ import Core.Rules as Rules
 import Core.UI as UI
 import Dict exposing (Dict)
 import FormatNumber.Locales exposing (Decimals(..))
+import Helper exposing (viewMarkdown)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Extra exposing (viewMaybe)
@@ -76,7 +77,7 @@ viewCategoryDescription currentCategory rawRules =
             currentCategory
             rawRules
             |> Maybe.andThen .description
-            |> viewMaybe (\desc -> div [] (Markdown.toHtml Nothing desc))
+            |> viewMaybe viewMarkdown
         ]
 
 
@@ -131,6 +132,7 @@ viewInput props question ( name, rule ) isApplicable =
                             , onInput = \str -> props.onInput name (NodeValue.Str str) Nothing
                             , toValue = identity
                             , selected = Rules.getStringFromSituation nodeValue
+                            , hint = rule.description
                             , toLabel =
                                 \pos ->
                                     text
@@ -151,6 +153,7 @@ viewInput props question ( name, rule ) isApplicable =
                     , label = text question
                     , current = nodeValue
                     , onChecked = \value -> props.onInput name value Nothing
+                    , hint = rule.description
                     }
 
             ( _, Just value ) ->

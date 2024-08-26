@@ -1,6 +1,6 @@
 module Components.Simulateur.NumericInput exposing (view)
 
-import BetaGouv.DSFR.Input
+import Components.DSFR.Input as Input
 import Core.Format
 import Core.InputError as InputError exposing (InputError)
 import Dict exposing (Dict)
@@ -42,31 +42,32 @@ view props =
             case ( Dict.get props.ruleName props.situation, props.value, maybeError ) of
                 ( Nothing, NodeValue.Number num, Nothing ) ->
                     -- Not touched input (the user didn't fill it)
-                    BetaGouv.DSFR.Input.new defaultConfig
-                        |> BetaGouv.DSFR.Input.withInputAttrs
+                    Input.new defaultConfig
+                        |> Input.withInputAttrs
                             [ placeholder (Core.Format.withPrecision (Max 2) num) ]
 
                 ( Just _, NodeValue.Number num, Nothing ) ->
                     -- Filled input
-                    BetaGouv.DSFR.Input.new { defaultConfig | value = String.fromFloat num }
+                    Input.new { defaultConfig | value = String.fromFloat num }
 
                 ( Just _, NodeValue.Str "", Nothing ) ->
                     -- Empty input (the user filled it and then removed the value)
-                    BetaGouv.DSFR.Input.new defaultConfig
+                    Input.new defaultConfig
 
                 ( _, _, Just error ) ->
                     -- Filled input with invalid value
-                    BetaGouv.DSFR.Input.new { defaultConfig | value = error.value }
+                    Input.new { defaultConfig | value = error.value }
 
                 _ ->
                     -- Should never happen
-                    BetaGouv.DSFR.Input.new defaultConfig
+                    Input.new defaultConfig
     in
     config
-        |> BetaGouv.DSFR.Input.withHint [ viewMaybe text props.rule.unite ]
-        |> BetaGouv.DSFR.Input.withError
+        |> Input.withHint [ viewMaybe text props.rule.description ]
+        |> Input.withUnit props.rule.unite
+        |> Input.withError
             (maybeError |> Maybe.map (\{ msg } -> [ text msg ]))
-        |> BetaGouv.DSFR.Input.view
+        |> Input.view
 
 
 validationOnInput : Config msg -> String -> msg
