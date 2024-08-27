@@ -1,6 +1,6 @@
 module Components.Simulateur.Result exposing (view)
 
-import BetaGouv.DSFR.Accordion
+import BetaGouv.DSFR.Accordion as Accordion
 import BetaGouv.DSFR.Button as Button
 import BetaGouv.DSFR.CallOut as CallOut
 import BetaGouv.DSFR.Icons as Icons
@@ -30,9 +30,19 @@ type alias Config msg =
     , resultRules : List RuleName
     , rules : RawRules
     , engineStatus : EngineStatus
-    , comparisonTableIsOpen : Bool
-    , onToggleComparisonTable : msg
+    , accordionsState : Dict String Bool
+    , onToggleAccordion : String -> msg
     }
+
+
+accordionCarbonId : String
+accordionCarbonId =
+    "accordion-carbon"
+
+
+accordionComparisonTableId : String
+accordionComparisonTableId =
+    "accordion-comparison-table"
 
 
 view : Config msg -> Html msg
@@ -186,7 +196,7 @@ view props =
                 , currentStep = Shared.SimulationStep.Result
                 , containsErrors = False
                 }
-            , div [ class "flex flex-col gap-8 md:gap-16" ]
+            , div [ class "flex flex-col gap-8 md:gap-20" ]
                 [ section []
                     [ h2 []
                         [ text "Récapitulatif de votre situation"
@@ -204,78 +214,90 @@ view props =
                             _ ->
                                 Components.LoadingCard.view
                         ]
-                    ]
-
-                -- TODO: move it to a tooltip or accordion
-                , CallOut.callout "L'objectif des 2 tonnes"
-                    (div []
-                        [ p []
-                            [ text """
+                    , Accordion.single
+                        { id = accordionCarbonId
+                        , header = text "Qu'est-ce que l'empreinte carbone ?"
+                        , onClick = props.onToggleAccordion accordionCarbonId
+                        , open =
+                            Dict.get accordionCarbonId props.accordionsState
+                                |> Maybe.withDefault False
+                        , content =
+                            div []
+                                [ h3 []
+                                    [ text "L'objectif des 2 tonnes" ]
+                                , p []
+                                    [ text """
                             Pour essayer de maintenir l'augmentation
                             de la température moyenne de la planète en
                             dessous de 2 °C par rapport aux niveaux
                             préindustriels, il faudrait arriver à atteindre la """
-                            , a [ href "https://fr.wikipedia.org/wiki/Neutralit%C3%A9_carbone", target "_blank" ] [ text "neutralité carbone" ]
-                            , text "."
-                            ]
-                        , br [] []
-                        , p []
-                            [ text "Pour cela, un objectif de 2 tonnes de CO2e par an et par personne a été fixé pour 2050 ("
-                            , a [ href "https://nosgestesclimat.fr/empreinte-climat", target "_blank" ]
-                                [ text "en savoir plus" ]
-                            , text ")."
-                            ]
-                        ]
-                    )
-                , viewAlternatives
-                    { title = "Les meilleures alternatives pour le gabarit " ++ targetGabaritTitle
-                    , desc =
-                        [ text "Parmi les véhicules de gabarit "
-                        , span [ class "font-medium" ] [ text targetGabaritTitle ]
-                        , text ", voici les meilleures alternatives pour votre usage."
-                        , text " Sachant que vous "
-                        , span [ class "font-medium" ]
-                            [ if hasChargingStation then
-                                text "avez"
+                                    , a [ href "https://fr.wikipedia.org/wiki/Neutralit%C3%A9_carbone", target "_blank" ] [ text "neutralité carbone" ]
+                                    , text "."
+                                    ]
+                                , p []
+                                    [ text "Pour cela, un objectif de 2 tonnes de CO2e par an et par personne a été fixé pour 2050 ("
+                                    , a [ href "https://nosgestesclimat.fr/empreinte-climat", target "_blank" ]
+                                        [ text "en savoir plus" ]
+                                    , text ")."
+                                    ]
+                                ]
+                        }
+                    ]
+                , section [ class "flex flex-col md:gap-20" ]
+                    [ viewAlternatives
+                        { title = "Les meilleures alternatives pour le gabarit " ++ targetGabaritTitle
+                        , desc =
+                            [ text "Parmi les véhicules de gabarit "
+                            , span [ class "font-medium" ] [ text targetGabaritTitle ]
+                            , text ", voici les meilleures alternatives pour votre usage."
+                            , text " Sachant que vous "
+                            , span [ class "font-medium" ]
+                                [ if hasChargingStation then
+                                    text "avez"
 
-                              else
-                                text "n'avez pas"
-                            , text " la possibilité d'avoir une borne de recharge."
+                                  else
+                                    text "n'avez pas"
+                                , text " la possibilité d'avoir une borne de recharge."
+                                ]
                             ]
-                        ]
-                    , cheapest = targetCheapest
-                    , greenest = targetGreenest
-                    }
-                , viewAlternatives
-                    { title = "Les meilleures alternatives toutes catégories confondues"
-                    , desc =
-                        [ text "Parmi toutes les alternatives, voici les meilleures pour votre usage."
-                        ]
-                    , cheapest = cheapest
-                    , greenest = greenest
-                    }
-                , BetaGouv.DSFR.Accordion.single
-                    { header = text "Voir toutes les alternatives"
-                    , id = "accordion-comparison-table"
-                    , onClick = props.onToggleComparisonTable
-                    , open = props.comparisonTableIsOpen
-                    , content =
-                        case ( userEmission, userCost ) of
-                            ( Just emission, Just cost ) ->
-                                case props.engineStatus of
-                                    EngineStatus.Evaluating ->
-                                        Components.LoadingCard.view
+                        , cheapest = targetCheapest
+                        , greenest = targetGreenest
+                        }
+                    , div []
+                        [ viewAlternatives
+                            { title = "Les meilleures alternatives toutes catégories confondues"
+                            , desc =
+                                [ text "Parmi toutes les alternatives, voici les meilleures pour votre usage."
+                                ]
+                            , cheapest = cheapest
+                            , greenest = greenest
+                            }
+                        , Accordion.single
+                            { header = text "Voir toutes les alternatives"
+                            , id = accordionComparisonTableId
+                            , onClick = props.onToggleAccordion accordionComparisonTableId
+                            , open =
+                                Dict.get accordionComparisonTableId props.accordionsState
+                                    |> Maybe.withDefault False
+                            , content =
+                                case ( userEmission, userCost ) of
+                                    ( Just emission, Just cost ) ->
+                                        case props.engineStatus of
+                                            EngineStatus.Evaluating ->
+                                                Components.LoadingCard.view
+
+                                            _ ->
+                                                Components.Simulateur.ComparisonTable.view
+                                                    { rulesToCompare = computedResults
+                                                    , userEmission = emission
+                                                    , userCost = cost
+                                                    }
 
                                     _ ->
-                                        Components.Simulateur.ComparisonTable.view
-                                            { rulesToCompare = computedResults
-                                            , userEmission = emission
-                                            , userCost = cost
-                                            }
-
-                            _ ->
-                                Components.LoadingCard.view
-                    }
+                                        Components.LoadingCard.view
+                            }
+                        ]
+                    ]
                 , section [ class "fr-col-8" ]
                     [ h2 [] [ text "Les aides financières" ]
                     , p []

@@ -53,7 +53,7 @@ view { rulesToCompare, userCost, userEmission } =
                                 [ text infos.motorisation
                                 , text infos.gabarit
                                 , text (Maybe.withDefault "Éléctricité" infos.carburant)
-                                , viewValuePlusDiff infos.emission userEmission "kg"
+                                , viewValuePlusDiff infos.emission userEmission "kgCO2e"
                                 , viewValuePlusDiff infos.cost userCost "€"
                                 ]
 
@@ -61,7 +61,7 @@ view { rulesToCompare, userCost, userEmission } =
                                 [ span [ class "italic" ]
                                     [ text "Votre voiture actuelle" ]
                                 , span [ class "italic" ]
-                                    [ viewValuePlusDiff emission userEmission "kg" ]
+                                    [ viewValuePlusDiff emission userEmission "kgCO2e" ]
                                 , span [ class "italic" ]
                                     [ viewValuePlusDiff cost userCost "€" ]
                                 ]
@@ -73,7 +73,7 @@ view { rulesToCompare, userCost, userEmission } =
             [ "Motorisation"
             , "Taille"
             , "Carburant"
-            , "Émission annuelle (CO2eq)"
+            , "Émission annuelle"
             , "Coût annuel"
             ]
         , rows = rows
@@ -107,13 +107,16 @@ viewValuePlusDiff value base unit =
         formattedDiff =
             Core.Format.floatToFrenchLocale (Max 0) diff
     in
-    span [ class "flex gap-2" ]
-        [ text (formattedValue ++ " " ++ unit)
+    span [ class "flex gap-2 items-center" ]
+        [ span []
+            [ text formattedValue
+            , span [ class "fr-pl-1v text-xs text-neutral-600" ] [ text unit ]
+            ]
         , if diff == 0 then
             nothing
 
           else
-            p [ class ("rounded-full text-xs flex items-center " ++ tagColor) ]
+            span [ class ("flex text-xs items-center " ++ tagColor) ]
                 [ text tagPrefix
                 , span [ title "Différence par rapport à votre situation actuelle" ]
                     [ text formattedDiff ]

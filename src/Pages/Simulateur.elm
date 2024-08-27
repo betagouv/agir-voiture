@@ -6,7 +6,7 @@ import Components.Simulateur.Questions
 import Components.Simulateur.Result
 import Core.InputError exposing (InputError)
 import Core.UI as UI
-import Dict
+import Dict exposing (Dict)
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -43,7 +43,7 @@ toLayout _ =
 
 
 type alias Model =
-    { comparisonTableIsOpen : Bool
+    { accordionsState : Dict String Bool
     }
 
 
@@ -53,7 +53,7 @@ init shared () =
         currentStep =
             getSimulationStep shared.simulationStep shared.orderedCategories
     in
-    ( { comparisonTableIsOpen = False }
+    ( { accordionsState = Dict.empty }
     , Effect.setSimulationStep currentStep
     )
 
@@ -84,7 +84,7 @@ type Msg
     | NewAnswer ( RuleName, NodeValue, Maybe InputError )
     | NewStep SimulationStep
     | ResetSimulation
-    | ToggleComparisonTable
+    | ToggleAccordion String
 
 
 update : Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
@@ -121,8 +121,13 @@ update _ msg model =
         ResetSimulation ->
             ( model, Effect.resetSimulation )
 
-        ToggleComparisonTable ->
-            ( { model | comparisonTableIsOpen = not model.comparisonTableIsOpen }, Effect.none )
+        ToggleAccordion id ->
+            ( { model
+                | accordionsState =
+                    Dict.update id (Maybe.map not) model.accordionsState
+              }
+            , Effect.none
+            )
 
 
 
@@ -192,8 +197,8 @@ view shared model =
                                         , resultRules = shared.resultRules
                                         , rules = shared.rules
                                         , engineStatus = shared.engineStatus
-                                        , comparisonTableIsOpen = model.comparisonTableIsOpen
-                                        , onToggleComparisonTable = ToggleComparisonTable
+                                        , accordionsState = model.accordionsState
+                                        , onToggleAccordion = ToggleAccordion
                                         }
 
                                 SimulationStep.NotStarted ->
