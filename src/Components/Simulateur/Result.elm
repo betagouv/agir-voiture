@@ -120,15 +120,18 @@ view props =
                 |> filterTarget
                 |> List.head
 
-        viewAlternative : String -> Core.Result.ComputedResult -> Html msg
-        viewAlternative title computedResult =
+        viewAlternative : Icons.IconName -> String -> Core.Result.ComputedResult -> Html msg
+        viewAlternative icon title computedResult =
             case props.engineStatus of
                 EngineStatus.Evaluating ->
                     Components.LoadingCard.view
 
                 _ ->
                     div []
-                        [ h4 [] [ text title ]
+                        [ h4 [ class "flex gap-2 items-center" ]
+                            [ Icons.iconMD icon
+                            , text title
+                            ]
                         , case computedResult of
                             AlternativeCar infos ->
                                 TotalCard.new
@@ -165,11 +168,11 @@ view props =
             case ( args.cheapest, args.greenest ) of
                 ( Just cheapestAlternative, Just greenestAlternative ) ->
                     section []
-                        [ h2 [] [ text args.title ]
+                        [ h2 [] args.title
                         , p [ class "fr-col-8" ] args.desc
                         , div [ class "grid grid-cols-2 gap-6" ]
-                            [ viewAlternative "La plus économique" cheapestAlternative
-                            , viewAlternative "La plus écologique" greenestAlternative
+                            [ viewAlternative Icons.finance.moneyEuroCircleLine "La plus économique" cheapestAlternative
+                            , viewAlternative Icons.others.leafLine "La plus écologique" greenestAlternative
                             ]
                         ]
 
@@ -245,13 +248,17 @@ view props =
                     ]
                 , section [ class "flex flex-col md:gap-20" ]
                     [ viewAlternatives
-                        { title = "Les meilleures alternatives pour le gabarit " ++ targetGabaritTitle
+                        { title =
+                            [ text "Les meilleures alternatives pour le gabarit "
+                            , span [ class "fr-px-3v bg-[var(--background-contrast-grey)]" ]
+                                [ text targetGabaritTitle ]
+                            ]
                         , desc =
                             [ text "Parmi les véhicules de gabarit "
-                            , span [ class "font-medium" ] [ text targetGabaritTitle ]
+                            , span [ class "font-medium fr-px-1v bg-[var(--background-contrast-grey)]" ] [ text targetGabaritTitle ]
                             , text ", voici les meilleures alternatives pour votre usage."
                             , text " Sachant que vous "
-                            , span [ class "font-medium" ]
+                            , span [ class "font-medium fr-px-1v bg-[var(--background-contrast-grey)]" ]
                                 [ if hasChargingStation then
                                     text "avez"
 
@@ -265,7 +272,7 @@ view props =
                         }
                     , div []
                         [ viewAlternatives
-                            { title = "Les meilleures alternatives toutes catégories confondues"
+                            { title = [ text "Les meilleures alternatives toutes catégories confondues" ]
                             , desc =
                                 [ text "Parmi toutes les alternatives, voici les meilleures pour votre usage."
                                 ]
