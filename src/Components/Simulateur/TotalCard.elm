@@ -55,8 +55,8 @@ withComparison { costToCompare, emissionToCompare } config =
 
 view : Config -> Html msg
 view config =
-    div [ class "border rounded fr-my-4v" ]
-        [ div [ class "fr-px-4v fr-py-2v fr-pt-4v flex flex-col gap-2" ]
+    div [ class "outline rounded-md fr-my-4v outline-1 outline-[var(--border-plain-info)]" ]
+        [ div [ class "fr-px-4v fr-py-4v flex flex-col gap-2" ]
             [ h5 [ class "m-0" ] [ text config.title ]
             , div [ class "flex flex-col gap-2" ]
                 [ div [ class "flex flex-col" ]
@@ -80,7 +80,7 @@ view config =
                         )
                         config.costToCompare
                     ]
-                , div [ class "flex flex-col gap-2" ]
+                , div [ class "flex flex-col" ]
                     [ div [ class "flex gap-2 h-fit items-center" ]
                         [ text "Émissions annuelles estimées :"
                         , viewValue
@@ -123,7 +123,7 @@ viewValue :
     -> Html msg
 viewValue props =
     span
-        [ class "rounded rounded-full fr-px-3v fr-py-1v flex gap-1 items-center"
+        [ class "rounded rounded-full fr-px-3v fr-py-1v flex gap-1 items-baseline "
         , class props.bgColor
         , class props.textColor
         ]
@@ -131,6 +131,7 @@ viewValue props =
             [ classList
                 [ ( "text-sm", props.size == Small )
                 , ( "fr-text--bold", props.size == Large )
+                , ( "font-medium", props.size == Normal )
                 ]
             ]
             [ text props.value ]
@@ -139,15 +140,14 @@ viewValue props =
             |> Maybe.withDefault
                 -- FIXME: should not be hardcoded like this
                 (case props.value of
-                    "Thermique" ->
-                        Icons.iconSM Icons.map.gasStationFill
-
-                    "Électrique" ->
-                        Icons.iconSM Icons.map.chargingPile2Fill
-
-                    "Hybride" ->
-                        Icons.iconSM Icons.map.chargingPile2Line
-
+                    -- "Thermique" ->
+                    --     Icons.iconSM Icons.map.gasStationFill
+                    --
+                    -- "Électrique" ->
+                    --     Icons.iconSM Icons.map.chargingPile2Fill
+                    --
+                    -- "Hybride" ->
+                    --     Icons.iconSM Icons.map.chargingPile2Line
                     _ ->
                         nothing
                 )
@@ -163,23 +163,14 @@ viewDiff : { value : Float, base : Float, unit : String } -> Html msg
 viewDiff { value, base, unit } =
     let
         diff =
-            value - base
+            Basics.abs (value - base)
     in
-    div [ class "flex italic items-baseline" ]
-        [ text "Soit"
-        , viewValue
-            { value = Core.Format.floatToFrenchLocale (Max 0) diff
-            , bgColor = ""
-            , textColor =
-                if diff < 0 then
-                    "text-[var(--text-default-success)]"
-
-                else
-                    "text-[var(--text-default-error)]"
-            , size = Normal
-            , unit = Just unit
-            }
-        , text "de différence par an."
+    span [ class "fr-my-1v fr-px-1v bg-[var(--background-contrast-info)] text-[var(--text-default-info)] w-fit outline outline-1 rounded-sm outline-[var(--border-plain-info)]" ]
+        [ span [ class "font-medium inline-flex gap-1 items-baseline" ]
+            [ text ("~" ++ Core.Format.floatToFrenchLocale (Max 0) diff)
+            , viewUnit unit
+            ]
+        , text " d'économie"
         ]
 
 
@@ -187,8 +178,8 @@ viewContext :
     List { value : String, unit : Maybe String }
     -> Html msg
 viewContext contextValues =
-    div [ class "flex flex-col text-slate-600 fr-px-4v fr-py-2v gap-2 bg-[var(--background-alt-grey)] border-t " ]
-        [ span [ class "font-semibold" ] [ text "Caractéristiques" ]
+    div [ class "flex flex-col fr-px-4v fr-pt-2v fr-pb-4v gap-2 bg-[var(--background-contrast-info)]" ]
+        [ span [ class "font-semibold" ] [ text "Contexte" ]
         , div [ class "flex gap-2 flex-wrap" ]
             (contextValues
                 |> List.map
