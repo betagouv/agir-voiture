@@ -2143,10 +2143,10 @@ property-information@^6.0.0:
   resolved "https://registry.yarnpkg.com/property-information/-/property-information-6.5.0.tgz#6212fbb52ba757e92ef4fb9d657563b933b7ffec"
   integrity sha512-PgTgs/BlvHxOu8QuEN7wi5A0OmXaBcHpmCSTehcs6Uuu9IkDIEo13Hy7n898RHfrQ49vKCoGeWZSaAK01nwVig==
 
-publicodes-voiture@^0.3.0-6:
-  version "0.3.0-6"
-  resolved "https://registry.yarnpkg.com/publicodes-voiture/-/publicodes-voiture-0.3.0-6.tgz#4779024d4a42049d586e930150ddac34a1a48d2b"
-  integrity sha512-sbnH6RECtbX0AFv/TwwIzpXtVFHoW6djemmDh083AuRt1/4pF66AbTRy66wcX10ua7A4XGNutL/k5kgANTmSAw==
+publicodes-voiture@^0.3.0-7:
+  version "0.3.0-7"
+  resolved "https://registry.yarnpkg.com/publicodes-voiture/-/publicodes-voiture-0.3.0-7.tgz#643539863fb2e70494d3bf378a34730cbae32a84"
+  integrity sha512-cwQGbfwQQZRhNVfc7wK+cRN89aLbteBHlOHM8ysmOfwGqhFRzcnaDn49tPdvQcIrun8nikaj8y3Azup+uO2XbA==
   dependencies:
     "@incubateur-ademe/nosgestesclimat" "^2.5.6"
     "@incubateur-ademe/publicodes-commun" "^1.1.5"
