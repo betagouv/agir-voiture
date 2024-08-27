@@ -5,6 +5,7 @@ module Components.Simulateur.TotalCard exposing (new, view, withComparison, with
 
 import BetaGouv.DSFR.Icons as Icons
 import Core.Format
+import Core.Result exposing (ResultType(..))
 import FormatNumber.Locales exposing (Decimals(..))
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -75,7 +76,7 @@ view config =
                             viewDiff
                                 { value = config.cost
                                 , base = baseCost
-                                , unit = "€"
+                                , resultType = Cost
                                 }
                         )
                         config.costToCompare
@@ -96,7 +97,7 @@ view config =
                             viewDiff
                                 { value = config.emission
                                 , base = baseEmission
-                                , unit = "kgCO2e"
+                                , resultType = Emission
                                 }
                         )
                         config.emissionToCompare
@@ -159,19 +160,49 @@ viewUnit unit =
     span [ class "text-sm italic" ] [ text unit ]
 
 
-viewDiff : { value : Float, base : Float, unit : String } -> Html msg
-viewDiff { value, base, unit } =
+viewDiff : { value : Float, base : Float, resultType : ResultType } -> Html msg
+viewDiff { value, base, resultType } =
     let
         diff =
-            Basics.abs (value - base)
+            base - value
+
+        formatedDiff =
+            "~" ++ Core.Format.floatToFrenchLocale (Max 0) (Basics.abs diff)
+
+        unit =
+            case resultType of
+                Core.Result.Cost ->
+                    "€"
+
+                Core.Result.Emission ->
+                    "kgCO2e"
     in
-    span [ class "fr-my-1v fr-px-1v bg-[var(--background-contrast-info)] text-[var(--text-default-info)] w-fit outline outline-1 rounded-sm outline-[var(--border-plain-info)]" ]
-        [ span [ class "font-medium inline-flex gap-1 items-baseline" ]
-            [ text ("~" ++ Core.Format.floatToFrenchLocale (Max 0) diff)
-            , viewUnit unit
+    if diff > 0 then
+        span [ class "fr-my-1v fr-px-1v bg-[var(--background-contrast-info)] text-[var(--text-default-info)] w-fit outline outline-1 rounded-sm outline-[var(--border-plain-info)]" ]
+            [ span [ class "font-medium inline-flex gap-1 items-baseline" ]
+                [ text formatedDiff, viewUnit unit ]
+            , case resultType of
+                Core.Result.Cost ->
+                    text " d'économie"
+
+                Core.Result.Emission ->
+                    text " d'émission évitée"
             ]
-        , text " d'économie"
-        ]
+
+    else if diff < 0 then
+        span [ class "fr-my-1v fr-px-1v bg-[var(--background-contrast-warning)] text-[var(--text-default-warning)] w-fit outline outline-1 rounded-sm outline-[var(--border-plain-warning)]" ]
+            [ span [ class "font-medium inline-flex gap-1 items-baseline" ]
+                [ text formatedDiff, viewUnit unit ]
+            , case resultType of
+                Core.Result.Cost ->
+                    text " de surcoût"
+
+                Core.Result.Emission ->
+                    text " d'émission supplémentaire"
+            ]
+
+    else
+        nothing
 
 
 viewContext :

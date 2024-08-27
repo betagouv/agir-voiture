@@ -9,6 +9,13 @@ import Publicodes.NodeValue as NodeValue
 import Publicodes.RuleName as RuleName exposing (RuleName, SplitedRuleName, split)
 
 
+{-| TODO: refactor with this
+-}
+type ResultType
+    = Cost
+    | Emission
+
+
 {-| A comparison item that represents a car with its cost and its carbon emissions.
 -}
 type ComputedResult
