@@ -16,6 +16,7 @@ type ComputedResult
         { cost : Float
         , emission : Float
         , gabarit : String
+        , motorisation : String
         }
     | AlternativeCar ComputedResultInfos
 
@@ -51,8 +52,8 @@ getCarburantTitle carburant =
 
 
 compareWith :
-    ({ cost : Float, emission : Float, gabarit : String }
-     -> { cost : Float, emission : Float, gabarit : String }
+    ({ cost : Float, emission : Float, gabarit : String, motorisation : String }
+     -> { cost : Float, emission : Float, gabarit : String, motorisation : String }
      -> Order
     )
     -> ComputedResult
@@ -62,8 +63,8 @@ compareWith compare a b =
     let
         -- NOTE: Only needed because of a bug in the compiler that doesn't allow to
         -- resolve ComputedResultInfos into { a | cost : Float, emission : Float, ... }.
-        map { cost, emission, gabarit } =
-            { cost = cost, emission = emission, gabarit = gabarit }
+        map { cost, emission, gabarit, motorisation } =
+            { cost = cost, emission = emission, gabarit = gabarit, motorisation = motorisation }
     in
     case ( a, b ) of
         ( AlternativeCar carA, AlternativeCar carB ) ->
@@ -209,12 +210,22 @@ getComputedResults props =
                                                                 getGabaritTitle gabarit props.rules
                                                             )
                                                         |> Maybe.withDefault ""
+
+                                                userMotorisation =
+                                                    props.evaluations
+                                                        |> getStringValue Rules.userMotorisation
+                                                        |> Maybe.map
+                                                            (\motorisation ->
+                                                                getMotorisationTitle motorisation props.rules
+                                                            )
+                                                        |> Maybe.withDefault ""
                                             in
                                             Just <|
                                                 CurrentUserCar
                                                     { cost = cost
                                                     , emission = emission
                                                     , gabarit = userGabarit
+                                                    , motorisation = userMotorisation
                                                     }
 
                                         _ ->

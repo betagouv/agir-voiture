@@ -55,8 +55,8 @@ withComparison { costToCompare, emissionToCompare } config =
 
 view : Config -> Html msg
 view config =
-    div [ class "outline rounded-md fr-my-4v outline-1 outline-[var(--border-plain-info)]" ]
-        [ div [ class "fr-px-4v fr-py-4v flex flex-col gap-2" ]
+    div [ class "rounded-md fr-my-4v outline outline-1 outline-[var(--border-plain-info)]" ]
+        [ div [ class "fr-p-4v flex flex-col gap-2" ]
             [ h5 [ class "m-0" ] [ text config.title ]
             , div [ class "flex flex-col gap-2" ]
                 [ div [ class "flex flex-col" ]

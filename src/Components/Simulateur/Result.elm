@@ -84,18 +84,21 @@ view props =
         filterTarget =
             List.filter
                 (\result ->
-                    case result of
-                        AlternativeCar infos ->
-                            -- Only keep the results with the same target gabarit
-                            -- TODO: use a +1/-1 comparison to be more flexible?
-                            (infos.gabarit == targetGabaritTitle)
-                                && -- Only keep the results with a charging station if the user has an electric car
-                                   -- FIXME: "électrique" is hardcoded
-                                   (hasChargingStation || infos.motorisation /= "Électrique")
+                    let
+                        ( gabarit, motorisation ) =
+                            case result of
+                                AlternativeCar infos ->
+                                    ( infos.gabarit, infos.motorisation )
 
-                        CurrentUserCar _ ->
-                            -- We ignre the user car
-                            False
+                                CurrentUserCar infos ->
+                                    ( infos.gabarit, infos.motorisation )
+                    in
+                    -- Only keep the results with the same target gabarit
+                    -- TODO: use a +1/-1 comparison to be more flexible?
+                    (gabarit == targetGabaritTitle)
+                        && -- Only keep the results with a charging station if the user has an electric car
+                           -- FIXME: "électrique" is hardcoded
+                           (hasChargingStation || motorisation /= "Électrique")
                 )
 
         computedResultsSortedOnCost =
@@ -160,8 +163,10 @@ view props =
                                     |> TotalCard.view
 
                             CurrentUserCar _ ->
-                                p [ class "rounded border fr-p-4v" ]
-                                    [ text "Vous avez déjà la meilleure alternative !" ]
+                                div [ class "flex gap-2 items-center font-medium rounded-md fr-my-4v fr-p-4v outline outline-1 outline-[var(--border-plain-success)] text-[var(--text-default-success)]" ]
+                                    [ Icons.iconMD Icons.system.successLine
+                                    , text "Vous avez déjà la meilleure alternative !"
+                                    ]
                         ]
 
         viewAlternatives args =
