@@ -10,7 +10,7 @@
         "html": { "lang": "fr" },
         "head": {}
       },
-      "title": "Quel véhicule pour changer le miens ?",
+      "title": "Quel véhicule pour changer le mien ?",
       "meta": [
         { "charset": "UTF-8" },
         { "http-equiv": "X-UA-Compatible", "content": "IE=edge" },
@@ -24,7 +24,7 @@
         },
         {
           "name": "og:title",
-          "content": "Quel véhicule pour changer le miens ?"
+          "content": "Quel véhicule pour changer le mien ?"
         },
         {
           "name": "og:description",
