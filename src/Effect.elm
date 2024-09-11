@@ -6,7 +6,7 @@ port module Effect exposing
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
     , map, toCmd
-    , closePersonasModal, evaluate, evaluateAll, newInputError, onEngineInitialized, onEvaluatedRules, onReactLinkClicked, onSituationUpdated, openPersonasModal, removeInputError, resetSimulation, restartEngine, scrollToTop, setSimulationStep, setSituation, updateSituation
+    , closePersonasModal, evaluate, evaluateAll, newInputError, onEngineError, onEngineInitialized, onEvaluatedRules, onReactLinkClicked, onSituationUpdated, openPersonasModal, removeInputError, resetSimulation, restartEngine, scrollToTop, setSimulationStep, setSituation, updateSituation
     )
 
 {-|
@@ -202,7 +202,12 @@ port onSituationUpdated : (() -> msg) -> Sub msg
 
 {-| The engine has been initialized.
 -}
-port onEngineInitialized : (Maybe String -> msg) -> Sub msg
+port onEngineInitialized : (() -> msg) -> Sub msg
+
+
+{-| The engine threw an error.
+-}
+port onEngineError : (String -> msg) -> Sub msg
 
 
 
