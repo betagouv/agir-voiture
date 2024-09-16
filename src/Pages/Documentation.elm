@@ -88,19 +88,18 @@ view shared _ =
                 , section [ class "" ]
                     [ p []
                         [ text """
-                Ce simulateur est basé sur un modèle de calcul créé à partir de
-                deux modèle de calculs existants :
+                Ce simulateur est basé sur deux modèles de calculs :
                 """
                         , ul []
                             [ li []
-                                [ text "le simulateur de l'ADEME "
+                                [ text "un calcul des émissions de CO2e d'un véhicule utilisant le modèle de calcul du simulateur de l'ADEME "
                                 , a [ href "https://nosgestesclimat.fr", target "_blank" ] [ text "Nos Gestes Climat" ]
-                                , text " pour le calcul des émissions de CO2e d'un véhicule ;"
+                                , text "."
                                 ]
                             , li []
-                                [ text "le simulateur "
-                                , a [ href "https://futur.eco", target "_blank" ] [ text "Futur.eco" ]
-                                , text " pour le calcul du coût d'un véhicule."
+                                [ text "un calcul du coût d'un véhicule insipiré du modèle de calcul de "
+                                , a [ href "https://futur.eco", target "_blank" ] [ text "futur.eco" ]
+                                , text " adapté pour le calcul de coût annuel et non du coût d'un trajet."
                                 ]
                             ]
                         ]
