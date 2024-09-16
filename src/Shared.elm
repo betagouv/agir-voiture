@@ -12,6 +12,7 @@ module Shared exposing
 
 -}
 
+import Browser.Navigation
 import Core.Personas as Personas exposing (Personas)
 import Core.Result
 import Core.Rules
@@ -130,6 +131,7 @@ update _ msg model =
                 , Effect.setSimulationStep SimulationStep.NotStarted
                 , Effect.restartEngine
                 , Effect.pushRoutePath Route.Path.Home_
+                , Effect.sendCmd Browser.Navigation.reload
                 ]
             )
 
@@ -178,7 +180,7 @@ update _ msg model =
             , Effect.none
             )
 
-        EngineInitialized Nothing ->
+        EngineInitialized ->
             case model.engineStatus of
                 EngineStatus.NotInitialized ->
                     ( { model | engineStatus = EngineStatus.Done }
@@ -188,7 +190,7 @@ update _ msg model =
                 _ ->
                     ( model, Effect.none )
 
-        EngineInitialized (Just errorMsg) ->
+        EngineError errorMsg ->
             ( { model | engineStatus = EngineStatus.WithError errorMsg }
             , Effect.none
             )
@@ -245,7 +247,8 @@ subscriptions _ _ =
                 Shared.Msg.NewEvaluations (decodeEvaluations encodedEvaluations)
             )
         , Effect.onSituationUpdated (\_ -> Evaluate)
-        , Effect.onEngineInitialized EngineInitialized
+        , Effect.onEngineInitialized (\_ -> EngineInitialized)
+        , Effect.onEngineError EngineError
         ]
 
 

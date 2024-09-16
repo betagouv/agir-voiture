@@ -117,7 +117,7 @@ getUserValues evaluations =
 
 getCostValueOf : SplitedRuleName -> Dict RuleName Evaluation -> Maybe Float
 getCostValueOf name =
-    getNumValue (RuleName.join ("coût" :: name))
+    getNumValue (RuleName.join ("coûts" :: name))
 
 
 getEmissionValueOf : SplitedRuleName -> Dict RuleName Evaluation -> Maybe Float
