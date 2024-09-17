@@ -96,13 +96,14 @@ export const onReady = async ({ app }: { app: any }) => {
             return;
           }
           try {
+            console.time(`EVALUATE_ALL (${data.length} rules)`);
             const evaluatedRules = data.map((rule: publicodes.RuleName) => {
               const result = engine.evaluate(rule);
-              const isApplicable =
-                // NOTE: maybe checking [result.nodeValue !== null] is enough. If
-                // we start to experience performance issues, we can remove the
-                // check for [result.nodeValue !== null]
-                engine.evaluate({ "est applicable": rule }).nodeValue === true;
+              const isApplicable = true;
+              // NOTE: maybe checking [result.nodeValue !== null] is enough. If
+              // we start to experience performance issues, we can remove the
+              // check for [result.nodeValue !== null]
+              engine.evaluate({ "est applicable": rule }).nodeValue === true;
 
               return [
                 rule,
@@ -113,6 +114,7 @@ export const onReady = async ({ app }: { app: any }) => {
                 },
               ];
             });
+            console.timeEnd(`EVALUATE_ALL (${data.length} rules)`);
             app.ports.onEvaluatedRules.send(evaluatedRules);
           } catch (error) {
             app.ports.onEngineError.send(error.message);
