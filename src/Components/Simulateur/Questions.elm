@@ -16,7 +16,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Extra exposing (nothing, viewMaybe)
 import Markdown
-import Publicodes exposing (Evaluation, Mecanism(..), RawRule, RawRules)
+import Publicodes exposing (Evaluation, Mechanism(..), RawRule, RawRules)
 import Publicodes.NodeValue as NodeValue exposing (NodeValue(..))
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
@@ -123,7 +123,7 @@ viewInput props question ( name, rule ) =
                 |> Maybe.map .nodeValue
     in
     case ( ( rule.formule, rule.unite ), maybeNodeValue ) of
-        ( ( Just (ChainedMecanism { une_possibilite }), _ ), Just nodeValue ) ->
+        ( ( Just (ChainedMechanism { une_possibilite }), _ ), Just nodeValue ) ->
             case une_possibilite of
                 Just { possibilites } ->
                     Components.Select.view

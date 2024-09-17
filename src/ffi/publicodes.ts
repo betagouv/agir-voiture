@@ -28,7 +28,9 @@ export function createAsync(
   return new Promise<PublicodesEngine>((resolve) => {
     const nbRules = Object.keys(rules).length;
     console.time(`[publicodes:parsing] ${nbRules} rules`);
-    const engine = new PublicodesEngine(rules).setSituation(situation ?? {});
+    const engine = new PublicodesEngine(rules, {
+      logger: { log: () => {}, warn: () => {}, error: () => {} },
+    }).setSituation(situation ?? {});
     console.timeEnd(`[publicodes:parsing] ${nbRules} rules`);
     resolve(engine);
   });
