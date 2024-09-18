@@ -94,8 +94,8 @@ validationOnInput props str =
                             Nothing
                     )
 
-        -- FIXME: the mechanism need to be evaluated before being referenced.
         checkMax num =
+            -- FIXME: the mechanism need to be evaluated before being used
             props.rule.plafond
                 |> Maybe.andThen Publicodes.Helpers.mechanismToFloat
                 |> Maybe.andThen
