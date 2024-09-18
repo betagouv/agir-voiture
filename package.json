@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@gouvfr/dsfr": "^1.12.1",
-    "@publicodes/react-ui": "^1.5.0",
-    "publicodes": "^1.5.0",
+    "@publicodes/react-ui": "^1.5.2",
+    "publicodes": "^1.5.1",
     "publicodes-voiture": "^0.3.0-9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

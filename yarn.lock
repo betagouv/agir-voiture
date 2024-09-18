@@ -294,10 +294,10 @@
   resolved "https://registry.yarnpkg.com/@pkgjs/parseargs/-/parseargs-0.11.0.tgz#a77ea742fab25775145434eb1d2328cf5013ac33"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
 
-"@publicodes/react-ui@^1.5.0":
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/@publicodes/react-ui/-/react-ui-1.5.0.tgz#0beac2683a40bb4d22e266c296a63c9cd8cf0ebe"
-  integrity sha512-CGflwv7GNkQbOSGVk7YO9pB4lisPTECR18VDMwgKaWgHuIh1Q4WdHRFOXD2cWWcpZOyiSM0+IEGzHPEA39UlDw==
+"@publicodes/react-ui@^1.5.2":
+  version "1.5.2"
+  resolved "https://registry.yarnpkg.com/@publicodes/react-ui/-/react-ui-1.5.2.tgz#58a28a950a1881722cc24a7512e77b2bc62be7d2"
+  integrity sha512-4Sj5/fwLI5yXVNr+SMPgEF+m//v47zo5gU8dmQmSXg2wY+eK9P09EI68GVQKv/mPqazLL75NBdWiA2elQBAk1g==
   dependencies:
     fuse.js "^7.0.0"
     styled-components "^6.1.1"
@@ -2151,10 +2151,10 @@ publicodes-voiture@^0.3.0-9:
     "@incubateur-ademe/nosgestesclimat" "^2.5.6"
     "@incubateur-ademe/publicodes-commun" "^1.1.5"
 
-publicodes@^1.5.0:
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/publicodes/-/publicodes-1.5.0.tgz#776ce14af79a1c130bd1e9092a5f23574d2f4711"
-  integrity sha512-A4rQkVN56tBg5uYzL0W639UTKrfjV4jLP+w1uxpNEpfw4NygV8sZQpG2wJVI/AOZoVUUbRbpyi8UXXb07O4YSA==
+publicodes@^1.5.1:
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/publicodes/-/publicodes-1.5.1.tgz#549de8fe9cd46ca94b5a984c95e5972126a6273d"
+  integrity sha512-VzTGL+iQUTRoBErP/5LRjq2jeFMPyd0kNcp1FPL9ackiZ0uE2SQHbKr+K6cT0OjKE0gJgPVF8lEDDZAALuLAng==
 
 queue-microtask@^1.2.2:
   version "1.2.3"
