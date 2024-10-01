@@ -25,7 +25,7 @@ results in term of carbon emissions.
 -}
 resultNamespaces : List RuleName
 resultNamespaces =
-    [ "empreinte", "coût" ]
+    [ "empreinte", "coûts" ]
 
 
 {-| The name of the rule that represents the total emission for the user car.
@@ -39,7 +39,7 @@ userEmission =
 -}
 userCost : RuleName
 userCost =
-    "coût . voiture"
+    "coûts . voiture"
 
 
 userGabarit : RuleName
@@ -60,8 +60,9 @@ userContext =
     [ "voiture . gabarit"
     , "voiture . motorisation"
     , "voiture . thermique . carburant"
-    , "voiture . thermique . consommation"
+    , "voiture . thermique . consommation carburant"
     , "voiture . thermique . prix carburant"
+    , "voiture . électrique . consommation électricité"
     , "voiture . prix d'achat"
 
     -- TODO: manage boolean,        "voiture . occasion"

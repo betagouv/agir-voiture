@@ -16,7 +16,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Extra exposing (nothing, viewMaybe)
 import Markdown
-import Publicodes exposing (Evaluation, Mecanism(..), RawRule, RawRules)
+import Publicodes exposing (Evaluation, Mechanism(..), RawRule, RawRules)
 import Publicodes.NodeValue as NodeValue exposing (NodeValue(..))
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
@@ -90,9 +90,13 @@ viewQuestions props =
                     (\name ->
                         Maybe.map2
                             (\rule eval ->
-                                div [ class "fr-col-8" ]
-                                    [ viewQuestion props ( name, rule ) eval.isApplicable
-                                    ]
+                                if eval.isApplicable then
+                                    div [ class "fr-col-8" ]
+                                        [ viewQuestion props ( name, rule )
+                                        ]
+
+                                else
+                                    nothing
                             )
                             (Dict.get name props.rules)
                             (Dict.get name props.evaluations)
@@ -101,71 +105,67 @@ viewQuestions props =
         ]
 
 
-viewQuestion : Config msg -> ( RuleName, RawRule ) -> Bool -> Html msg
-viewQuestion props ( name, rule ) isApplicable =
+viewQuestion : Config msg -> ( RuleName, RawRule ) -> Html msg
+viewQuestion props ( name, rule ) =
     rule.question
         |> Maybe.map
             (\question ->
-                viewInput props question ( name, rule ) isApplicable
+                viewInput props question ( name, rule )
             )
         |> viewMaybe identity
 
 
-viewInput : Config msg -> String -> ( RuleName, RawRule ) -> Bool -> Html msg
-viewInput props question ( name, rule ) isApplicable =
+viewInput : Config msg -> String -> ( RuleName, RawRule ) -> Html msg
+viewInput props question ( name, rule ) =
     let
         maybeNodeValue =
             Dict.get name props.evaluations
                 |> Maybe.map .nodeValue
     in
-    if not isApplicable then
-        nothing
+    case ( ( rule.formule, rule.unite ), maybeNodeValue ) of
+        ( ( Just (ChainedMechanism { une_possibilite }), _ ), Just nodeValue ) ->
+            case une_possibilite of
+                Just { possibilites } ->
+                    Components.Select.view
+                        { label = question
+                        , options = possibilites
+                        , onInput = \str -> props.onInput name (NodeValue.Str str) Nothing
+                        , toValue = identity
+                        , selected = Rules.getStringFromSituation nodeValue
+                        , hint = rule.description
+                        , toLabel =
+                            \pos ->
+                                text
+                                    (Rules.getOptionTitle
+                                        { rules = props.rules
+                                        , namespace = Just name
+                                        , optionValue = pos
+                                        }
+                                    )
+                        }
 
-    else
-        case ( ( rule.formule, rule.unite ), maybeNodeValue ) of
-            ( ( Just (ChainedMecanism { une_possibilite }), _ ), Just nodeValue ) ->
-                case une_possibilite of
-                    Just { possibilites } ->
-                        Components.Select.view
-                            { label = question
-                            , options = possibilites
-                            , onInput = \str -> props.onInput name (NodeValue.Str str) Nothing
-                            , toValue = identity
-                            , selected = Rules.getStringFromSituation nodeValue
-                            , hint = rule.description
-                            , toLabel =
-                                \pos ->
-                                    text
-                                        (Rules.getOptionTitle
-                                            { rules = props.rules
-                                            , namespace = Just name
-                                            , optionValue = pos
-                                            }
-                                        )
-                            }
+                Nothing ->
+                    nothing
 
-                    Nothing ->
-                        nothing
+        ( _, Just ((Boolean _) as nodeValue) ) ->
+            Components.Simulateur.BooleanInput.view
+                { id = name
+                , label = text question
+                , current = nodeValue
+                , onChecked = \value -> props.onInput name value Nothing
+                , hint = rule.description
+                }
 
-            ( _, Just ((Boolean _) as nodeValue) ) ->
-                Components.Simulateur.BooleanInput.view
-                    { id = name
-                    , label = text question
-                    , current = nodeValue
-                    , onChecked = \value -> props.onInput name value Nothing
-                    , hint = rule.description
-                    }
+        ( _, Just value ) ->
+            Components.Simulateur.NumericInput.view
+                { onInput = props.onInput
+                , inputErrors = props.inputErrors
+                , situation = props.situation
+                , label = text question
+                , rule = rule
+                , ruleName = name
+                , value = value
+                }
 
-            ( _, Just value ) ->
-                Components.Simulateur.NumericInput.view
-                    { onInput = props.onInput
-                    , inputErrors = props.inputErrors
-                    , situation = props.situation
-                    , label = text question
-                    , rule = rule
-                    , ruleName = name
-                    , value = value
-                    }
-
-            _ ->
-                nothing
+        _ ->
+            nothing

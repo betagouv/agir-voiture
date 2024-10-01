@@ -8,7 +8,9 @@ import FormatNumber.Locales exposing (Decimals(..))
 import Html exposing (Html, text)
 import Html.Attributes exposing (placeholder)
 import Html.Extra exposing (viewMaybe)
-import Publicodes exposing (Mecanism(..), RawRule)
+import Maybe.Extra
+import Publicodes exposing (Mechanism(..), RawRule)
+import Publicodes.Helpers
 import Publicodes.NodeValue as NodeValue exposing (NodeValue(..))
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
@@ -73,16 +75,43 @@ view props =
 validationOnInput : Config msg -> String -> msg
 validationOnInput props str =
     let
-        maybeMin =
+        checkMin num =
             props.rule.plancher
+                |> Maybe.andThen Publicodes.Helpers.mechanismToFloat
                 |> Maybe.andThen
-                    (\expr ->
-                        case expr of
-                            Expr (NodeValue.Number num) ->
-                                Just num
+                    (\min ->
+                        if num < min then
+                            Just <|
+                                props.onInput props.ruleName
+                                    (NodeValue.Str str)
+                                    (Just
+                                        (InputError.InvalidInput
+                                            ("Veuillez entrer un nombre supérieur ou égal à " ++ String.fromFloat min)
+                                        )
+                                    )
 
-                            _ ->
-                                Nothing
+                        else
+                            Nothing
+                    )
+
+        checkMax num =
+            -- FIXME: the mechanism need to be evaluated before being used
+            props.rule.plafond
+                |> Maybe.andThen Publicodes.Helpers.mechanismToFloat
+                |> Maybe.andThen
+                    (\max ->
+                        if num > max then
+                            Just <|
+                                props.onInput props.ruleName
+                                    (NodeValue.Str str)
+                                    (Just
+                                        (InputError.InvalidInput
+                                            ("Veuillez entrer un nombre inférieur ou égal à " ++ String.fromFloat max)
+                                        )
+                                    )
+
+                        else
+                            Nothing
                     )
     in
     -- NOTE: could it be cleaner?
@@ -98,23 +127,9 @@ validationOnInput props str =
     else
         case String.toFloat str of
             Just num ->
-                maybeMin
-                    |> Maybe.andThen
-                        (\min ->
-                            if num < min then
-                                Just <|
-                                    props.onInput props.ruleName
-                                        (NodeValue.Str str)
-                                        (Just
-                                            (InputError.InvalidInput
-                                                ("Veuillez entrer un nombre supérieur ou égal à " ++ String.fromFloat min)
-                                            )
-                                        )
-
-                            else
-                                Nothing
-                        )
-                    |> Maybe.withDefault (props.onInput props.ruleName (NodeValue.Number num) Nothing)
+                Maybe.Extra.or (checkMin num) (checkMax num)
+                    |> Maybe.withDefault
+                        (props.onInput props.ruleName (NodeValue.Number num) Nothing)
 
             Nothing ->
                 props.onInput props.ruleName

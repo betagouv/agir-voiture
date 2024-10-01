@@ -3,8 +3,13 @@
   text-align: left;
 }
 
+#documentation-search {
+  padding-left: 1rem;
+}
+
 #documentation-rule-root nav {
   padding-top: 2rem;
+  z-index: 1000;
 }
 
 #documentation-search-item-name {

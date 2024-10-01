@@ -38,7 +38,7 @@ async function safeInitEngine(
     app.ports.onEngineInitialized.send(null);
     return engine;
   } catch (error) {
-    app.ports.onEngineInitialized.send(error.message);
+    app.ports.onEngineError.send(error.message);
   }
 }
 
@@ -95,25 +95,30 @@ export const onReady = async ({ app }: { app: any }) => {
           if (!engine) {
             return;
           }
-          const evaluatedRules = data.map((rule: publicodes.RuleName) => {
-            const result = engine.evaluate(rule);
-            const isApplicable =
-              // NOTE: maybe checking [result.nodeValue !== null] is enough. If
-              // we start to experience performance issues, we can remove the
-              // check for [result.nodeValue !== null]
-              engine.evaluate({ "est applicable": rule }).nodeValue === true;
+          try {
+            console.time(`EVALUATE_ALL (${data.length} rules)`);
+            const evaluatedRules = data.map((rule: publicodes.RuleName) => {
+              const result = engine.evaluate(rule);
+              const isApplicable =
+                // NOTE: maybe checking [result.nodeValue !== null] is enough. If
+                // we start to experience performance issues, we can remove the
+                // check for [result.nodeValue !== null]
+                engine.evaluate({ "est applicable": rule }).nodeValue === true;
 
-            return [
-              rule,
-              {
-                isApplicable,
-                nodeValue: result.nodeValue ?? null,
-                unit: publicodes.getSerializedUnit(result),
-              },
-            ];
-          });
-
-          app.ports.onEvaluatedRules.send(evaluatedRules);
+              return [
+                rule,
+                {
+                  isApplicable,
+                  nodeValue: result.nodeValue ?? null,
+                  unit: publicodes.getSerializedUnit(result),
+                },
+              ];
+            });
+            console.timeEnd(`EVALUATE_ALL (${data.length} rules)`);
+            app.ports.onEvaluatedRules.send(evaluatedRules);
+          } catch (error) {
+            app.ports.onEngineError.send(error.message);
+          }
           break;
         }
 

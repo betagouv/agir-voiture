@@ -1,6 +1,6 @@
 module Publicodes exposing
     ( Evaluation
-    , Mecanism(..)
+    , Mechanism(..)
     , RawRule
     , RawRules
     , decodeRawRules
@@ -16,18 +16,18 @@ import Publicodes.Situation as Situation exposing (Situation)
 
 
 type alias Clause =
-    { si : Maybe Mecanism
-    , alors : Maybe Mecanism
-    , sinon : Maybe Mecanism
+    { si : Maybe Mechanism
+    , alors : Maybe Mechanism
+    , sinon : Maybe Mechanism
     }
 
 
 clauseDecoder : Decoder Clause
 clauseDecoder =
     Decode.succeed Clause
-        |> optional "si" (nullable mecanismDecoder) Nothing
-        |> optional "alors" (nullable mecanismDecoder) Nothing
-        |> optional "sinon" (nullable mecanismDecoder) Nothing
+        |> optional "si" (nullable mechanismDecoder) Nothing
+        |> optional "alors" (nullable mechanismDecoder) Nothing
+        |> optional "sinon" (nullable mechanismDecoder) Nothing
 
 
 type alias PossibiliteNode =
@@ -87,8 +87,8 @@ recalculNodeDecoder =
 
 {-| TODO: could be a cleaner way to do this?
 -}
-type alias ChainedMecanisms =
-    { valeur : Maybe Mecanism
+type alias ChainedMechanisms =
+    { valeur : Maybe Mechanism
     , somme : Maybe (List String)
     , moyenne : Maybe (List String)
     , variations : Maybe (List Clause)
@@ -100,23 +100,23 @@ type alias ChainedMecanisms =
     }
 
 
-type Mecanism
+type Mechanism
     = Expr NodeValue
-    | ChainedMecanism ChainedMecanisms
+    | ChainedMechanism ChainedMechanisms
 
 
-mecanismDecoder : Decoder Mecanism
-mecanismDecoder =
+mechanismDecoder : Decoder Mechanism
+mechanismDecoder =
     Decode.oneOf
         [ map Expr NodeValue.decoder
-        , map ChainedMecanism chainedMecanismsDecoder
+        , map ChainedMechanism chainedMechanismsDecoder
         ]
 
 
-chainedMecanismsDecoder : Decoder ChainedMecanisms
-chainedMecanismsDecoder =
-    Decode.succeed ChainedMecanisms
-        |> optional "valeur" (nullable (lazy (\_ -> mecanismDecoder))) Nothing
+chainedMechanismsDecoder : Decoder ChainedMechanisms
+chainedMechanismsDecoder =
+    Decode.succeed ChainedMechanisms
+        |> optional "valeur" (nullable (lazy (\_ -> mechanismDecoder))) Nothing
         |> optional "somme" (nullable (list string)) Nothing
         |> optional "moyenne" (nullable (list string)) Nothing
         |> optional "variations" (nullable (list (lazy (\_ -> clauseDecoder)))) Nothing
@@ -127,19 +127,20 @@ chainedMecanismsDecoder =
         |> optional "est défini" (nullable string) Nothing
 
 
-{-| TODO: correctly define RawRule as ChainedMecanism with a few extra fields
+{-| TODO: correctly define RawRule as ChainedMechanism with a few extra fields
 -}
 type alias RawRule =
     { question : Maybe String
     , description : Maybe String
     , resume : Maybe String
     , unite : Maybe String
-    , par_defaut : Maybe Mecanism
-    , formule : Maybe Mecanism
-    , valeur : Maybe Mecanism
+    , par_defaut : Maybe Mechanism
+    , formule : Maybe Mechanism
+    , valeur : Maybe Mechanism
     , titre : Maybe String
     , note : Maybe String
-    , plancher : Maybe Mecanism
+    , plancher : Maybe Mechanism
+    , plafond : Maybe Mechanism
     }
 
 
@@ -150,12 +151,13 @@ rawRuleDecoder =
         |> optional "description" (nullable string) Nothing
         |> optional "résumé" (nullable string) Nothing
         |> optional "unité" (nullable string) Nothing
-        |> optional "par défaut" (nullable mecanismDecoder) Nothing
-        |> optional "formule" (nullable mecanismDecoder) Nothing
-        |> optional "valeur" (nullable mecanismDecoder) Nothing
+        |> optional "par défaut" (nullable mechanismDecoder) Nothing
+        |> optional "formule" (nullable mechanismDecoder) Nothing
+        |> optional "valeur" (nullable mechanismDecoder) Nothing
         |> optional "titre" (nullable string) Nothing
         |> optional "note" (nullable string) Nothing
-        |> optional "plancher" (nullable mecanismDecoder) Nothing
+        |> optional "plancher" (nullable mechanismDecoder) Nothing
+        |> optional "plafond" (nullable mechanismDecoder) Nothing
 
 
 type alias RawRules =
