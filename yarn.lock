@@ -164,16 +164,6 @@
   resolved "https://registry.yarnpkg.com/@gouvfr/dsfr/-/dsfr-1.12.1.tgz#c25df1df5d3bacc4b847a1856c1d7f22219304a8"
   integrity sha512-2zXBHSDjjlaNcxGtqbPQN/vyjJQKIRUP3CKOYoodj2/45pAWM1AXo3kCwXFLUo5kQOltShZUquQ7hSeVg4RRtA==
 
-"@incubateur-ademe/nosgestesclimat@^2.5.6":
-  version "2.5.6"
-  resolved "https://registry.yarnpkg.com/@incubateur-ademe/nosgestesclimat/-/nosgestesclimat-2.5.6.tgz#30c45bf00cbf9e92acb959f385d42bb431f691bd"
-  integrity sha512-wVN4J2rSl6/lbsIdQq8gMP0IfsYiqINzgNAshAWfKPkYlg2kOttOm76biI5LaHG9XV6fF3Y1tsK8qLQSz/nW+g==
-
-"@incubateur-ademe/publicodes-commun@^1.1.5":
-  version "1.1.5"
-  resolved "https://registry.yarnpkg.com/@incubateur-ademe/publicodes-commun/-/publicodes-commun-1.1.5.tgz#6f5aeccd1bfda9856dc81702cde4102006f7ce8f"
-  integrity sha512-L9eHM53sabNPtWr7H9RbJCEUEMBf3RuWCjPJ7NKk5rQjprCTNAB72sWMW04/LUi/JzZH4CLizpvqt2Z+I3H3Kg==
-
 "@isaacs/cliui@^8.0.2":
   version "8.0.2"
   resolved "https://registry.yarnpkg.com/@isaacs/cliui/-/cliui-8.0.2.tgz#b37667b7bc181c168782259bab42474fbf52b550"
@@ -2142,14 +2132,6 @@ property-information@^6.0.0:
   version "6.5.0"
   resolved "https://registry.yarnpkg.com/property-information/-/property-information-6.5.0.tgz#6212fbb52ba757e92ef4fb9d657563b933b7ffec"
   integrity sha512-PgTgs/BlvHxOu8QuEN7wi5A0OmXaBcHpmCSTehcs6Uuu9IkDIEo13Hy7n898RHfrQ49vKCoGeWZSaAK01nwVig==
-
-publicodes-voiture@^0.3.0-9:
-  version "0.3.0-9"
-  resolved "https://registry.yarnpkg.com/publicodes-voiture/-/publicodes-voiture-0.3.0-9.tgz#ba0a46ede1c503b16bc14536328d9c4bd84cdad8"
-  integrity sha512-zPnSWl/3N3htkmOkXSejy/4MJIO6PlboGhzfWTZJnwHIP4Oa5XAVeK7Ea4jYYNE6QXXam38usDQeOirLzaMdiw==
-  dependencies:
-    "@incubateur-ademe/nosgestesclimat" "^2.5.6"
-    "@incubateur-ademe/publicodes-commun" "^1.1.5"
 
 publicodes@^1.5.1:
   version "1.5.1"

@@ -77,6 +77,10 @@ init flagsResult _ =
     in
     case flagsResult of
         Ok flags ->
+            let
+                _ =
+                    Debug.log "Flags" flags
+            in
             ( { emptyModel
                 | situation = flags.situation
                 , rules = flags.rules
@@ -89,8 +93,12 @@ init flagsResult _ =
             , Effect.none
             )
 
-        Err _ ->
+        Err e ->
             -- TODO: handle error
+            let
+                _ =
+                    Debug.log "Error" e
+            in
             ( emptyModel, Effect.none )
 
 

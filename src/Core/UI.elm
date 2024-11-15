@@ -26,12 +26,9 @@ type alias Category =
 
 The `index` field is used to order the categories in the UI (ascending order).
 
-The `subs` field contains the list of sub-categories but it's not used for now.
-
 -}
 type alias CategoryInfos =
     { index : Int
-    , subs : List RuleName
     }
 
 
@@ -39,7 +36,6 @@ decodeCategoryInfos : Decoder CategoryInfos
 decodeCategoryInfos =
     Decode.succeed CategoryInfos
         |> required "index" int
-        |> required "sub" (list string)
 
 
 {-| Associates for each category its information.
@@ -96,4 +92,4 @@ getAllCategoryAndSubCategoryNames : Categories -> List Category
 getAllCategoryAndSubCategoryNames categories =
     categories
         |> Dict.toList
-        |> List.concatMap (\( category, { subs } ) -> category :: subs)
+        |> List.map Tuple.first

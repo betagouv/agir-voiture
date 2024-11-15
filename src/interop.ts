@@ -4,10 +4,12 @@ import "./ffi/dsfr.css";
 import "./ffi/dsfr";
 
 // Import publicodes model
-import rules, { ui, personas } from "../node_modules/publicodes-voiture";
+import rules from "@betagouv/publicodes-voiture/rules";
+import personas from "@betagouv/publicodes-voiture/personas";
 
-import * as publicodes from "./ffi/publicodes";
-import * as publicodesRulePage from "./web-components/rule-page/define";
+import ui from "./ffi/ui.js";
+import * as publicodes from "./ffi/publicodes.js";
+import * as publicodesRulePage from "./web-components/rule-page/define.js";
 
 const situation = JSON.parse(localStorage.getItem("situation") ?? "{}");
 
