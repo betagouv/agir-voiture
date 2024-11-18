@@ -7,6 +7,13 @@
   resolved "https://registry.yarnpkg.com/@alloc/quick-lru/-/quick-lru-5.2.0.tgz#7bf68b20c0a350f936915fcae06f58e32007ce30"
   integrity sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==
 
+"@betagouv/publicodes-voiture@file:../publicodes-voiture":
+  version "0.3.0-9"
+  dependencies:
+    "@incubateur-ademe/nosgestesclimat" "^2.5.6"
+    "@incubateur-ademe/publicodes-commun" "^1.1.5"
+    publicodes "^1.6.0"
+
 "@elm_binaries/darwin_arm64@0.19.1-0":
   version "0.19.1-0"
   resolved "https://registry.yarnpkg.com/@elm_binaries/darwin_arm64/-/darwin_arm64-0.19.1-0.tgz#ea09fca7cdfedad3fa517267099d78d180f01098"
@@ -164,6 +171,16 @@
   resolved "https://registry.yarnpkg.com/@gouvfr/dsfr/-/dsfr-1.12.1.tgz#c25df1df5d3bacc4b847a1856c1d7f22219304a8"
   integrity sha512-2zXBHSDjjlaNcxGtqbPQN/vyjJQKIRUP3CKOYoodj2/45pAWM1AXo3kCwXFLUo5kQOltShZUquQ7hSeVg4RRtA==
 
+"@incubateur-ademe/nosgestesclimat@^2.5.6":
+  version "2.5.6"
+  resolved "https://registry.yarnpkg.com/@incubateur-ademe/nosgestesclimat/-/nosgestesclimat-2.5.6.tgz#30c45bf00cbf9e92acb959f385d42bb431f691bd"
+  integrity sha512-wVN4J2rSl6/lbsIdQq8gMP0IfsYiqINzgNAshAWfKPkYlg2kOttOm76biI5LaHG9XV6fF3Y1tsK8qLQSz/nW+g==
+
+"@incubateur-ademe/publicodes-commun@^1.1.5":
+  version "1.1.5"
+  resolved "https://registry.yarnpkg.com/@incubateur-ademe/publicodes-commun/-/publicodes-commun-1.1.5.tgz#6f5aeccd1bfda9856dc81702cde4102006f7ce8f"
+  integrity sha512-L9eHM53sabNPtWr7H9RbJCEUEMBf3RuWCjPJ7NKk5rQjprCTNAB72sWMW04/LUi/JzZH4CLizpvqt2Z+I3H3Kg==
+
 "@isaacs/cliui@^8.0.2":
   version "8.0.2"
   resolved "https://registry.yarnpkg.com/@isaacs/cliui/-/cliui-8.0.2.tgz#b37667b7bc181c168782259bab42474fbf52b550"
@@ -284,10 +301,10 @@
   resolved "https://registry.yarnpkg.com/@pkgjs/parseargs/-/parseargs-0.11.0.tgz#a77ea742fab25775145434eb1d2328cf5013ac33"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
 
-"@publicodes/react-ui@^1.5.2":
-  version "1.5.2"
-  resolved "https://registry.yarnpkg.com/@publicodes/react-ui/-/react-ui-1.5.2.tgz#58a28a950a1881722cc24a7512e77b2bc62be7d2"
-  integrity sha512-4Sj5/fwLI5yXVNr+SMPgEF+m//v47zo5gU8dmQmSXg2wY+eK9P09EI68GVQKv/mPqazLL75NBdWiA2elQBAk1g==
+"@publicodes/react-ui@^1.5.4":
+  version "1.5.4"
+  resolved "https://registry.yarnpkg.com/@publicodes/react-ui/-/react-ui-1.5.4.tgz#6ca2fb899ce06827bb5218d2dcbcc48c4fbe9fe7"
+  integrity sha512-xheoSay9/i9tzHga0NEYUIAZPaK1HETxJCP6n8g3De1wdEURensbH+TgEYbuKoYroKFJ/HhSGAu/C58I3R8D7A==
   dependencies:
     fuse.js "^7.0.0"
     styled-components "^6.1.1"
@@ -673,7 +690,7 @@ comma-separated-tokens@^2.0.0:
   resolved "https://registry.yarnpkg.com/comma-separated-tokens/-/comma-separated-tokens-2.0.3.tgz#4e89c9458acb61bc8fef19f4529973b2392839ee"
   integrity sha512-Fu4hJdvzeylCfQPp9SGWidpzrMs7tTrlu6Vb8XGaRGck8QSNZJJp538Wrb60Lax4fPwR64ViY468OIUTbRlGZg==
 
-commander@^2.20.0:
+commander@^2.19.0, commander@^2.20.0:
   version "2.20.3"
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.20.3.tgz#fd485e84c03eb4881c20722ba48035e8531aeb33"
   integrity sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==
@@ -844,6 +861,11 @@ didyoumean@^1.2.2:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/didyoumean/-/didyoumean-1.2.2.tgz#989346ffe9e839b4555ecf5666edea0d3e8ad037"
   integrity sha512-gxtyfqMg7GKyhQmb056K7M3xszy/myH8w+B4RT+QXBQsvAOdc3XymqDDPHx1BgPgsdAA5SIifona89YtRATDzw==
+
+discontinuous-range@1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/discontinuous-range/-/discontinuous-range-1.0.0.tgz#e38331f0844bba49b9a9cb71c771585aab1bc65a"
+  integrity sha512-c68LpLbO+7kP/b1Hr1qs8/BJ09F5khZGTxqxZuhzxpmwJKOgRFHJWIb9/KmqnqHhLdO55aOxFH/EGBvUQbL/RQ==
 
 dlv@^1.1.3:
   version "1.1.3"
@@ -1746,6 +1768,11 @@ minimatch@^9.0.4:
   resolved "https://registry.yarnpkg.com/minipass/-/minipass-7.1.2.tgz#93a9626ce5e5e66bd4db86849e7515e92340a707"
   integrity sha512-qOOzS1cBTWYF4BH8fVePDBOO9iptMnGUEZwNc/cMWnTV2nVLZ7VoNWEPHkYczZA0pdoA7dl6e7FL659nX9S2aw==
 
+moo@^0.5.0, moo@^0.5.2:
+  version "0.5.2"
+  resolved "https://registry.yarnpkg.com/moo/-/moo-0.5.2.tgz#f9fe82473bc7c184b0d32e2215d3f6e67278733c"
+  integrity sha512-iSAJLHYKnX41mKcJKjqvnAN9sf0LMDTXDEvFv+ffuRR9a1MIuXLjMNL6EsnDHSkKLTWNqQQ5uo61P4EbU4NU+Q==
+
 ms@2.1.2:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.2.tgz#d09d1f357b443f493382a8eb3ccd183872ae6009"
@@ -1764,6 +1791,16 @@ nanoid@^3.3.7:
   version "3.3.7"
   resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.7.tgz#d0c301a691bc8d54efa0a2226ccf3fe2fd656bd8"
   integrity sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==
+
+nearley@^2.20.1:
+  version "2.20.1"
+  resolved "https://registry.yarnpkg.com/nearley/-/nearley-2.20.1.tgz#246cd33eff0d012faf197ff6774d7ac78acdd474"
+  integrity sha512-+Mc8UaAebFzgV+KpI5n7DasuuQCHA89dmwm7JXw3TV43ukfNQ9DnBH3Mdb2g/I4Fdxc26pwimBWvjIw0UAILSQ==
+  dependencies:
+    commander "^2.19.0"
+    moo "^0.5.0"
+    railroad-diagrams "^1.0.0"
+    randexp "0.4.6"
 
 node-releases@^2.0.18:
   version "2.0.18"
@@ -2133,15 +2170,31 @@ property-information@^6.0.0:
   resolved "https://registry.yarnpkg.com/property-information/-/property-information-6.5.0.tgz#6212fbb52ba757e92ef4fb9d657563b933b7ffec"
   integrity sha512-PgTgs/BlvHxOu8QuEN7wi5A0OmXaBcHpmCSTehcs6Uuu9IkDIEo13Hy7n898RHfrQ49vKCoGeWZSaAK01nwVig==
 
-publicodes@^1.5.1:
-  version "1.5.1"
-  resolved "https://registry.yarnpkg.com/publicodes/-/publicodes-1.5.1.tgz#549de8fe9cd46ca94b5a984c95e5972126a6273d"
-  integrity sha512-VzTGL+iQUTRoBErP/5LRjq2jeFMPyd0kNcp1FPL9ackiZ0uE2SQHbKr+K6cT0OjKE0gJgPVF8lEDDZAALuLAng==
+publicodes@^1.6.0:
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/publicodes/-/publicodes-1.6.0.tgz#f10821909e791f86eeebd83969c3f66164bcb73a"
+  integrity sha512-xko1LN0UFvFyMcGeFN9Ma+oigWhs1pf6bfVoKrg9T2yWrTcSMVkF9Gpfs6ELykxYXZ2hdqoBqID6G4oN3xVdDA==
+  dependencies:
+    moo "^0.5.2"
+    nearley "^2.20.1"
 
 queue-microtask@^1.2.2:
   version "1.2.3"
   resolved "https://registry.yarnpkg.com/queue-microtask/-/queue-microtask-1.2.3.tgz#4929228bbc724dfac43e0efb058caf7b6cfb6243"
   integrity sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==
+
+railroad-diagrams@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/railroad-diagrams/-/railroad-diagrams-1.0.0.tgz#eb7e6267548ddedfb899c1b90e57374559cddb7e"
+  integrity sha512-cz93DjNeLY0idrCNOH6PviZGRN9GJhsdm9hpn1YCS879fj4W+x5IFJhhkRZcwVgMmFF7R82UA/7Oh+R8lLZg6A==
+
+randexp@0.4.6:
+  version "0.4.6"
+  resolved "https://registry.yarnpkg.com/randexp/-/randexp-0.4.6.tgz#e986ad5e5e31dae13ddd6f7b3019aa7c87f60ca3"
+  integrity sha512-80WNmd9DA0tmZrw9qQa62GPPWfuXJknrmVmLcxvq4uZBdYqb1wYoKTmnlGUchvVWe0XiLupYkBoXVOxz3C8DYQ==
+  dependencies:
+    discontinuous-range "1.0.0"
+    ret "~0.1.10"
 
 react-dom@^18.3.1:
   version "18.3.1"
@@ -2238,6 +2291,11 @@ resolve@^1.1.7, resolve@^1.22.2:
     is-core-module "^2.13.0"
     path-parse "^1.0.7"
     supports-preserve-symlinks-flag "^1.0.0"
+
+ret@~0.1.10:
+  version "0.1.15"
+  resolved "https://registry.yarnpkg.com/ret/-/ret-0.1.15.tgz#b8a4825d5bdb1fc3f6f53c2bc33f81388681c7bc"
+  integrity sha512-TTlYpa+OL+vMMNG24xSlQGEJ3B/RzEfUlLct7b5G/ytav+wPrplCpVMFuwzXbkecJrb6IYo1iFb0S9v37754mg==
 
 reusify@^1.0.4:
   version "1.0.4"
@@ -2653,10 +2711,10 @@ vfile@^6.0.0:
     unist-util-stringify-position "^4.0.0"
     vfile-message "^4.0.0"
 
-vite-plugin-elm-watch@1.3.3:
-  version "1.3.3"
-  resolved "https://registry.yarnpkg.com/vite-plugin-elm-watch/-/vite-plugin-elm-watch-1.3.3.tgz#163fae87c0e1c20ad26fa5bc02d8cc4353b63d22"
-  integrity sha512-rR78gmeYp08E4CvtpnZuumsmNXaG/XOJ/xtOVfEG3TOJqDChXy1DzE1pnPsERohbELkov7ZZPHRLGV1z2iyxKg==
+vite-plugin-elm-watch@1.3.3, vite-plugin-elm-watch@^1.3.5:
+  version "1.3.5"
+  resolved "https://registry.yarnpkg.com/vite-plugin-elm-watch/-/vite-plugin-elm-watch-1.3.5.tgz#c9d229592513750a3be0b601737f5cccd8f7f512"
+  integrity sha512-vioAqAWjDmSTBW5ZQrUHNncbbAswfoBGIhObIvE+sc3Ox41As6R1G1mgBjlSrC/vf1FWpzQv/qB6U6aKiyU4Dw==
   dependencies:
     cross-spawn "7.0.3"
     elm "0.19.1-6"
