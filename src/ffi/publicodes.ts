@@ -1,16 +1,9 @@
-import PublicodesEngine, {
-  Rule,
-  Situation as PublicodesSituation,
-  serializeUnit,
-  EvaluatedNode,
-} from "publicodes";
-
-export type RuleName = string;
-export type PublicodeValue = string | number;
-export type RawRule = Omit<Rule, "nom"> | string | number;
-export type RawRules = Readonly<Record<RuleName, RawRule>>;
-export type Situation = PublicodesSituation<RuleName>;
-export type Engine = PublicodesEngine<RuleName>;
+import {
+  CarSimulatorEngine,
+  RuleName,
+  Situation,
+} from "@betagouv/publicodes-voiture";
+import { serializeUnit, EvaluatedNode, Rule } from "publicodes";
 
 /**
  * Instantiate a new publicodes engine with the given rules and situation.
@@ -19,18 +12,19 @@ export type Engine = PublicodesEngine<RuleName>;
  * initialize it asynchronously. This is useful to avoid blocking the UI while
  * the engine is being initialized.
  *
+ * TODO: a better error handling should be implemented.
+ *
  * FIXME: situation shouldn't be nullable, investigation needed.
  */
 export function createAsync(
-  rules: Readonly<RawRules>,
+  rules: Readonly<Record<RuleName, Rule>>,
   situation: Readonly<Situation> | null,
 ) {
-  return new Promise<PublicodesEngine>((resolve) => {
+  return new Promise<CarSimulatorEngine>((resolve) => {
     const nbRules = Object.keys(rules).length;
     console.time(`[publicodes:parsing] ${nbRules} rules`);
-    const engine = new PublicodesEngine(rules, {
-      logger: { log: () => {}, warn: () => {}, error: () => {} },
-    }).setSituation(situation ?? {});
+    const engine = new CarSimulatorEngine();
+    engine.setSituation(situation ?? {});
     console.timeEnd(`[publicodes:parsing] ${nbRules} rules`);
     resolve(engine);
   });

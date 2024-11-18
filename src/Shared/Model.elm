@@ -1,9 +1,11 @@
 module Shared.Model exposing (Model, empty)
 
+import Core.Evaluation exposing (Evaluation)
 import Core.Personas exposing (Personas)
+import Core.Result exposing (Results)
 import Core.UI as UI
 import Dict exposing (Dict)
-import Publicodes exposing (Evaluation, RawRules)
+import Publicodes exposing (RawRules)
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
 import Shared.EngineStatus as EngineStatus exposing (EngineStatus(..))
@@ -31,6 +33,7 @@ type alias Model =
     , evaluations : Dict RuleName Evaluation
     , orderedCategories : List UI.Category
     , resultRules : List RuleName
+    , results : Maybe Results
     , inputErrors : Dict RuleName { msg : String, value : String }
     , engineStatus : EngineStatus
     }
@@ -46,6 +49,7 @@ empty =
     , evaluations = Dict.empty
     , orderedCategories = []
     , resultRules = []
+    , results = Nothing
     , inputErrors = Dict.empty
     , engineStatus = EngineStatus.NotInitialized
     }

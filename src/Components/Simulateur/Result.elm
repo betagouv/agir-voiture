@@ -10,6 +10,7 @@ import Components.Simulateur.ComparisonTable
 import Components.Simulateur.Navigation
 import Components.Simulateur.TotalCard as TotalCard
 import Components.Simulateur.UserTotal
+import Core.Evaluation exposing (Evaluation)
 import Core.Result exposing (ComputedResult(..))
 import Core.Rules as Rules
 import Core.UI as UI
@@ -17,7 +18,7 @@ import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Extra exposing (nothing)
-import Publicodes exposing (Evaluation, RawRules)
+import Publicodes exposing (RawRules)
 import Publicodes.RuleName exposing (RuleName)
 import Shared.EngineStatus as EngineStatus exposing (EngineStatus(..))
 import Shared.SimulationStep exposing (SimulationStep)

@@ -1,12 +1,29 @@
 module Core.Result exposing (..)
 
+import Core.Evaluation exposing (Evaluation)
+import Core.Result.CarInfos as CarInfos exposing (CarInfos)
 import Core.Rules as Rules
 import Dict exposing (Dict)
+import Json.Decode as Decode
+import Json.Decode.Pipeline exposing (required)
 import List.Extra
-import Publicodes exposing (Evaluation, RawRules)
+import Publicodes exposing (RawRules)
 import Publicodes.Helpers as Helpers
 import Publicodes.NodeValue as NodeValue
 import Publicodes.RuleName as RuleName exposing (RuleName, SplitedRuleName, split)
+
+
+type alias Results =
+    { user : CarInfos
+
+    -- , alternatives : List CarInfos
+    }
+
+
+decoder : Decode.Decoder Results
+decoder =
+    Decode.succeed Results
+        |> required "user" CarInfos.decoder
 
 
 {-| TODO: refactor with this
@@ -92,7 +109,7 @@ getNumValue : RuleName -> Dict RuleName Evaluation -> Maybe Float
 getNumValue ruleName evaluations =
     evaluations
         |> Dict.get ruleName
-        |> Maybe.map .nodeValue
+        |> Maybe.map .value
         |> Maybe.andThen NodeValue.toFloat
 
 
@@ -129,7 +146,7 @@ getStringValue : RuleName -> Dict RuleName Evaluation -> Maybe String
 getStringValue name evaluations =
     evaluations
         |> Dict.get name
-        |> Maybe.map .nodeValue
+        |> Maybe.map .value
         |> Maybe.map NodeValue.toString
 
 
@@ -137,7 +154,7 @@ getBooleanValue : RuleName -> Dict RuleName Evaluation -> Maybe Bool
 getBooleanValue name evaluations =
     evaluations
         |> Dict.get name
-        |> Maybe.map .nodeValue
+        |> Maybe.map .value
         |> Maybe.andThen
             (\value ->
                 case value of

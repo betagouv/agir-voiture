@@ -110,6 +110,14 @@ evaluateAll ruleNames =
         }
 
 
+evaluateResults : Effect msg
+evaluateResults =
+    SendToJs
+        { tag = "EVALUATE_RESULTS"
+        , data = Json.Encode.null
+        }
+
+
 updateSituation : ( RuleName, NodeValue ) -> Effect msg
 updateSituation ( name, value ) =
     batch

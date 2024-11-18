@@ -13,6 +13,7 @@ module Shared exposing
 -}
 
 import Browser.Navigation
+import Core.Evaluation exposing (Evaluation)
 import Core.Personas as Personas exposing (Personas)
 import Core.Result
 import Core.Rules
@@ -21,7 +22,7 @@ import Dict
 import Effect exposing (Effect)
 import Json.Decode
 import Json.Decode.Pipeline as Decode
-import Publicodes exposing (Evaluation, RawRules)
+import Publicodes exposing (RawRules)
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation as Situation exposing (Situation)
 import Route exposing (Route)
@@ -77,10 +78,6 @@ init flagsResult _ =
     in
     case flagsResult of
         Ok flags ->
-            let
-                _ =
-                    Debug.log "Flags" flags
-            in
             ( { emptyModel
                 | situation = flags.situation
                 , rules = flags.rules
@@ -94,10 +91,10 @@ init flagsResult _ =
             )
 
         Err e ->
-            -- TODO: handle error
+            -- FIXME: handle error
             let
                 _ =
-                    Debug.log "Error" e
+                    Debug.log "Error while decoding flags" e
             in
             ( emptyModel, Effect.none )
 
@@ -227,14 +224,17 @@ evaluate model =
             in
             ( { model | engineStatus = EngineStatus.Evaluating }
             , if model.simulationStep == SimulationStep.Result then
-                [ Core.Rules.userCost
-                , Core.Rules.userEmission
-                , Core.Rules.targetGabarit
-                , Core.Rules.targetChargingStation
-                ]
-                    ++ Core.Rules.userContext
-                    ++ model.resultRules
-                    |> Effect.evaluateAll
+                let
+                    evalAll =
+                        [ Core.Rules.targetGabarit
+                        , Core.Rules.targetChargingStation
+                        ]
+                            ++ Core.Rules.userContext
+                            ++ model.resultRules
+                            |> Effect.evaluateAll
+                in
+                Effect.batch [ evalAll ]
+                -- TODO: , Effect.evaluateResults ]
 
               else
                 currentQuestions
@@ -264,8 +264,12 @@ decodeEvaluations : List ( RuleName, Json.Decode.Value ) -> List ( RuleName, Eva
 decodeEvaluations evaluations =
     List.filterMap
         (\( ruleName, encodedEvaluation ) ->
-            Json.Decode.decodeValue Publicodes.evaluationDecoder encodedEvaluation
-                |> Result.toMaybe
-                |> Maybe.map (\evaluation -> ( ruleName, evaluation ))
+            case Json.Decode.decodeValue Core.Evaluation.decoder encodedEvaluation of
+                Ok evaluation ->
+                    Just ( ruleName, evaluation )
+
+                Err _ ->
+                    -- FIXME: handle error
+                    Nothing
         )
         evaluations

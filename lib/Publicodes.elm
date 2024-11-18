@@ -1,10 +1,8 @@
 module Publicodes exposing
-    ( Evaluation
-    , Mechanism(..)
+    ( Mechanism(..)
     , RawRule
     , RawRules
     , decodeRawRules
-    , evaluationDecoder
     )
 
 import Dict exposing (Dict)
@@ -92,7 +90,6 @@ type alias ChainedMechanisms =
     , somme : Maybe (List String)
     , moyenne : Maybe (List String)
     , variations : Maybe (List Clause)
-    , une_possibilite : Maybe PossibiliteNode
     , toutes_ces_conditions : Maybe (List Clause)
     , une_de_ces_conditions : Maybe (List Clause)
     , recalcul : Maybe RecalculNode
@@ -120,7 +117,6 @@ chainedMechanismsDecoder =
         |> optional "somme" (nullable (list string)) Nothing
         |> optional "moyenne" (nullable (list string)) Nothing
         |> optional "variations" (nullable (list (lazy (\_ -> clauseDecoder)))) Nothing
-        |> optional "une possibilité" (nullable possibiliteNodeDecoder) Nothing
         |> optional "toutes ces conditions" (nullable (list (lazy (\_ -> clauseDecoder)))) Nothing
         |> optional "une de ces conditions" (nullable (list (lazy (\_ -> clauseDecoder)))) Nothing
         |> optional "recalcul" (nullable recalculNodeDecoder) Nothing
@@ -141,6 +137,7 @@ type alias RawRule =
     , note : Maybe String
     , plancher : Maybe Mechanism
     , plafond : Maybe Mechanism
+    , une_possibilite : Maybe PossibiliteNode
     }
 
 
@@ -158,6 +155,7 @@ rawRuleDecoder =
         |> optional "note" (nullable string) Nothing
         |> optional "plancher" (nullable mechanismDecoder) Nothing
         |> optional "plafond" (nullable mechanismDecoder) Nothing
+        |> optional "une possibilité" (nullable possibiliteNodeDecoder) Nothing
 
 
 type alias RawRules =
@@ -167,18 +165,3 @@ type alias RawRules =
 decodeRawRules : Decoder RawRules
 decodeRawRules =
     Decode.dict rawRuleDecoder
-
-
-type alias Evaluation =
-    { isApplicable : Bool
-    , nodeValue : NodeValue
-    , unit : Maybe String
-    }
-
-
-evaluationDecoder : Decode.Decoder Evaluation
-evaluationDecoder =
-    Decode.succeed Evaluation
-        |> required "isApplicable" Decode.bool
-        |> required "nodeValue" NodeValue.decoder
-        |> required "unit" (nullable Decode.string)

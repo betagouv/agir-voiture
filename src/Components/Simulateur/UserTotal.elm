@@ -8,6 +8,7 @@ module Components.Simulateur.UserTotal exposing (view, viewParagraph)
 -}
 
 import Components.Simulateur.TotalCard as TotalCard
+import Core.Evaluation exposing (Evaluation)
 import Core.Format
 import Core.Rules as Rules
 import Dict exposing (Dict)
@@ -15,7 +16,7 @@ import FormatNumber.Locales exposing (Decimals(..))
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Extra exposing (nothing)
-import Publicodes exposing (Evaluation, RawRules)
+import Publicodes exposing (RawRules)
 import Publicodes.NodeValue as NodeValue
 import Publicodes.RuleName exposing (RuleName)
 
@@ -37,8 +38,8 @@ view { rules, evaluations, cost, emission } =
                             (\name ->
                                 Dict.get name evaluations
                                     |> Maybe.andThen
-                                        (\{ nodeValue, unit } ->
-                                            case nodeValue of
+                                        (\{ value, unit } ->
+                                            case value of
                                                 NodeValue.Str optionValue ->
                                                     Just
                                                         { unit = unit

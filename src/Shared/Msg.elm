@@ -2,7 +2,7 @@ module Shared.Msg exposing (Msg(..))
 
 {-| -}
 
-import Publicodes exposing (Evaluation)
+import Core.Evaluation exposing (Evaluation)
 import Publicodes.NodeValue exposing (NodeValue)
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
