@@ -200,6 +200,12 @@ update _ msg model =
             , Effect.none
             )
 
+        NewResults results ->
+            ( { model | results = Just results }, Effect.none )
+
+        DecodeError err ->
+            ( { model | decodeError = Just err }, Effect.none )
+
 
 {-| Evaluates rules to update according to the current simulation step.
 -}
@@ -233,8 +239,7 @@ evaluate model =
                             ++ model.resultRules
                             |> Effect.evaluateAll
                 in
-                Effect.batch [ evalAll ]
-                -- TODO: , Effect.evaluateResults ]
+                Effect.batch [ evalAll, Effect.evaluateResults ]
 
               else
                 currentQuestions
@@ -250,26 +255,45 @@ subscriptions : Route () -> Model -> Sub Msg
 subscriptions _ _ =
     Sub.batch
         [ Effect.onReactLinkClicked Shared.Msg.PushNewPath
+        , Effect.onSituationUpdated (\_ -> Shared.Msg.Evaluate)
+        , Effect.onEngineInitialized (\_ -> Shared.Msg.EngineInitialized)
+        , Effect.onEngineError Shared.Msg.EngineError
         , Effect.onEvaluatedRules
             (\encodedEvaluations ->
-                Shared.Msg.NewEvaluations (decodeEvaluations encodedEvaluations)
+                case decodeEvaluations encodedEvaluations of
+                    Ok evaluations ->
+                        Shared.Msg.NewEvaluations evaluations
+
+                    Err e ->
+                        Shared.Msg.DecodeError e
             )
-        , Effect.onSituationUpdated (\_ -> Evaluate)
-        , Effect.onEngineInitialized (\_ -> EngineInitialized)
-        , Effect.onEngineError EngineError
+        , Effect.onEvaluatedResults
+            (\encodedResults ->
+                case Json.Decode.decodeValue Core.Result.decoder encodedResults of
+                    Ok results ->
+                        Shared.Msg.NewResults results
+
+                    Err e ->
+                        Shared.Msg.DecodeError e
+            )
         ]
 
 
-decodeEvaluations : List ( RuleName, Json.Decode.Value ) -> List ( RuleName, Evaluation )
-decodeEvaluations evaluations =
-    List.filterMap
-        (\( ruleName, encodedEvaluation ) ->
-            case Json.Decode.decodeValue Core.Evaluation.decoder encodedEvaluation of
-                Ok evaluation ->
-                    Just ( ruleName, evaluation )
-
+decodeEvaluations : List ( RuleName, Json.Decode.Value ) -> Result Json.Decode.Error (List ( RuleName, Evaluation ))
+decodeEvaluations encodedEvaluations =
+    List.foldl
+        (\( ruleName, encodedEvaluation ) result ->
+            case result of
                 Err _ ->
-                    -- FIXME: handle error
-                    Nothing
+                    result
+
+                Ok evaluations ->
+                    encodedEvaluation
+                        |> Json.Decode.decodeValue Core.Evaluation.decoder
+                        |> Result.andThen
+                            (\eval ->
+                                Ok (( ruleName, eval ) :: evaluations)
+                            )
         )
-        evaluations
+        (Ok [])
+        encodedEvaluations

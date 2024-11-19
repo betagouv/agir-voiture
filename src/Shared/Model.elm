@@ -5,6 +5,7 @@ import Core.Personas exposing (Personas)
 import Core.Result exposing (Results)
 import Core.UI as UI
 import Dict exposing (Dict)
+import Json.Decode
 import Publicodes exposing (RawRules)
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
@@ -34,8 +35,9 @@ type alias Model =
     , orderedCategories : List UI.Category
     , resultRules : List RuleName
     , results : Maybe Results
-    , inputErrors : Dict RuleName { msg : String, value : String }
     , engineStatus : EngineStatus
+    , inputErrors : Dict RuleName { msg : String, value : String }
+    , decodeError : Maybe Json.Decode.Error
     }
 
 
@@ -52,4 +54,5 @@ empty =
     , results = Nothing
     , inputErrors = Dict.empty
     , engineStatus = EngineStatus.NotInitialized
+    , decodeError = Nothing
     }
