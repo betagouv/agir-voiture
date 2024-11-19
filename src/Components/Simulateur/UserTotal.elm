@@ -10,6 +10,7 @@ module Components.Simulateur.UserTotal exposing (view, viewParagraph)
 import Components.Simulateur.TotalCard as TotalCard
 import Core.Evaluation exposing (Evaluation)
 import Core.Format
+import Core.Results.CarInfos exposing (CarInfos)
 import Core.Rules as Rules
 import Dict exposing (Dict)
 import FormatNumber.Locales exposing (Decimals(..))
@@ -24,13 +25,16 @@ import Publicodes.RuleName exposing (RuleName)
 view :
     { rules : RawRules
     , evaluations : Dict RuleName Evaluation
-    , cost : Maybe Float
-    , emission : Maybe Float
+    , user : CarInfos
     }
     -> Html msg
-view { rules, evaluations, cost, emission } =
-    case ( cost, emission ) of
-        ( Just costVal, Just emissionVal ) ->
+view { rules, evaluations, user } =
+    case
+        ( NodeValue.toFloat user.cost.value
+        , NodeValue.toFloat user.emissions.value
+        )
+    of
+        ( Just cost, Just emissions ) ->
             let
                 contextValues =
                     Rules.userContext
@@ -78,8 +82,8 @@ view { rules, evaluations, cost, emission } =
             in
             TotalCard.new
                 { title = "Votre voiture"
-                , cost = costVal
-                , emission = emissionVal
+                , cost = cost
+                , emission = emissions
                 }
                 |> TotalCard.withContext contextValues
                 |> TotalCard.view

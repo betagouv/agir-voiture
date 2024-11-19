@@ -1,7 +1,7 @@
 module Core.Results exposing (..)
 
 import Core.Evaluation exposing (Evaluation)
-import Core.Result.CarInfos as CarInfos exposing (CarInfos)
+import Core.Results.CarInfos as CarInfos exposing (CarInfos)
 import Core.Rules as Rules
 import Dict exposing (Dict)
 import Json.Decode as Decode
@@ -113,25 +113,6 @@ getNumValue ruleName evaluations =
         |> Maybe.andThen NodeValue.toFloat
 
 
-getUserEmission : Dict RuleName Evaluation -> Maybe Float
-getUserEmission =
-    getNumValue Rules.userEmission
-
-
-getUserCost : Dict RuleName Evaluation -> Maybe Float
-getUserCost =
-    getNumValue Rules.userCost
-
-
-{-| Returns the user values for the emission and the cost.
--}
-getUserValues :
-    Dict RuleName Evaluation
-    -> { userEmission : Maybe Float, userCost : Maybe Float }
-getUserValues evaluations =
-    { userEmission = getUserEmission evaluations, userCost = getUserCost evaluations }
-
-
 getCostValueOf : SplitedRuleName -> Dict RuleName Evaluation -> Maybe Float
 getCostValueOf name =
     getNumValue (RuleName.join ("coûts" :: name))
@@ -222,34 +203,6 @@ getComputedResults props =
                                                                 Nothing
                                                     , cost = cost
                                                     , emission = emission
-                                                    }
-
-                                        [ "voiture" ] ->
-                                            let
-                                                userGabarit =
-                                                    props.evaluations
-                                                        |> getStringValue Rules.userGabarit
-                                                        |> Maybe.map
-                                                            (\gabarit ->
-                                                                getGabaritTitle gabarit props.rules
-                                                            )
-                                                        |> Maybe.withDefault ""
-
-                                                userMotorisation =
-                                                    props.evaluations
-                                                        |> getStringValue Rules.userMotorisation
-                                                        |> Maybe.map
-                                                            (\motorisation ->
-                                                                getMotorisationTitle motorisation props.rules
-                                                            )
-                                                        |> Maybe.withDefault ""
-                                            in
-                                            Just <|
-                                                CurrentUserCar
-                                                    { cost = cost
-                                                    , emission = emission
-                                                    , gabarit = userGabarit
-                                                    , motorisation = userMotorisation
                                                     }
 
                                         _ ->

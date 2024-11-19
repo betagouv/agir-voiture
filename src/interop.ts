@@ -103,7 +103,8 @@ export const onReady = ({ app }: { app: any }) => {
               break;
             }
             case "EVALUATE_RESULTS": {
-              // TODO:
+              const user = simulatorEngine.evaluateCar();
+              app.ports.onEvaluatedResults.send({ user });
               break;
             }
             case "EVALUATE_ALL": {

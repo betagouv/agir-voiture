@@ -196,6 +196,7 @@ view shared model =
                                         , evaluations = shared.evaluations
                                         , resultRules = shared.resultRules
                                         , rules = shared.rules
+                                        , results = shared.results
                                         , engineStatus = shared.engineStatus
                                         , accordionsState = model.accordionsState
                                         , onToggleAccordion = ToggleAccordion
@@ -211,6 +212,8 @@ view shared model =
     }
 
 
+{-| TODO: harmonize with other error views in Layouts.HeaderAndFooter
+-}
 viewEngineError : String -> Html Msg
 viewEngineError msg =
     div [ class "fr-text-red-600" ]

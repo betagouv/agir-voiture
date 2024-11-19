@@ -11,7 +11,7 @@ import Components.Simulateur.Navigation
 import Components.Simulateur.TotalCard as TotalCard
 import Components.Simulateur.UserTotal
 import Core.Evaluation exposing (Evaluation)
-import Core.Results exposing (ComputedResult(..))
+import Core.Results exposing (ComputedResult(..), Results)
 import Core.Rules as Rules
 import Core.UI as UI
 import Dict exposing (Dict)
@@ -19,6 +19,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Extra exposing (nothing)
 import Publicodes exposing (RawRules)
+import Publicodes.NodeValue as NodeValue
 import Publicodes.RuleName exposing (RuleName)
 import Shared.EngineStatus as EngineStatus exposing (EngineStatus(..))
 import Shared.SimulationStep exposing (SimulationStep)
@@ -30,6 +31,7 @@ type alias Config msg =
     , evaluations : Dict RuleName Evaluation
     , resultRules : List RuleName
     , rules : RawRules
+    , results : Maybe Results
     , engineStatus : EngineStatus
     , accordionsState : Dict String Bool
     , onToggleAccordion : String -> msg
@@ -49,8 +51,8 @@ accordionComparisonTableId =
 view : Config msg -> Html msg
 view props =
     let
-        { userEmission, userCost } =
-            Core.Results.getUserValues props.evaluations
+        maybeUserCarInfos =
+            Maybe.map .user props.results
 
         computedResults =
             Core.Results.getComputedResults
@@ -126,11 +128,8 @@ view props =
 
         viewAlternative : Icons.IconName -> String -> Core.Results.ComputedResult -> Html msg
         viewAlternative icon title computedResult =
-            case props.engineStatus of
-                EngineStatus.Evaluating ->
-                    Components.LoadingCard.view
-
-                _ ->
+            case ( props.engineStatus, maybeUserCarInfos ) of
+                ( EngineStatus.Done, Just userCarInfos ) ->
                     div []
                         [ h4 [ class "flex gap-2 items-center" ]
                             [ Icons.iconMD icon
@@ -158,8 +157,10 @@ view props =
                                                 )
                                         )
                                     |> TotalCard.withComparison
-                                        { costToCompare = userCost
-                                        , emissionToCompare = userEmission
+                                        { costToCompare =
+                                            NodeValue.toFloat userCarInfos.cost.value
+                                        , emissionToCompare =
+                                            NodeValue.toFloat userCarInfos.emissions.value
                                         }
                                     |> TotalCard.view
 
@@ -169,6 +170,10 @@ view props =
                                     , text "Vous avez déjà la meilleure alternative !"
                                     ]
                         ]
+
+                _ ->
+                    -- TODO: we may want to show error messages for invalid state
+                    Components.LoadingCard.view
 
         viewAlternatives args =
             case ( args.cheapest, args.greenest ) of
@@ -211,14 +216,17 @@ view props =
                         [ text "Récapitulatif de votre situation"
                         ]
                     , div [ class "fr-col-8" ]
-                        [ case props.engineStatus of
-                            EngineStatus.Done ->
+                        [ case ( props.engineStatus, props.results ) of
+                            ( EngineStatus.Done, Just results ) ->
                                 Components.Simulateur.UserTotal.view
-                                    { cost = userCost
-                                    , emission = userEmission
-                                    , evaluations = props.evaluations
+                                    { evaluations = props.evaluations
                                     , rules = props.rules
+                                    , user = results.user
                                     }
+
+                            ( EngineStatus.Done, Nothing ) ->
+                                -- TODO: should not happen
+                                Components.LoadingCard.view
 
                             _ ->
                                 Components.LoadingCard.view
@@ -293,18 +301,23 @@ view props =
                                 Dict.get accordionComparisonTableId props.accordionsState
                                     |> Maybe.withDefault False
                             , content =
-                                case ( userEmission, userCost ) of
-                                    ( Just emission, Just cost ) ->
-                                        case props.engineStatus of
-                                            EngineStatus.Evaluating ->
-                                                Components.LoadingCard.view
-
-                                            _ ->
+                                case maybeUserCarInfos of
+                                    Just user ->
+                                        case
+                                            ( NodeValue.toFloat user.cost.value
+                                            , NodeValue.toFloat user.emissions.value
+                                            )
+                                        of
+                                            ( Just userCost, Just userEmission ) ->
                                                 Components.Simulateur.ComparisonTable.view
                                                     { rulesToCompare = computedResults
-                                                    , userEmission = emission
-                                                    , userCost = cost
+                                                    , userCost = userCost
+                                                    , userEmission = userEmission
                                                     }
+
+                                            _ ->
+                                                -- FIXME: show error message
+                                                Components.LoadingCard.view
 
                                     _ ->
                                         Components.LoadingCard.view

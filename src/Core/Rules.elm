@@ -42,16 +42,6 @@ userCost =
     "coûts . voiture"
 
 
-userGabarit : RuleName
-userGabarit =
-    "voiture . gabarit"
-
-
-userMotorisation : RuleName
-userMotorisation =
-    "voiture . motorisation"
-
-
 {-| Returns the user situation to show in the results.
 TODO: resultContext?
 -}
