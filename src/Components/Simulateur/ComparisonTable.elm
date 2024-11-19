@@ -2,7 +2,7 @@ module Components.Simulateur.ComparisonTable exposing (view)
 
 import Components.DSFR.Table
 import Core.Format
-import Core.Result exposing (ComputedResult(..))
+import Core.Results exposing (ComputedResult(..))
 import FormatNumber.Locales exposing (Decimals(..))
 import Html exposing (..)
 import Html.Attributes exposing (..)

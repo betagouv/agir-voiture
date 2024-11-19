@@ -15,7 +15,7 @@ module Shared exposing
 import Browser.Navigation
 import Core.Evaluation exposing (Evaluation)
 import Core.Personas as Personas exposing (Personas)
-import Core.Result
+import Core.Results
 import Core.Rules
 import Core.UI as UI
 import Dict
@@ -85,18 +85,13 @@ init flagsResult _ =
                 , ui = flags.ui
                 , personas = flags.personas
                 , orderedCategories = UI.getOrderedCategories flags.ui.categories
-                , resultRules = Core.Result.getResultRules flags.rules
+                , resultRules = Core.Results.getResultRules flags.rules
               }
             , Effect.none
             )
 
         Err e ->
-            -- FIXME: handle error
-            let
-                _ =
-                    Debug.log "Error while decoding flags" e
-            in
-            ( emptyModel, Effect.none )
+            ( { emptyModel | decodeError = Just e }, Effect.none )
 
 
 
@@ -269,7 +264,7 @@ subscriptions _ _ =
             )
         , Effect.onEvaluatedResults
             (\encodedResults ->
-                case Json.Decode.decodeValue Core.Result.decoder encodedResults of
+                case Json.Decode.decodeValue Core.Results.decoder encodedResults of
                     Ok results ->
                         Shared.Msg.NewResults results
 

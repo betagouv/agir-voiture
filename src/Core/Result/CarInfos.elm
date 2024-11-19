@@ -11,7 +11,7 @@ type alias CarInfos =
     , emissions : Float
     , size : ValueInfos
     , motorisation : ValueInfos
-    , carburant : ValueInfos
+    , fuel : ValueInfos
     }
 
 
@@ -23,4 +23,4 @@ decoder =
         |> required "emissions" Decode.float
         |> required "size" ValueInfos.decoder
         |> required "motorisation" ValueInfos.decoder
-        |> required "carburant" ValueInfos.decoder
+        |> required "fuel" ValueInfos.decoder

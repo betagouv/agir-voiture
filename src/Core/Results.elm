@@ -1,4 +1,4 @@
-module Core.Result exposing (..)
+module Core.Results exposing (..)
 
 import Core.Evaluation exposing (Evaluation)
 import Core.Result.CarInfos as CarInfos exposing (CarInfos)

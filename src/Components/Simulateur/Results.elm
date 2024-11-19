@@ -1,4 +1,4 @@
-module Components.Simulateur.Result exposing (view)
+module Components.Simulateur.Results exposing (view)
 
 import BetaGouv.DSFR.Accordion as Accordion
 import BetaGouv.DSFR.Button as Button
@@ -11,7 +11,7 @@ import Components.Simulateur.Navigation
 import Components.Simulateur.TotalCard as TotalCard
 import Components.Simulateur.UserTotal
 import Core.Evaluation exposing (Evaluation)
-import Core.Result exposing (ComputedResult(..))
+import Core.Results exposing (ComputedResult(..))
 import Core.Rules as Rules
 import Core.UI as UI
 import Dict exposing (Dict)
@@ -50,10 +50,10 @@ view : Config msg -> Html msg
 view props =
     let
         { userEmission, userCost } =
-            Core.Result.getUserValues props.evaluations
+            Core.Results.getUserValues props.evaluations
 
         computedResults =
-            Core.Result.getComputedResults
+            Core.Results.getComputedResults
                 { resultRules = props.resultRules
                 , evaluations = props.evaluations
                 , rules = props.rules
@@ -61,23 +61,23 @@ view props =
 
         targetGabaritTitle =
             props.evaluations
-                |> Core.Result.getStringValue Rules.targetGabarit
+                |> Core.Results.getStringValue Rules.targetGabarit
                 |> Maybe.map
                     (\gabarit ->
-                        Core.Result.getGabaritTitle gabarit props.rules
+                        Core.Results.getGabaritTitle gabarit props.rules
                     )
                 |> Maybe.withDefault ""
 
         hasChargingStation =
             props.evaluations
-                |> Core.Result.getBooleanValue Rules.targetChargingStation
+                |> Core.Results.getBooleanValue Rules.targetChargingStation
                 |> Maybe.withDefault True
 
         -- Sorts the computed results on the given attribute
         computedResultsSortedOn attr =
             computedResults
                 |> List.sortWith
-                    (Core.Result.compareWith
+                    (Core.Results.compareWith
                         (\a b -> Basics.compare (attr a) (attr b))
                     )
 
@@ -124,7 +124,7 @@ view props =
                 |> filterTarget
                 |> List.head
 
-        viewAlternative : Icons.IconName -> String -> Core.Result.ComputedResult -> Html msg
+        viewAlternative : Icons.IconName -> String -> Core.Results.ComputedResult -> Html msg
         viewAlternative icon title computedResult =
             case props.engineStatus of
                 EngineStatus.Evaluating ->

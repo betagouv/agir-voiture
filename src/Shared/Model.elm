@@ -2,7 +2,7 @@ module Shared.Model exposing (Model, empty)
 
 import Core.Evaluation exposing (Evaluation)
 import Core.Personas exposing (Personas)
-import Core.Result exposing (Results)
+import Core.Results exposing (Results)
 import Core.UI as UI
 import Dict exposing (Dict)
 import Json.Decode

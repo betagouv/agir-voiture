@@ -3,7 +3,7 @@ module Pages.Simulateur exposing (Model, Msg, page)
 import BetaGouv.DSFR.Button
 import BetaGouv.DSFR.Icons
 import Components.Simulateur.Questions
-import Components.Simulateur.Result
+import Components.Simulateur.Results
 import Core.InputError exposing (InputError)
 import Core.UI as UI
 import Dict exposing (Dict)
@@ -190,7 +190,7 @@ view shared model =
                                             nothing
 
                                 SimulationStep.Result ->
-                                    Components.Simulateur.Result.view
+                                    Components.Simulateur.Results.view
                                         { categories = shared.orderedCategories
                                         , onNewStep = \step -> NewStep step
                                         , evaluations = shared.evaluations

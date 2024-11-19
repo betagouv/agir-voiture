@@ -3,7 +3,7 @@ module Shared.Msg exposing (Msg(..))
 {-| -}
 
 import Core.Evaluation exposing (Evaluation)
-import Core.Result exposing (Results)
+import Core.Results exposing (Results)
 import Json.Decode
 import Publicodes.NodeValue exposing (NodeValue)
 import Publicodes.RuleName exposing (RuleName)

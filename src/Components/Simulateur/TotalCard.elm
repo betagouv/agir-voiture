@@ -3,9 +3,8 @@ module Components.Simulateur.TotalCard exposing (new, view, withComparison, with
 {-| Component to display the total cost and emission of a car.
 -}
 
-import BetaGouv.DSFR.Icons as Icons
 import Core.Format
-import Core.Result exposing (ResultType(..))
+import Core.Results exposing (ResultType(..))
 import FormatNumber.Locales exposing (Decimals(..))
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -171,10 +170,10 @@ viewDiff { value, base, resultType } =
 
         unit =
             case resultType of
-                Core.Result.Cost ->
+                Core.Results.Cost ->
                     "€"
 
-                Core.Result.Emission ->
+                Core.Results.Emission ->
                     "kgCO2e"
     in
     if diff > 0 then
@@ -182,10 +181,10 @@ viewDiff { value, base, resultType } =
             [ span [ class "font-medium inline-flex gap-1 items-baseline" ]
                 [ text formatedDiff, viewUnit unit ]
             , case resultType of
-                Core.Result.Cost ->
+                Core.Results.Cost ->
                     text " d'économie"
 
-                Core.Result.Emission ->
+                Core.Results.Emission ->
                     text " d'émission évitée"
             ]
 
@@ -194,10 +193,10 @@ viewDiff { value, base, resultType } =
             [ span [ class "font-medium inline-flex gap-1 items-baseline" ]
                 [ text formatedDiff, viewUnit unit ]
             , case resultType of
-                Core.Result.Cost ->
+                Core.Results.Cost ->
                     text " de surcoût"
 
-                Core.Result.Emission ->
+                Core.Results.Emission ->
                     text " d'émission supplémentaire"
             ]
 
