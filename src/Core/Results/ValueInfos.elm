@@ -1,13 +1,14 @@
-module Core.Results.RuleValue exposing (RuleValue, decoderWith, title)
+module Core.Results.ValueInfos exposing (RuleValue, decoder)
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (required)
+import Publicodes.NodeValue as NodeValue exposing (NodeValue)
 
 
 {-| Elm representation of the `RuleValue` type from @betagouv/publicodes-voiture.
 -}
-type alias RuleValue a =
-    { value : a
+type alias RuleValue =
+    { value : NodeValue
     , unit : Maybe String
     , title : Maybe String
     , isEnumValue : Bool
@@ -15,16 +16,9 @@ type alias RuleValue a =
     }
 
 
-decoderWith : Decoder a -> Decoder (RuleValue a)
-decoderWith valueDecoder =
+decoder : Decoder RuleValue
+decoder =
     Decode.succeed RuleValue
-        |> required "value" valueDecoder
+        |> required "nodeValue" NodeValue.decoder
         |> required "unit" (Decode.maybe Decode.string)
         |> required "title" (Decode.maybe Decode.string)
-        |> required "isEnumValue" Decode.bool
-        |> required "isApplicable" Decode.bool
-
-
-title : RuleValue String -> String
-title ruleValue =
-    Maybe.withDefault ruleValue.value ruleValue.title

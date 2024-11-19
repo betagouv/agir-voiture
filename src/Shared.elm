@@ -85,7 +85,6 @@ init flagsResult _ =
                 , ui = flags.ui
                 , personas = flags.personas
                 , orderedCategories = UI.getOrderedCategories flags.ui.categories
-                , resultRules = Core.Results.getResultRules flags.rules
               }
             , Effect.none
             )
@@ -225,16 +224,14 @@ evaluate model =
             in
             ( { model | engineStatus = EngineStatus.Evaluating }
             , if model.simulationStep == SimulationStep.Result then
-                let
-                    evalAll =
-                        [ Core.Rules.targetGabarit
-                        , Core.Rules.targetChargingStation
-                        ]
-                            ++ Core.Rules.userContext
-                            ++ model.resultRules
-                            |> Effect.evaluateAll
-                in
-                Effect.batch [ evalAll, Effect.evaluateResults ]
+                Effect.batch
+                    [ Effect.evaluateAll
+                        (Core.Rules.targetGabarit
+                            :: Core.Rules.targetChargingStation
+                            :: Core.Rules.userContext
+                        )
+                    , Effect.evaluateResults
+                    ]
 
               else
                 currentQuestions

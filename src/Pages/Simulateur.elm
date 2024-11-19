@@ -194,7 +194,6 @@ view shared model =
                                         { categories = shared.orderedCategories
                                         , onNewStep = \step -> NewStep step
                                         , evaluations = shared.evaluations
-                                        , resultRules = shared.resultRules
                                         , rules = shared.rules
                                         , results = shared.results
                                         , engineStatus = shared.engineStatus

@@ -43,13 +43,13 @@ withContext context config =
 
 
 withComparison :
-    { costToCompare : Maybe Float, emissionToCompare : Maybe Float }
+    { costToCompare : Float, emissionToCompare : Float }
     -> Config
     -> Config
 withComparison { costToCompare, emissionToCompare } config =
     { config
-        | costToCompare = costToCompare
-        , emissionToCompare = emissionToCompare
+        | costToCompare = Just costToCompare
+        , emissionToCompare = Just emissionToCompare
     }
 
 

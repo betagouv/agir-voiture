@@ -33,7 +33,6 @@ type alias Model =
     , simulationStep : SimulationStep
     , evaluations : Dict RuleName Evaluation
     , orderedCategories : List UI.Category
-    , resultRules : List RuleName
     , results : Maybe Results
     , engineStatus : EngineStatus
     , inputErrors : Dict RuleName { msg : String, value : String }
@@ -50,7 +49,6 @@ empty =
     , personas = Dict.empty
     , evaluations = Dict.empty
     , orderedCategories = []
-    , resultRules = []
     , results = Nothing
     , inputErrors = Dict.empty
     , engineStatus = EngineStatus.NotInitialized

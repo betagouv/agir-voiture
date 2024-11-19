@@ -11,7 +11,8 @@ import Components.Simulateur.Navigation
 import Components.Simulateur.TotalCard as TotalCard
 import Components.Simulateur.UserTotal
 import Core.Evaluation exposing (Evaluation)
-import Core.Results exposing (ComputedResult(..), Results)
+import Core.Results exposing (Results)
+import Core.Results.CarInfos exposing (CarInfos)
 import Core.Rules as Rules
 import Core.UI as UI
 import Dict exposing (Dict)
@@ -19,7 +20,6 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Extra exposing (nothing)
 import Publicodes exposing (RawRules)
-import Publicodes.NodeValue as NodeValue
 import Publicodes.RuleName exposing (RuleName)
 import Shared.EngineStatus as EngineStatus exposing (EngineStatus(..))
 import Shared.SimulationStep exposing (SimulationStep)
@@ -29,7 +29,6 @@ type alias Config msg =
     { categories : List UI.Category
     , onNewStep : SimulationStep -> msg
     , evaluations : Dict RuleName Evaluation
-    , resultRules : List RuleName
     , rules : RawRules
     , results : Maybe Results
     , engineStatus : EngineStatus
@@ -51,16 +50,6 @@ accordionComparisonTableId =
 view : Config msg -> Html msg
 view props =
     let
-        maybeUserCarInfos =
-            Maybe.map .user props.results
-
-        computedResults =
-            Core.Results.getComputedResults
-                { resultRules = props.resultRules
-                , evaluations = props.evaluations
-                , rules = props.rules
-                }
-
         targetGabaritTitle =
             props.evaluations
                 |> Core.Results.getStringValue Rules.targetGabarit
@@ -75,104 +64,94 @@ view props =
                 |> Core.Results.getBooleanValue Rules.targetChargingStation
                 |> Maybe.withDefault True
 
-        -- Sorts the computed results on the given attribute
-        computedResultsSortedOn attr =
-            computedResults
+        sortedAlternativesOn attr =
+            props.results
+                |> Maybe.map .alternatives
+                |> Maybe.withDefault []
                 |> List.sortWith
-                    (Core.Results.compareWith
-                        (\a b -> Basics.compare (attr a) (attr b))
-                    )
+                    (\a b -> Basics.compare (attr a).value (attr b).value)
 
-        -- Filters the computed results on the given target (size, charging station)
-        filterTarget =
+        -- Filters the alternatives results on the given target (size, charging station)
+        filterInTarget : List CarInfos -> List CarInfos
+        filterInTarget =
             List.filter
-                (\result ->
-                    let
-                        ( gabarit, motorisation ) =
-                            case result of
-                                AlternativeCar infos ->
-                                    ( infos.gabarit, infos.motorisation )
-
-                                CurrentUserCar infos ->
-                                    ( infos.gabarit, infos.motorisation )
-                    in
+                (\carInfo ->
                     -- Only keep the results with the same target gabarit
                     -- TODO: use a +1/-1 comparison to be more flexible?
-                    (gabarit == targetGabaritTitle)
+                    (carInfo.size.value == targetGabaritTitle)
                         && -- Only keep the results with a charging station if the user has an electric car
                            -- FIXME: "électrique" is hardcoded
-                           (hasChargingStation || motorisation /= "Électrique")
+                           (hasChargingStation || carInfo.motorisation.value /= "électrique")
                 )
 
-        computedResultsSortedOnCost =
-            computedResultsSortedOn .cost
+        alternativesSortedOnCost =
+            sortedAlternativesOn .cost
 
-        computedResultsSortedOnEmission =
-            computedResultsSortedOn .emission
+        -- (\{ cost } -> cost.value)
+        alternativesSortedOnEmission =
+            sortedAlternativesOn .emissions
 
+        --(\{ emissions } -> emissions.value)
         cheapest =
-            List.head computedResultsSortedOnCost
+            List.head alternativesSortedOnCost
 
         greenest =
-            List.head computedResultsSortedOnEmission
+            List.head alternativesSortedOnEmission
 
         targetCheapest =
-            computedResultsSortedOnCost
-                |> filterTarget
+            alternativesSortedOnCost
+                |> filterInTarget
                 |> List.head
 
         targetGreenest =
-            computedResultsSortedOnEmission
-                |> filterTarget
+            alternativesSortedOnEmission
+                |> filterInTarget
                 |> List.head
 
-        viewAlternative : Icons.IconName -> String -> Core.Results.ComputedResult -> Html msg
-        viewAlternative icon title computedResult =
-            case ( props.engineStatus, maybeUserCarInfos ) of
-                ( EngineStatus.Done, Just userCarInfos ) ->
+        viewAlternative : Icons.IconName -> String -> CarInfos -> Html msg
+        viewAlternative icon title infos =
+            case ( props.engineStatus, props.results ) of
+                ( EngineStatus.Done, Just { user } ) ->
                     div []
                         [ h4 [ class "flex gap-2 items-center" ]
                             [ Icons.iconMD icon
                             , text title
                             ]
-                        , case computedResult of
-                            AlternativeCar infos ->
-                                TotalCard.new
-                                    { title = infos.title
-                                    , cost = infos.cost
-                                    , emission = infos.emission
-                                    }
-                                    |> TotalCard.withContext
-                                        ([ infos.gabarit
-                                         , infos.motorisation
-                                         , Maybe.withDefault "" infos.carburant
-                                         ]
-                                            |> List.filterMap
-                                                (\value ->
-                                                    if String.isEmpty value then
-                                                        Nothing
+                        , TotalCard.new
+                            { title = Maybe.withDefault "" infos.title
+                            , cost = infos.cost.value
+                            , emission = infos.emissions.value
+                            }
+                            |> TotalCard.withContext
+                                ([ infos.size.value
+                                 , infos.motorisation.value
+                                 , Maybe.map .value infos.fuel
+                                    |> Maybe.withDefault ""
+                                 ]
+                                    |> List.filterMap
+                                        (\value ->
+                                            if String.isEmpty value then
+                                                Nothing
 
-                                                    else
-                                                        Just { value = value, unit = Nothing }
-                                                )
+                                            else
+                                                Just { value = value, unit = Nothing }
                                         )
-                                    |> TotalCard.withComparison
-                                        { costToCompare =
-                                            NodeValue.toFloat userCarInfos.cost.value
-                                        , emissionToCompare =
-                                            NodeValue.toFloat userCarInfos.emissions.value
-                                        }
-                                    |> TotalCard.view
+                                )
+                            |> TotalCard.withComparison
+                                { costToCompare = user.cost.value
+                                , emissionToCompare = user.emissions.value
+                                }
+                            |> TotalCard.view
 
-                            CurrentUserCar _ ->
-                                div [ class "flex gap-2 items-center font-medium rounded-md fr-my-4v fr-p-4v outline outline-1 outline-[var(--border-plain-success)] text-[var(--text-default-success)]" ]
-                                    [ Icons.iconMD Icons.system.successLine
-                                    , text "Vous avez déjà la meilleure alternative !"
-                                    ]
+                        -- TODO: case where the user car is the best option
+                        -- CurrentUserCar _ ->
+                        --     div [ class "flex gap-2 items-center font-medium rounded-md fr-my-4v fr-p-4v outline outline-1 outline-[var(--border-plain-success)] text-[var(--text-default-success)]" ]
+                        --         [ Icons.iconMD Icons.system.successLine
+                        --         , text "Vous avez déjà la meilleure alternative !"
+                        --         ]
                         ]
 
                 _ ->
-                    -- TODO: we may want to show error messages for invalid state
                     Components.LoadingCard.view
 
         viewAlternatives args =
@@ -217,16 +196,12 @@ view props =
                         ]
                     , div [ class "fr-col-8" ]
                         [ case ( props.engineStatus, props.results ) of
-                            ( EngineStatus.Done, Just results ) ->
+                            ( EngineStatus.Done, Just { user } ) ->
                                 Components.Simulateur.UserTotal.view
                                     { evaluations = props.evaluations
                                     , rules = props.rules
-                                    , user = results.user
+                                    , user = user
                                     }
-
-                            ( EngineStatus.Done, Nothing ) ->
-                                -- TODO: should not happen
-                                Components.LoadingCard.view
 
                             _ ->
                                 Components.LoadingCard.view
@@ -301,26 +276,9 @@ view props =
                                 Dict.get accordionComparisonTableId props.accordionsState
                                     |> Maybe.withDefault False
                             , content =
-                                case maybeUserCarInfos of
-                                    Just user ->
-                                        case
-                                            ( NodeValue.toFloat user.cost.value
-                                            , NodeValue.toFloat user.emissions.value
-                                            )
-                                        of
-                                            ( Just userCost, Just userEmission ) ->
-                                                Components.Simulateur.ComparisonTable.view
-                                                    { rulesToCompare = computedResults
-                                                    , userCost = userCost
-                                                    , userEmission = userEmission
-                                                    }
-
-                                            _ ->
-                                                -- FIXME: show error message
-                                                Components.LoadingCard.view
-
-                                    _ ->
-                                        Components.LoadingCard.view
+                                props.results
+                                    |> Maybe.map Components.Simulateur.ComparisonTable.view
+                                    |> Maybe.withDefault Components.LoadingCard.view
                             }
                         ]
                     ]

@@ -16,7 +16,6 @@ import Dict exposing (Dict)
 import FormatNumber.Locales exposing (Decimals(..))
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Extra exposing (nothing)
 import Publicodes exposing (RawRules)
 import Publicodes.NodeValue as NodeValue
 import Publicodes.RuleName exposing (RuleName)
@@ -29,67 +28,58 @@ view :
     }
     -> Html msg
 view { rules, evaluations, user } =
-    case
-        ( NodeValue.toFloat user.cost.value
-        , NodeValue.toFloat user.emissions.value
-        )
-    of
-        ( Just cost, Just emissions ) ->
-            let
-                contextValues =
-                    Rules.userContext
-                        |> List.filterMap
-                            (\name ->
-                                Dict.get name evaluations
-                                    |> Maybe.andThen
-                                        (\{ value, unit } ->
-                                            case value of
-                                                NodeValue.Str optionValue ->
-                                                    Just
-                                                        { unit = unit
-                                                        , value =
-                                                            Rules.getOptionTitle
-                                                                { rules = rules
-                                                                , namespace = Just name
-                                                                , optionValue = optionValue
-                                                                }
+    let
+        contextValues =
+            Rules.userContext
+                |> List.filterMap
+                    (\name ->
+                        Dict.get name evaluations
+                            |> Maybe.andThen
+                                (\{ value, unit } ->
+                                    case value of
+                                        NodeValue.Str optionValue ->
+                                            Just
+                                                { unit = unit
+                                                , value =
+                                                    Rules.getOptionTitle
+                                                        { rules = rules
+                                                        , namespace = Just name
+                                                        , optionValue = optionValue
                                                         }
+                                                }
 
-                                                NodeValue.Number num ->
-                                                    Just
-                                                        { unit = unit
-                                                        , value =
-                                                            Core.Format.floatToFrenchLocale
-                                                                (Max 2)
-                                                                num
-                                                        }
+                                        NodeValue.Number num ->
+                                            Just
+                                                { unit = unit
+                                                , value =
+                                                    Core.Format.floatToFrenchLocale
+                                                        (Max 2)
+                                                        num
+                                                }
 
-                                                NodeValue.Boolean bool ->
-                                                    Just
-                                                        { unit = unit
-                                                        , value =
-                                                            if bool then
-                                                                "Oui"
+                                        NodeValue.Boolean bool ->
+                                            Just
+                                                { unit = unit
+                                                , value =
+                                                    if bool then
+                                                        "Oui"
 
-                                                            else
-                                                                "Non"
-                                                        }
+                                                    else
+                                                        "Non"
+                                                }
 
-                                                _ ->
-                                                    Nothing
-                                        )
-                            )
-            in
-            TotalCard.new
-                { title = "Votre voiture"
-                , cost = cost
-                , emission = emissions
-                }
-                |> TotalCard.withContext contextValues
-                |> TotalCard.view
-
-        _ ->
-            nothing
+                                        _ ->
+                                            Nothing
+                                )
+                    )
+    in
+    TotalCard.new
+        { title = "Votre voiture"
+        , cost = user.cost.value
+        , emission = user.emissions.value
+        }
+        |> TotalCard.withContext contextValues
+        |> TotalCard.view
 
 
 viewParagraph : { cost : Maybe Float, emission : Maybe Float } -> Html msg
