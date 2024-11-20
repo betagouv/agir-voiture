@@ -20,26 +20,18 @@ import Regex
 -- to be reused and type checked.
 
 
-{-| The namespace of the rules that corresponds to all the combined
-results in term of carbon emissions.
+{-| The name of the rule that represents the total carbon emissions for the user car.
 -}
-resultNamespaces : List RuleName
-resultNamespaces =
-    [ "empreinte", "coûts" ]
-
-
-{-| The name of the rule that represents the total emission for the user car.
--}
-userEmission : RuleName
-userEmission =
-    "empreinte . voiture"
+userEmissions : RuleName
+userEmissions =
+    "empreinte"
 
 
 {-| The name of the rule that represents the total cost for the user car.
 -}
 userCost : RuleName
 userCost =
-    "coûts . voiture"
+    "coûts"
 
 
 {-| Returns the user situation to show in the results.

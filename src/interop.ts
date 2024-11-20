@@ -5,7 +5,7 @@ import "./ffi/dsfr";
 
 // Import publicodes model
 import {
-  CarSimulatorEngine,
+  CarSimulator,
   RuleName,
   Situation,
 } from "@betagouv/publicodes-voiture";
@@ -13,7 +13,6 @@ import personas from "@betagouv/publicodes-voiture/personas";
 import rules from "@betagouv/publicodes-voiture/rules";
 
 import ui from "./ffi/ui.js";
-import * as publicodes from "./ffi/publicodes.js";
 import * as publicodesRulePage from "./web-components/rule-page/define.js";
 import { Rule } from "publicodes";
 
@@ -33,155 +32,177 @@ export function flags() {
     simulationStep: localStorage.getItem("simulationStep") ?? "NotStarted",
   };
 }
+/**
+ * This function is called AFTER the Elm app starts up and is used to
+ * receive/send messages to/from Elm via ports.
+ */
+export const onReady = ({ app }: { app: any }) => {
+  safeInitSimulator(app, rules, situation).then((simulator: CarSimulator) => {
+    const setSituation = (app: any, newSituation: Situation | null) => {
+      localStorage.setItem("situation", JSON.stringify(newSituation ?? {}));
+      simulator?.setSituation(newSituation ?? {});
+      app.ports.onSituationUpdated.send(null);
+    };
+
+    if (simulator) {
+      // Defines the custom component <publicodes-rule-page> to be used in the
+      // Elm app to render the React component <RulePage> used for the
+      // documentation.
+      publicodesRulePage.defineCustomElementWith(
+        // NOTE: we need to get the ref to the engine to be able to correctly
+        // synchronize the situation between the Elm app and the custom
+        // element.
+        // TODO: to test if it's really necessary.
+        simulator.getEngine({ shallowCopy: false }),
+        app,
+      );
+    }
+
+    // Subscribes to outgoing messages from Elm and handles them
+    if (app.ports && app.ports.outgoing) {
+      app.ports.outgoing.subscribe(async ({ tag, data }) => {
+        switch (tag) {
+          // Publicodes
+          case "RESTART_ENGINE": {
+            // Try to reinitialize the engine with an empty situation
+            simulator = await safeInitSimulator(app, rules, {});
+          }
+          case "SET_SITUATION": {
+            setSituation(app, data);
+            break;
+          }
+          case "UPDATE_SITUATION": {
+            const newSituation = {
+              ...simulator.getEngine().getSituation(),
+              [data.name]: data.value,
+            } as Situation;
+            setSituation(app, newSituation);
+            break;
+          }
+          case "SET_SIMULATION_STEP": {
+            localStorage.setItem("simulationStep", data);
+            break;
+          }
+          case "EVALUATE_RESULTS": {
+            console.time("[publicodes:evaluateCar]");
+            const user = simulator.evaluateCar();
+            console.timeEnd("[publicodes:evaluateCar]");
+
+            console.time("[publicodes:evaluateAlternatives]");
+            const alternatives = simulator.evaluateAlternatives();
+            console.timeEnd("[publicodes:evaluateAlternatives]");
+
+            app.ports.onEvaluatedResults.send({
+              user: objUndefinedToNull(user),
+              alternatives: alternatives.map(objUndefinedToNull),
+            });
+            break;
+          }
+          case "EVALUATE_ALL": {
+            if (!simulator) {
+              return;
+            }
+            try {
+              console.time(`EVALUATE_ALL (${data.length} rules)`);
+              const evaluatedRules = data.map((rule: RuleName) => {
+                const evaluation = Object.fromEntries(
+                  Object.entries(simulator.evaluateRule(rule)).map(
+                    ([key, value]) => [
+                      key,
+                      // NOTE: needed to convert undefined to null to be able
+                      // to correctly deserialize the value in Elm (maybe a
+                      // cleaner solution should be implemented).
+                      undefinedToNull(value),
+                    ],
+                  ),
+                );
+
+                return [rule, evaluation];
+              });
+              console.timeEnd(`EVALUATE_ALL (${data.length} rules)`);
+              app.ports.onEvaluatedRules.send(evaluatedRules);
+            } catch (error) {
+              app.ports.onEngineError.send(error.message);
+            }
+            break;
+          }
+
+          // Modal dialog
+          case "OPEN_MODAL": {
+            const dialog = document.getElementById(data) as HTMLDialogElement;
+            if (dialog) {
+              dialog.showModal();
+            } else {
+              console.error("Dialog not found: ", data);
+            }
+            break;
+          }
+          case "CLOSE_MODAL": {
+            const dialog = document.getElementById(data) as HTMLDialogElement;
+            if (dialog) {
+              dialog.close();
+            } else {
+              console.error("Dialog not found: ", data);
+            }
+            break;
+          }
+
+          // Common JS functions
+          case "SCROLL_TO_TOP": {
+            console.log("Scrolling to top");
+            window.scrollTo(0, 0);
+            break;
+          }
+
+          default: {
+            console.error("Unknown message from Elm with tag: ", tag);
+          }
+        }
+      });
+    }
+  });
+};
 
 // TODO: it's really beneficial to have the engine initialized asynchronously
 // if we await it directly?
-async function safeInitEngine(
+async function safeInitSimulator(
   app: any,
   rules: Record<RuleName, Rule>,
   situation: Situation,
-): Promise<CarSimulatorEngine | undefined> {
+): Promise<CarSimulator | undefined> {
   try {
-    const engine = await publicodes.createAsync(rules, situation);
+    const simulator = await createAsync(rules, situation);
     app.ports.onEngineInitialized.send(null);
-    return engine;
+    return simulator;
   } catch (error) {
     app.ports.onEngineError.send(error.message);
   }
 }
 
 /**
- * This function is called AFTER the Elm app starts up and is used to
- * receive/send messages to/from Elm via ports.
+ * Instantiate a new publicodes engine with the given rules and situation.
+ *
+ * NOTE: I encapsulate the engine in a promise to be able to
+ * initialize it asynchronously. This is useful to avoid blocking the UI while
+ * the engine is being initialized.
+ *
+ * TODO: a better error handling should be implemented.
+ *
+ * FIXME: situation shouldn't be nullable, investigation needed.
  */
-export const onReady = ({ app }: { app: any }) => {
-  safeInitEngine(app, rules, situation).then(
-    (simulatorEngine: CarSimulatorEngine) => {
-      const setSituation = (app: any, newSituation: Situation | null) => {
-        localStorage.setItem("situation", JSON.stringify(newSituation ?? {}));
-        simulatorEngine?.setSituation(newSituation ?? {});
-        app.ports.onSituationUpdated.send(null);
-      };
-
-      if (simulatorEngine) {
-        // Defines the custom component <publicodes-rule-page> to be used in the
-        // Elm app to render the React component <RulePage> used for the
-        // documentation.
-        publicodesRulePage.defineCustomElementWith(
-          // NOTE: we need to get the ref to the engine to be able to correctly
-          // synchronize the situation between the Elm app and the custom
-          // element.
-          // TODO: to test if it's really necessary.
-          simulatorEngine.getEngine({ shallowCopy: false }),
-          app,
-        );
-      }
-
-      // Subscribes to outgoing messages from Elm and handles them
-      if (app.ports && app.ports.outgoing) {
-        app.ports.outgoing.subscribe(async ({ tag, data }) => {
-          switch (tag) {
-            // Publicodes
-            case "RESTART_ENGINE": {
-              // Try to reinitialize the engine with an empty situation
-              simulatorEngine = await safeInitEngine(app, rules, {});
-            }
-            case "SET_SITUATION": {
-              setSituation(app, data);
-              break;
-            }
-            case "UPDATE_SITUATION": {
-              const newSituation = {
-                ...simulatorEngine.getEngine().getSituation(),
-                [data.name]: data.value,
-              } as Situation;
-              setSituation(app, newSituation);
-              break;
-            }
-            case "SET_SIMULATION_STEP": {
-              localStorage.setItem("simulationStep", data);
-              break;
-            }
-            case "EVALUATE_RESULTS": {
-              console.time("[publicodes:evaluateCar]");
-              const user = simulatorEngine.evaluateCar();
-              console.timeEnd("[publicodes:evaluateCar]");
-
-              console.time("[publicodes:evaluateAlternatives]");
-              const alternatives = simulatorEngine.evaluateAlternatives();
-              console.timeEnd("[publicodes:evaluateAlternatives]");
-
-              app.ports.onEvaluatedResults.send({
-                user: objUndefinedToNull(user),
-                alternatives: alternatives.map(objUndefinedToNull),
-              });
-              break;
-            }
-            case "EVALUATE_ALL": {
-              if (!simulatorEngine) {
-                return;
-              }
-              try {
-                console.time(`EVALUATE_ALL (${data.length} rules)`);
-                const evaluatedRules = data.map((rule: RuleName) => {
-                  const evaluation = Object.fromEntries(
-                    Object.entries(simulatorEngine.evaluateRule(rule)).map(
-                      ([key, value]) => [
-                        key,
-                        // NOTE: needed to convert undefined to null to be able
-                        // to correctly deserialize the value in Elm (maybe a
-                        // cleaner solution should be implemented).
-                        undefinedToNull(value),
-                      ],
-                    ),
-                  );
-
-                  return [rule, evaluation];
-                });
-                console.timeEnd(`EVALUATE_ALL (${data.length} rules)`);
-                app.ports.onEvaluatedRules.send(evaluatedRules);
-              } catch (error) {
-                app.ports.onEngineError.send(error.message);
-              }
-              break;
-            }
-
-            // Modal dialog
-            case "OPEN_MODAL": {
-              const dialog = document.getElementById(data) as HTMLDialogElement;
-              if (dialog) {
-                dialog.showModal();
-              } else {
-                console.error("Dialog not found: ", data);
-              }
-              break;
-            }
-            case "CLOSE_MODAL": {
-              const dialog = document.getElementById(data) as HTMLDialogElement;
-              if (dialog) {
-                dialog.close();
-              } else {
-                console.error("Dialog not found: ", data);
-              }
-              break;
-            }
-
-            // Common JS functions
-            case "SCROLL_TO_TOP": {
-              console.log("Scrolling to top");
-              window.scrollTo(0, 0);
-              break;
-            }
-
-            default: {
-              console.error("Unknown message from Elm with tag: ", tag);
-            }
-          }
-        });
-      }
-    },
-  );
-};
+export function createAsync(
+  rules: Readonly<Record<RuleName, Rule>>,
+  situation: Readonly<Situation> | null,
+) {
+  return new Promise<CarSimulator>((resolve) => {
+    const nbRules = Object.keys(rules).length;
+    console.time(`[publicodes:parsing] ${nbRules} rules`);
+    const simulator = new CarSimulator();
+    simulator.setSituation(situation ?? {});
+    console.timeEnd(`[publicodes:parsing] ${nbRules} rules`);
+    resolve(simulator);
+  });
+}
 
 /**
  * In elm, only `null` value are allowed in JSON. This function is used to

@@ -115,7 +115,7 @@ view shared _ =
                         [ div [ class "fr-col-12 fr-col-md-6" ]
                             [ viewCard Core.Rules.userCost shared.rules ]
                         , div [ class "fr-col-12 fr-col-md-6" ]
-                            [ viewCard Core.Rules.userEmission shared.rules ]
+                            [ viewCard Core.Rules.userEmissions shared.rules ]
                         ]
                     ]
                 , section [ class "fr-mt-12v" ]
