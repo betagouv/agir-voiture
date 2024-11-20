@@ -13,6 +13,7 @@ import Components.Simulateur.UserTotal
 import Core.Evaluation exposing (Evaluation)
 import Core.Results exposing (Results)
 import Core.Results.CarInfos exposing (CarInfos)
+import Core.Results.RuleValue as RuleValue
 import Core.Rules as Rules
 import Core.UI as UI
 import Dict exposing (Dict)
@@ -50,19 +51,8 @@ accordionComparisonTableId =
 view : Config msg -> Html msg
 view props =
     let
-        targetGabaritTitle =
-            props.evaluations
-                |> Core.Results.getStringValue Rules.targetGabarit
-                |> Maybe.map
-                    (\gabarit ->
-                        Core.Results.getGabaritTitle gabarit props.rules
-                    )
-                |> Maybe.withDefault ""
-
-        hasChargingStation =
-            props.evaluations
-                |> Core.Results.getBooleanValue Rules.targetChargingStation
-                |> Maybe.withDefault True
+        targetInfos =
+            getTargetInfos props.evaluations props.rules
 
         sortedAlternativesOn attr =
             props.results
@@ -74,15 +64,26 @@ view props =
         -- Filters the alternatives results on the given target (size, charging station)
         filterInTarget : List CarInfos -> List CarInfos
         filterInTarget =
-            List.filter
-                (\carInfo ->
-                    -- Only keep the results with the same target gabarit
-                    -- TODO: use a +1/-1 comparison to be more flexible?
-                    (carInfo.size.value == targetGabaritTitle)
-                        && -- Only keep the results with a charging station if the user has an electric car
-                           -- FIXME: "électrique" is hardcoded
-                           (hasChargingStation || carInfo.motorisation.value /= "électrique")
-                )
+            case targetInfos of
+                Nothing ->
+                    identity
+
+                Just { gabaritTitle, hasChargingStation } ->
+                    List.filter
+                        (\carInfo ->
+                            -- Only keep the results with the same target gabarit
+                            -- TODO: use a +1/-1 comparison to be more flexible?
+                            let
+                                sameSize =
+                                    Maybe.map (\sizeTitle -> sizeTitle == gabaritTitle) carInfo.size.title
+                                        |> Maybe.withDefault False
+
+                                elecAndHasChargingStation =
+                                    hasChargingStation || carInfo.motorisation.value /= "électrique"
+                            in
+                            -- Only keep the results with a charging station if the user has an electric car
+                            sameSize && elecAndHasChargingStation
+                        )
 
         alternativesSortedOnCost =
             sortedAlternativesOn .cost
@@ -122,10 +123,12 @@ view props =
                             , cost = infos.cost.value
                             , emission = infos.emissions.value
                             }
-                            |> TotalCard.withContext
-                                ([ infos.size.value
-                                 , infos.motorisation.value
-                                 , Maybe.map .value infos.fuel
+                            |> -- NOTE: maybe not relevant as infomration is already in the title
+                               TotalCard.withContext
+                                ([ RuleValue.title infos.size
+                                 , RuleValue.title infos.motorisation
+                                 , infos.fuel
+                                    |> Maybe.map RuleValue.title
                                     |> Maybe.withDefault ""
                                  ]
                                     |> List.filterMap
@@ -236,29 +239,35 @@ view props =
                         }
                     ]
                 , section [ class "flex flex-col md:gap-20" ]
-                    [ viewAlternatives
-                        { title =
-                            [ text "Les meilleures alternatives pour le gabarit "
-                            , span [ class "fr-px-3v bg-[var(--background-contrast-grey)]" ]
-                                [ text targetGabaritTitle ]
-                            ]
-                        , desc =
-                            [ text "Parmi les véhicules de gabarit "
-                            , span [ class "font-medium fr-px-1v bg-[var(--background-contrast-grey)]" ] [ text targetGabaritTitle ]
-                            , text ", voici les meilleures alternatives pour votre usage."
-                            , text " Sachant que vous "
-                            , span [ class "font-medium fr-px-1v bg-[var(--background-contrast-grey)]" ]
-                                [ if hasChargingStation then
-                                    text "avez"
+                    [ case targetInfos of
+                        Just { gabaritTitle, hasChargingStation } ->
+                            viewAlternatives
+                                { title =
+                                    [ text "Les meilleures alternatives pour le gabarit "
+                                    , span [ class "fr-px-3v bg-[var(--background-contrast-grey)]" ]
+                                        [ text gabaritTitle ]
+                                    ]
+                                , desc =
+                                    [ text "Parmi les véhicules de gabarit "
+                                    , span [ class "font-medium fr-px-1v bg-[var(--background-contrast-grey)]" ]
+                                        [ text gabaritTitle ]
+                                    , text ", voici les meilleures alternatives pour votre usage."
+                                    , text " Sachant que vous "
+                                    , span [ class "font-medium fr-px-1v bg-[var(--background-contrast-grey)]" ]
+                                        [ if hasChargingStation then
+                                            text "avez"
 
-                                  else
-                                    text "n'avez pas"
-                                , text " la possibilité d'avoir une borne de recharge."
-                                ]
-                            ]
-                        , cheapest = targetCheapest
-                        , greenest = targetGreenest
-                        }
+                                          else
+                                            text "n'avez pas"
+                                        , text " la possibilité d'avoir une borne de recharge."
+                                        ]
+                                    ]
+                                , cheapest = targetCheapest
+                                , greenest = targetGreenest
+                                }
+
+                        _ ->
+                            nothing
                     , div []
                         [ viewAlternatives
                             { title = [ text "Les meilleures alternatives toutes catégories confondues" ]
@@ -341,3 +350,26 @@ view props =
                 ]
             ]
         ]
+
+
+getTargetInfos :
+    Dict RuleName Evaluation
+    -> RawRules
+    -> Maybe { gabaritTitle : String, hasChargingStation : Bool }
+getTargetInfos evaluations rules =
+    let
+        gabaritTitle =
+            evaluations
+                |> Core.Results.getStringValue Rules.targetGabarit
+                |> Maybe.map
+                    (\gabarit ->
+                        Core.Results.getGabaritTitle gabarit rules
+                    )
+
+        hasChargingStation =
+            Core.Results.getBooleanValue Rules.targetChargingStation evaluations
+    in
+    Maybe.map2
+        (\g c -> { gabaritTitle = g, hasChargingStation = c })
+        gabaritTitle
+        hasChargingStation

@@ -103,10 +103,18 @@ export const onReady = ({ app }: { app: any }) => {
               break;
             }
             case "EVALUATE_RESULTS": {
+              console.time("[publicodes:evaluateCar]");
               const user = simulatorEngine.evaluateCar();
+              console.timeEnd("[publicodes:evaluateCar]");
+
+              console.time("[publicodes:evaluateAlternatives]");
               const alternatives = simulatorEngine.evaluateAlternatives();
-              console.log("alternatives", alternatives);
-              app.ports.onEvaluatedResults.send({ user, alternatives });
+              console.timeEnd("[publicodes:evaluateAlternatives]");
+
+              app.ports.onEvaluatedResults.send({
+                user: objUndefinedToNull(user),
+                alternatives: alternatives.map(objUndefinedToNull),
+              });
               break;
             }
             case "EVALUATE_ALL": {
@@ -175,6 +183,26 @@ export const onReady = ({ app }: { app: any }) => {
   );
 };
 
+/**
+ * In elm, only `null` value are allowed in JSON. This function is used to
+ * convert `undefined` to `null` in order to be able to correctly deserialize
+ * the value in Elm.
+ */
 function undefinedToNull<T>(value: T | undefined): T | null {
   return value ?? null;
+}
+
+/**
+ * TODO: recursivelly convert all undefined values to null in an object.
+ *
+ * PERF: this function could be seen as a performance bottleneck but the
+ * performance impact is negligible (max 1ms by rules).
+ */
+function objUndefinedToNull(obj: object): object {
+  console.time("objUndefinedToNull");
+  const res = Object.fromEntries(
+    Object.entries(obj).map(([key, value]) => [key, undefinedToNull(value)]),
+  );
+  console.timeEnd("objUndefinedToNull");
+  return res;
 }

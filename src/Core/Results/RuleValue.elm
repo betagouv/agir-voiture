@@ -1,7 +1,7 @@
 module Core.Results.RuleValue exposing (RuleValue, decoderWith, title)
 
 import Json.Decode as Decode exposing (Decoder)
-import Json.Decode.Pipeline exposing (required)
+import Json.Decode.Pipeline exposing (optional, required)
 
 
 {-| Elm representation of the `RuleValue` type from @betagouv/publicodes-voiture.
@@ -19,7 +19,7 @@ decoderWith : Decoder a -> Decoder (RuleValue a)
 decoderWith valueDecoder =
     Decode.succeed RuleValue
         |> required "value" valueDecoder
-        |> required "unit" (Decode.maybe Decode.string)
+        |> optional "unit" (Decode.maybe Decode.string) Nothing
         |> required "title" (Decode.maybe Decode.string)
         |> required "isEnumValue" Decode.bool
         |> required "isApplicable" Decode.bool
