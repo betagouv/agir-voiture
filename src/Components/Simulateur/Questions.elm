@@ -1,4 +1,4 @@
-module Components.Simulateur.Questions exposing (view)
+module Components.Simulateur.Questions exposing (Config, view)
 
 import Components.Select
 import Components.Simulateur.BooleanInput
@@ -10,12 +10,11 @@ import Core.InputError exposing (InputError)
 import Core.Rules as Rules
 import Core.UI as UI
 import Dict exposing (Dict)
-import FormatNumber.Locales exposing (Decimals(..))
 import Helper exposing (viewMarkdown)
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html, div, hr, text)
+import Html.Attributes exposing (class)
 import Html.Extra exposing (nothing, viewIf, viewMaybe)
-import Publicodes exposing (Mechanism(..), RawRule, RawRules)
+import Publicodes exposing (RawRule, RawRules)
 import Publicodes.NodeValue as NodeValue exposing (NodeValue(..))
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)

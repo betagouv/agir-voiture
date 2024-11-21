@@ -6,8 +6,8 @@ import Core.Results exposing (Results)
 import Core.Results.CarInfos exposing (CarInfos)
 import Core.Results.RuleValue as RuleValue
 import FormatNumber.Locales exposing (Decimals(..))
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html, span, text)
+import Html.Attributes exposing (class, title)
 import Html.Extra exposing (nothing)
 
 
@@ -74,26 +74,8 @@ viewValuePlusDiff value base unit =
         diff =
             value - base
 
-        tagColor =
-            -- less is better
-            if diff < 0 then
-                "text-[var(--text-default-success)]"
-
-            else
-                "text-[var(--text-default-error)]"
-
-        tagPrefix =
-            if diff > 0 then
-                "+"
-
-            else
-                ""
-
         formattedValue =
             Core.Format.floatToFrenchLocale (Max 0) value
-
-        formattedDiff =
-            Core.Format.floatToFrenchLocale (Max 0) diff
     in
     span [ class "flex gap-2 items-center" ]
         [ span []
@@ -104,6 +86,25 @@ viewValuePlusDiff value base unit =
             nothing
 
           else
+            let
+                tagColor =
+                    -- less is better
+                    if diff < 0 then
+                        "text-[var(--text-default-success)]"
+
+                    else
+                        "text-[var(--text-default-error)]"
+
+                tagPrefix =
+                    if diff > 0 then
+                        "+"
+
+                    else
+                        ""
+
+                formattedDiff =
+                    Core.Format.floatToFrenchLocale (Max 0) diff
+            in
             span [ class ("flex text-xs items-center " ++ tagColor) ]
                 [ text tagPrefix
                 , span [ title "Différence par rapport à votre situation actuelle" ]

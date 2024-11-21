@@ -1,7 +1,7 @@
 module Components.Select exposing (view)
 
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html, div, label, option, select, span, text)
+import Html.Attributes exposing (class, for, id, name, selected, value)
 import Html.Events exposing (onInput)
 import Html.Extra exposing (viewMaybe)
 
@@ -18,7 +18,7 @@ view :
     -> Html msg
 view props =
     div [ class "fr-select-group" ]
-        [ Html.label [ class "fr-label", for "select" ]
+        [ label [ class "fr-label", for "select" ]
             [ text props.label
             , span [ class "fr-hint-text" ]
                 [ viewMaybe text props.hint ]

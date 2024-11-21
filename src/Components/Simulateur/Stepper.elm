@@ -1,8 +1,8 @@
-module Components.Simulateur.Stepper exposing (view)
+module Components.Simulateur.Stepper exposing (Props, view)
 
 import Core.UI as UI
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html, div, h2, p, span, text)
+import Html.Attributes exposing (attribute, class)
 import Html.Extra exposing (nothing)
 import Publicodes
 import Publicodes.Helpers

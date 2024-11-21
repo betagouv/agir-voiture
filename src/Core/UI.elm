@@ -1,4 +1,4 @@
-module Core.UI exposing (..)
+module Core.UI exposing (Categories, Category, CategoryInfos, Data, Questions, decode, empty, getOrderedCategories)
 
 {-| This module contains all the types and functions related to the
 [`ui.yaml`](https://github.com/betagouv/publicodes-voiture/blob/main/ui.yaml)
@@ -10,8 +10,8 @@ _simulation steps_) and the list of questions to display in the UI.
 -}
 
 import Dict exposing (Dict)
-import Json.Decode as Decode exposing (..)
-import Json.Decode.Pipeline exposing (..)
+import Json.Decode as Decode exposing (Decoder, dict, int, list, string)
+import Json.Decode.Pipeline exposing (required)
 import Publicodes.RuleName exposing (RuleName)
 
 
@@ -85,11 +85,4 @@ getOrderedCategories : Categories -> List Category
 getOrderedCategories categories =
     Dict.toList categories
         |> List.sortBy (\( _, { index } ) -> index)
-        |> List.map Tuple.first
-
-
-getAllCategoryAndSubCategoryNames : Categories -> List Category
-getAllCategoryAndSubCategoryNames categories =
-    categories
-        |> Dict.toList
         |> List.map Tuple.first

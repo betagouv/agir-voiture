@@ -1,4 +1,4 @@
-module Components.DSFR.Modal exposing (..)
+module Components.DSFR.Modal exposing (view)
 
 import Accessibility.Aria exposing (labelledBy)
 import BetaGouv.DSFR.Button as Button

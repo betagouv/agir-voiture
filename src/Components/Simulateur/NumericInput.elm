@@ -1,4 +1,4 @@
-module Components.Simulateur.NumericInput exposing (view)
+module Components.Simulateur.NumericInput exposing (Config, view)
 
 import Components.DSFR.Input as Input
 import Core.Format
@@ -9,9 +9,9 @@ import Html exposing (Html, text)
 import Html.Attributes exposing (placeholder)
 import Html.Extra exposing (viewMaybe)
 import Maybe.Extra
-import Publicodes exposing (Mechanism(..), RawRule)
+import Publicodes exposing (RawRule)
 import Publicodes.Helpers
-import Publicodes.NodeValue as NodeValue exposing (NodeValue(..))
+import Publicodes.NodeValue as NodeValue exposing (NodeValue)
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
 

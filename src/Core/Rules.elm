@@ -1,4 +1,4 @@
-module Core.Rules exposing (..)
+module Core.Rules exposing (getOptionTitle, getStringFromSituation, userContext, userCost, userEmissions)
 
 {-| This module contains all the helper functions to manipulate the Publicodes rules of
 the [`publicodes-voiture`](https://github.com/betagouv/publicodes-voiture) model.
@@ -7,11 +7,10 @@ It's not intended to be generic to all Publicodes models.
 
 -}
 
-import Dict exposing (Dict)
-import List.Extra
+import Dict
 import Publicodes exposing (RawRules)
 import Publicodes.NodeValue exposing (NodeValue)
-import Publicodes.RuleName exposing (RuleName, namespace, split)
+import Publicodes.RuleName exposing (RuleName)
 import Regex
 
 

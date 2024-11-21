@@ -1,4 +1,4 @@
-module Shared.SimulationStep exposing (SimulationStep(..), decode, decoder, encode)
+module Shared.SimulationStep exposing (SimulationStep(..), decoder, encode)
 
 {-| Represents the current step of the simulation.
 
@@ -34,11 +34,6 @@ decoder =
                     Category s
         )
         Decode.string
-
-
-decode : Encode.Value -> Result Decode.Error SimulationStep
-decode value =
-    Decode.decodeValue decoder value
 
 
 encode : SimulationStep -> Encode.Value

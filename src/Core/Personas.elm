@@ -1,4 +1,4 @@
-module Core.Personas exposing (..)
+module Core.Personas exposing (Persona, Personas, personasDecoder)
 
 {-| This module contains all the types and functions related to the
 [`personas.yaml`](https://github.com/betagouv/publicodes-voiture/blob/main/personas.yaml)
@@ -11,8 +11,8 @@ pre-filled simulation.
 -}
 
 import Dict exposing (Dict)
-import Json.Decode as Decode exposing (..)
-import Json.Decode.Pipeline exposing (..)
+import Json.Decode as Decode exposing (Decoder, string)
+import Json.Decode.Pipeline exposing (required)
 import Publicodes.Situation as Situation exposing (Situation)
 
 

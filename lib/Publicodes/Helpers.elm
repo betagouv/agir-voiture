@@ -1,4 +1,4 @@
-module Publicodes.Helpers exposing (getTitle, getUnit, mechanismToFloat)
+module Publicodes.Helpers exposing (getTitle, mechanismToFloat)
 
 {-| Get the title of a rule from its name.
 If the rule doesn't have a title, the name is returned.
@@ -21,12 +21,6 @@ getTitle name rules =
 
         Nothing ->
             name
-
-
-getUnit : RuleName -> RawRules -> Maybe String
-getUnit name rules =
-    Dict.get name rules
-        |> Maybe.andThen .unite
 
 
 mechanismToFloat : Mechanism -> Maybe Float

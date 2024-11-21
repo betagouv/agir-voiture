@@ -1,4 +1,4 @@
-module Components.Simulateur.UserTotal exposing (view, viewParagraph)
+module Components.Simulateur.UserTotal exposing (view)
 
 {-|
 
@@ -14,8 +14,7 @@ import Core.Results.CarInfos exposing (CarInfos)
 import Core.Rules as Rules
 import Dict exposing (Dict)
 import FormatNumber.Locales exposing (Decimals(..))
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html)
 import Publicodes exposing (RawRules)
 import Publicodes.NodeValue as NodeValue
 import Publicodes.RuleName exposing (RuleName)
@@ -80,34 +79,3 @@ view { rules, evaluations, user } =
         }
         |> TotalCard.withContext contextValues
         |> TotalCard.view
-
-
-viewParagraph : { cost : Maybe Float, emission : Maybe Float } -> Html msg
-viewParagraph { cost, emission } =
-    let
-        format =
-            Core.Format.floatToFrenchLocale (Max 0)
-    in
-    case ( cost, emission ) of
-        ( Just costVal, Just emissionVal ) ->
-            p []
-                [ text "Actuellement, votre voiture vous coûte "
-                , span [ class "font-medium text-[var(--text-title-blue-france)]" ]
-                    [ text (format costVal ++ " €") ]
-                , text " et émet "
-                , span [ class "font-medium text-[var(--text-title-blue-france)]" ]
-                    [ text (format emissionVal ++ " kg de CO2e") ]
-                , text " par an."
-                ]
-
-        _ ->
-            p []
-                [ span [ class "text-[var(--text-default-error)]" ]
-                    [ text """
-                    Une erreur est survenue lors du calcul, veuillez
-                    'Réinitialiser' et recommencer. Si le problème persiste, 
-                    """
-                    , a [ target "_blank", href "mailto:emile.rolley@tuta.io" ]
-                        [ text "contactez-nous." ]
-                    ]
-                ]

@@ -8,8 +8,8 @@ import Core.InputError exposing (InputError)
 import Core.UI as UI
 import Dict exposing (Dict)
 import Effect exposing (Effect)
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html, div, p, text)
+import Html.Attributes exposing (class, classList)
 import Html.Extra exposing (nothing)
 import Layouts
 import Page exposing (Page)
@@ -80,8 +80,7 @@ getSimulationStep step orderedCategories =
 
 
 type Msg
-    = NoOp
-    | NewAnswer ( RuleName, NodeValue, Maybe InputError )
+    = NewAnswer ( RuleName, NodeValue, Maybe InputError )
     | NewStep SimulationStep
     | ResetSimulation
     | ToggleAccordion String
@@ -90,9 +89,6 @@ type Msg
 update : Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
 update _ msg model =
     case msg of
-        NoOp ->
-            ( model, Effect.none )
-
         NewAnswer ( name, value, Nothing ) ->
             ( model
             , Effect.batch

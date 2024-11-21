@@ -1,7 +1,11 @@
 module Publicodes exposing
-    ( Mechanism(..)
+    ( ChainedMechanisms
+    , Clause
+    , Mechanism(..)
+    , PossibiliteNode
     , RawRule
     , RawRules
+    , RecalculNode
     , decodeRawRules
     )
 

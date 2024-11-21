@@ -8,8 +8,8 @@ import Components.DSFR.Notice
 import Core.Personas exposing (Personas)
 import Dict
 import Effect exposing (Effect)
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html, a, br, div, p, span, text)
+import Html.Attributes exposing (class, classList, href, id, target)
 import Html.Extra exposing (viewIf)
 import Json.Decode
 import Layout exposing (Layout)
@@ -17,7 +17,6 @@ import Publicodes.Situation exposing (Situation)
 import Route exposing (Route)
 import Shared
 import Shared.Constants
-import Shared.Msg exposing (Msg(..))
 import View exposing (View)
 
 

@@ -1,7 +1,7 @@
 module Pages.Documentation.ALL_ exposing (Model, Msg, page)
 
 import Effect exposing (Effect)
-import Html exposing (..)
+import Html exposing (node)
 import Html.Attributes exposing (attribute)
 import Json.Encode as Encode
 import Layouts

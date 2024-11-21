@@ -9,8 +9,8 @@ import Json.Decode
 import Publicodes exposing (RawRules)
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
-import Shared.EngineStatus as EngineStatus exposing (EngineStatus(..))
-import Shared.SimulationStep as SimulationStep exposing (SimulationStep(..))
+import Shared.EngineStatus as EngineStatus exposing (EngineStatus)
+import Shared.SimulationStep as SimulationStep exposing (SimulationStep)
 
 
 {-| Contains all the data shared between the different pages of the application.

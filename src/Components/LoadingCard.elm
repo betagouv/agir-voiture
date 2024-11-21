@@ -1,7 +1,7 @@
 module Components.LoadingCard exposing (view)
 
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html, div)
+import Html.Attributes exposing (class)
 
 
 view : Html msg

@@ -3,8 +3,8 @@ module Pages.Documentation exposing (Model, Msg, page)
 import Components.DSFR.Card as Card
 import Core.Rules
 import Effect exposing (Effect)
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html, a, div, h1, h2, li, p, section, text, ul)
+import Html.Attributes exposing (class, href, target)
 import Layouts
 import Page exposing (Page)
 import Publicodes exposing (RawRules)

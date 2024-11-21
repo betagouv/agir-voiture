@@ -278,9 +278,9 @@ decodeEvaluations encodedEvaluations =
                 Ok evaluations ->
                     encodedEvaluation
                         |> Json.Decode.decodeValue Core.Evaluation.decoder
-                        |> Result.andThen
+                        |> Result.map
                             (\eval ->
-                                Ok (( ruleName, eval ) :: evaluations)
+                                ( ruleName, eval ) :: evaluations
                             )
         )
         (Ok [])
