@@ -7,7 +7,8 @@
   "type": "module",
   "scripts": {
     "start": "elm-land server",
-    "build": "elm-land build"
+    "build": "elm-land build",
+    "review": "elm-review"
   },
   "dependencies": {
     "@betagouv/publicodes-voiture": "file:../publicodes-voiture/",
