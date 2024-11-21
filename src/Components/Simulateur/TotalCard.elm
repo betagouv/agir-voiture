@@ -96,7 +96,7 @@ view config =
                             viewDiff
                                 { value = config.emission
                                 , base = baseEmission
-                                , resultType = Emission
+                                , resultType = Emissions
                                 }
                         )
                         config.emissionToCompare
@@ -173,7 +173,7 @@ viewDiff { value, base, resultType } =
                 Core.Results.Cost ->
                     "€"
 
-                Core.Results.Emission ->
+                Core.Results.Emissions ->
                     "kgCO2e"
     in
     if diff > 0 then
@@ -184,7 +184,7 @@ viewDiff { value, base, resultType } =
                 Core.Results.Cost ->
                     text " d'économie"
 
-                Core.Results.Emission ->
+                Core.Results.Emissions ->
                     text " d'émission évitée"
             ]
 
@@ -196,7 +196,7 @@ viewDiff { value, base, resultType } =
                 Core.Results.Cost ->
                     text " de surcoût"
 
-                Core.Results.Emission ->
+                Core.Results.Emissions ->
                     text " d'émission supplémentaire"
             ]
 

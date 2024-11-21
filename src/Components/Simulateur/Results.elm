@@ -13,7 +13,7 @@ import Components.Simulateur.UserTotal
 import Core.Evaluation exposing (Evaluation)
 import Core.Results exposing (Results)
 import Core.Results.CarInfos exposing (CarInfos)
-import Core.Results.RuleValue as RuleValue
+import Core.Results.RuleValue as RuleValue exposing (RuleValue)
 import Core.Rules as Rules
 import Core.UI as UI
 import Dict exposing (Dict)
@@ -88,11 +88,9 @@ view props =
         alternativesSortedOnCost =
             sortedAlternativesOn .cost
 
-        -- (\{ cost } -> cost.value)
         alternativesSortedOnEmission =
             sortedAlternativesOn .emissions
 
-        --(\{ emissions } -> emissions.value)
         cheapest =
             List.head alternativesSortedOnCost
 
@@ -109,8 +107,13 @@ view props =
                 |> filterInTarget
                 |> List.head
 
-        viewAlternative : Icons.IconName -> String -> CarInfos -> Html msg
-        viewAlternative icon title infos =
+        viewAlternative :
+            (CarInfos -> RuleValue comparable)
+            -> Icons.IconName
+            -> String
+            -> CarInfos
+            -> Html msg
+        viewAlternative attr icon title infos =
             case ( props.engineStatus, props.results ) of
                 ( EngineStatus.Done, Just { user } ) ->
                     div []
@@ -118,40 +121,40 @@ view props =
                             [ Icons.iconMD icon
                             , text title
                             ]
-                        , TotalCard.new
-                            { title = Maybe.withDefault "" infos.title
-                            , cost = infos.cost.value
-                            , emission = infos.emissions.value
-                            }
-                            |> -- NOTE: maybe not relevant as infomration is already in the title
-                               TotalCard.withContext
-                                ([ RuleValue.title infos.size
-                                 , RuleValue.title infos.motorisation
-                                 , infos.fuel
-                                    |> Maybe.map RuleValue.title
-                                    |> Maybe.withDefault ""
-                                 ]
-                                    |> List.filterMap
-                                        (\value ->
-                                            if String.isEmpty value then
-                                                Nothing
-
-                                            else
-                                                Just { value = value, unit = Nothing }
-                                        )
-                                )
-                            |> TotalCard.withComparison
-                                { costToCompare = user.cost.value
-                                , emissionToCompare = user.emissions.value
+                        , if Basics.compare (attr user).value (attr infos).value == GT then
+                            TotalCard.new
+                                { title = Maybe.withDefault "" infos.title
+                                , cost = infos.cost.value
+                                , emission = infos.emissions.value
                                 }
-                            |> TotalCard.view
+                                |> -- NOTE: maybe not relevant as information is already in the title
+                                   TotalCard.withContext
+                                    ([ RuleValue.title infos.size
+                                     , RuleValue.title infos.motorisation
+                                     , infos.fuel
+                                        |> Maybe.map RuleValue.title
+                                        |> Maybe.withDefault ""
+                                     ]
+                                        |> List.filterMap
+                                            (\value ->
+                                                if String.isEmpty value then
+                                                    Nothing
 
-                        -- TODO: case where the user car is the best option
-                        -- CurrentUserCar _ ->
-                        --     div [ class "flex gap-2 items-center font-medium rounded-md fr-my-4v fr-p-4v outline outline-1 outline-[var(--border-plain-success)] text-[var(--text-default-success)]" ]
-                        --         [ Icons.iconMD Icons.system.successLine
-                        --         , text "Vous avez déjà la meilleure alternative !"
-                        --         ]
+                                                else
+                                                    Just { value = value, unit = Nothing }
+                                            )
+                                    )
+                                |> TotalCard.withComparison
+                                    { costToCompare = user.cost.value
+                                    , emissionToCompare = user.emissions.value
+                                    }
+                                |> TotalCard.view
+
+                          else
+                            div [ class "flex gap-2 items-center font-medium rounded-md fr-my-4v fr-p-4v outline outline-1 outline-[var(--border-plain-success)] text-[var(--text-default-success)]" ]
+                                [ Icons.iconMD Icons.system.successLine
+                                , text "Vous avez déjà la meilleure alternative !"
+                                ]
                         ]
 
                 _ ->
@@ -164,8 +167,16 @@ view props =
                         [ h2 [] args.title
                         , p [ class "fr-col-8" ] args.desc
                         , div [ class "grid grid-cols-2 gap-6" ]
-                            [ viewAlternative Icons.finance.moneyEuroCircleLine "La plus économique" cheapestAlternative
-                            , viewAlternative Icons.others.leafLine "La plus écologique" greenestAlternative
+                            [ viewAlternative
+                                .cost
+                                Icons.finance.moneyEuroCircleLine
+                                "La plus économique"
+                                cheapestAlternative
+                            , viewAlternative
+                                .emissions
+                                Icons.others.leafLine
+                                "La plus écologique"
+                                greenestAlternative
                             ]
                         ]
 
