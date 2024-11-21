@@ -92,9 +92,14 @@ export const onReady = ({ app }: { app: any }) => {
             const alternatives = simulator.evaluateAlternatives();
             console.timeEnd("[publicodes:evaluateAlternatives]");
 
+            console.time("[publicodes:evaluateTarget]");
+            const target = simulator.evaluateTargetCar();
+            console.timeEnd("[publicodes:evaluateTarget]");
+
             app.ports.onEvaluatedResults.send({
               user: objUndefinedToNull(user),
               alternatives: alternatives.map(objUndefinedToNull),
+              target: objUndefinedToNull(target),
             });
             break;
           }
@@ -103,7 +108,6 @@ export const onReady = ({ app }: { app: any }) => {
               return;
             }
             try {
-              console.time(`EVALUATE_ALL (${data.length} rules)`);
               const evaluatedRules = data.map((rule: RuleName) => {
                 const evaluation = Object.fromEntries(
                   Object.entries(simulator.evaluateRule(rule)).map(
@@ -119,7 +123,6 @@ export const onReady = ({ app }: { app: any }) => {
 
                 return [rule, evaluation];
               });
-              console.timeEnd(`EVALUATE_ALL (${data.length} rules)`);
               app.ports.onEvaluatedRules.send(evaluatedRules);
             } catch (error) {
               app.ports.onEngineError.send(error.message);
@@ -220,10 +223,8 @@ function undefinedToNull<T>(value: T | undefined): T | null {
  * performance impact is negligible (max 1ms by rules).
  */
 function objUndefinedToNull(obj: object): object {
-  console.time("objUndefinedToNull");
   const res = Object.fromEntries(
     Object.entries(obj).map(([key, value]) => [key, undefinedToNull(value)]),
   );
-  console.timeEnd("objUndefinedToNull");
   return res;
 }

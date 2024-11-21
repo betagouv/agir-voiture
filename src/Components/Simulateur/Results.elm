@@ -14,7 +14,6 @@ import Core.Evaluation exposing (Evaluation)
 import Core.Results exposing (Results)
 import Core.Results.CarInfos exposing (CarInfos)
 import Core.Results.RuleValue as RuleValue exposing (RuleValue)
-import Core.Rules as Rules
 import Core.UI as UI
 import Dict exposing (Dict)
 import Html exposing (..)
@@ -52,7 +51,7 @@ view : Config msg -> Html msg
 view props =
     let
         targetInfos =
-            getTargetInfos props.evaluations props.rules
+            Maybe.map .target props.results
 
         sortedAlternativesOn attr =
             props.results
@@ -68,18 +67,17 @@ view props =
                 Nothing ->
                     identity
 
-                Just { gabaritTitle, hasChargingStation } ->
+                Just target ->
                     List.filter
                         (\carInfo ->
                             -- Only keep the results with the same target gabarit
                             -- TODO: use a +1/-1 comparison to be more flexible?
                             let
                                 sameSize =
-                                    Maybe.map (\sizeTitle -> sizeTitle == gabaritTitle) carInfo.size.title
-                                        |> Maybe.withDefault False
+                                    target.size == carInfo.size
 
                                 elecAndHasChargingStation =
-                                    hasChargingStation || carInfo.motorisation.value /= "électrique"
+                                    target.hasChargingStation.value || carInfo.motorisation.value /= "électrique"
                             in
                             -- Only keep the results with a charging station if the user has an electric car
                             sameSize && elecAndHasChargingStation
@@ -251,21 +249,21 @@ view props =
                     ]
                 , section [ class "flex flex-col md:gap-20" ]
                     [ case targetInfos of
-                        Just { gabaritTitle, hasChargingStation } ->
+                        Just { size, hasChargingStation } ->
                             viewAlternatives
                                 { title =
                                     [ text "Les meilleures alternatives pour le gabarit "
                                     , span [ class "fr-px-3v bg-[var(--background-contrast-grey)]" ]
-                                        [ text gabaritTitle ]
+                                        [ text (RuleValue.title size) ]
                                     ]
                                 , desc =
                                     [ text "Parmi les véhicules de gabarit "
                                     , span [ class "font-medium fr-px-1v bg-[var(--background-contrast-grey)]" ]
-                                        [ text gabaritTitle ]
+                                        [ text (RuleValue.title size) ]
                                     , text ", voici les meilleures alternatives pour votre usage."
                                     , text " Sachant que vous "
                                     , span [ class "font-medium fr-px-1v bg-[var(--background-contrast-grey)]" ]
-                                        [ if hasChargingStation then
+                                        [ if hasChargingStation.value then
                                             text "avez"
 
                                           else
@@ -361,26 +359,3 @@ view props =
                 ]
             ]
         ]
-
-
-getTargetInfos :
-    Dict RuleName Evaluation
-    -> RawRules
-    -> Maybe { gabaritTitle : String, hasChargingStation : Bool }
-getTargetInfos evaluations rules =
-    let
-        gabaritTitle =
-            evaluations
-                |> Core.Results.getStringValue Rules.targetGabarit
-                |> Maybe.map
-                    (\gabarit ->
-                        Core.Results.getGabaritTitle gabarit rules
-                    )
-
-        hasChargingStation =
-            Core.Results.getBooleanValue Rules.targetChargingStation evaluations
-    in
-    Maybe.map2
-        (\g c -> { gabaritTitle = g, hasChargingStation = c })
-        gabaritTitle
-        hasChargingStation

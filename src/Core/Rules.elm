@@ -52,59 +52,6 @@ userContext =
     ]
 
 
-{-| Size of the car considered.
--}
-targetGabarit : RuleName
-targetGabarit =
-    "voiture . cible . gabarit"
-
-
-{-| Ability to have a charging station.
--}
-targetChargingStation : RuleName
-targetChargingStation =
-    "voiture . cible . borne de recharge"
-
-
-getQuestions : RawRules -> List String -> Dict String (List RuleName)
-getQuestions rules categories =
-    Dict.toList rules
-        |> List.filterMap
-            (\( name, rule ) ->
-                Maybe.map (\_ -> name) rule.question
-            )
-        |> List.foldl
-            (\name dict ->
-                let
-                    category =
-                        namespace name
-                in
-                if List.member category categories then
-                    Dict.update category
-                        (\maybeList ->
-                            case maybeList of
-                                Just list ->
-                                    Just (name :: list)
-
-                                Nothing ->
-                                    Just [ name ]
-                        )
-                        dict
-
-                else
-                    dict
-            )
-            Dict.empty
-
-
-isInCategory : RuleName -> RuleName -> Bool
-isInCategory category ruleName =
-    split ruleName
-        |> List.head
-        |> Maybe.withDefault ""
-        |> (\namespace -> namespace == category)
-
-
 getStringFromSituation : NodeValue -> String
 getStringFromSituation stringValue =
     let
@@ -144,17 +91,3 @@ getOptionTitle props =
                 |> Maybe.andThen .titre
                 |> Maybe.withDefault
                     (getOptionTitle { props | namespace = Nothing })
-
-
-{-| Get the string value of a item in a `possibilité` mechanism.
-
-    getOptionValue "voiture . gabarit . moyenne" == "moyenne"
-
-    getOptionValue "gabarit" == "gabarit"
-
--}
-getOptionValue : RuleName -> String
-getOptionValue val =
-    split val
-        |> List.Extra.last
-        |> Maybe.withDefault val

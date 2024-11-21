@@ -225,11 +225,7 @@ evaluate model =
             ( { model | engineStatus = EngineStatus.Evaluating }
             , if model.simulationStep == SimulationStep.Result then
                 Effect.batch
-                    [ Effect.evaluateAll
-                        (Core.Rules.targetGabarit
-                            :: Core.Rules.targetChargingStation
-                            :: Core.Rules.userContext
-                        )
+                    [ Effect.evaluateAll Core.Rules.userContext
                     , Effect.evaluateResults
                     ]
 
