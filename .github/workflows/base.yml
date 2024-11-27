@@ -15,14 +15,11 @@ jobs:
           node-version: 18
           cache: "yarn"
 
-      - id: install
-        name: Install dependencies
+      - name: Install dependencies
         run: yarn install --immutable
 
-      - id: compile
-        name: Elm review
-        run: yarn review
-
-      - id: test
-        name: Build
+      - name: Elm Land build
         run: yarn build
+
+      - name: Elm Review
+        run: yarn review
