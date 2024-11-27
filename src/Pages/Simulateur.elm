@@ -3,13 +3,13 @@ module Pages.Simulateur exposing (Model, Msg, page)
 import BetaGouv.DSFR.Button
 import BetaGouv.DSFR.Icons
 import Components.Simulateur.Questions
-import Components.Simulateur.Result
+import Components.Simulateur.Results
 import Core.InputError exposing (InputError)
 import Core.UI as UI
 import Dict exposing (Dict)
 import Effect exposing (Effect)
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html, div, p, text)
+import Html.Attributes exposing (class, classList)
 import Html.Extra exposing (nothing)
 import Layouts
 import Page exposing (Page)
@@ -80,8 +80,7 @@ getSimulationStep step orderedCategories =
 
 
 type Msg
-    = NoOp
-    | NewAnswer ( RuleName, NodeValue, Maybe InputError )
+    = NewAnswer ( RuleName, NodeValue, Maybe InputError )
     | NewStep SimulationStep
     | ResetSimulation
     | ToggleAccordion String
@@ -90,9 +89,6 @@ type Msg
 update : Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
 update _ msg model =
     case msg of
-        NoOp ->
-            ( model, Effect.none )
-
         NewAnswer ( name, value, Nothing ) ->
             ( model
             , Effect.batch
@@ -190,12 +186,12 @@ view shared model =
                                             nothing
 
                                 SimulationStep.Result ->
-                                    Components.Simulateur.Result.view
+                                    Components.Simulateur.Results.view
                                         { categories = shared.orderedCategories
                                         , onNewStep = \step -> NewStep step
                                         , evaluations = shared.evaluations
-                                        , resultRules = shared.resultRules
                                         , rules = shared.rules
+                                        , results = shared.results
                                         , engineStatus = shared.engineStatus
                                         , accordionsState = model.accordionsState
                                         , onToggleAccordion = ToggleAccordion
@@ -211,6 +207,8 @@ view shared model =
     }
 
 
+{-| TODO: harmonize with other error views in Layouts.HeaderAndFooter
+-}
 viewEngineError : String -> Html Msg
 viewEngineError msg =
     div [ class "fr-text-red-600" ]

@@ -1,4 +1,4 @@
-module Components.Simulateur.Result exposing (view)
+module Components.Simulateur.Results exposing (Config, view)
 
 import BetaGouv.DSFR.Accordion as Accordion
 import BetaGouv.DSFR.Button as Button
@@ -10,16 +10,18 @@ import Components.Simulateur.ComparisonTable
 import Components.Simulateur.Navigation
 import Components.Simulateur.TotalCard as TotalCard
 import Components.Simulateur.UserTotal
-import Core.Result exposing (ComputedResult(..))
-import Core.Rules as Rules
+import Core.Evaluation exposing (Evaluation)
+import Core.Results exposing (Results)
+import Core.Results.CarInfos exposing (CarInfos)
+import Core.Results.RuleValue as RuleValue exposing (RuleValue)
 import Core.UI as UI
 import Dict exposing (Dict)
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html, a, div, h2, h3, h4, p, section, span, text)
+import Html.Attributes exposing (class, href, target)
 import Html.Extra exposing (nothing)
-import Publicodes exposing (Evaluation, RawRules)
+import Publicodes exposing (RawRules)
 import Publicodes.RuleName exposing (RuleName)
-import Shared.EngineStatus as EngineStatus exposing (EngineStatus(..))
+import Shared.EngineStatus as EngineStatus exposing (EngineStatus)
 import Shared.SimulationStep exposing (SimulationStep)
 
 
@@ -27,8 +29,8 @@ type alias Config msg =
     { categories : List UI.Category
     , onNewStep : SimulationStep -> msg
     , evaluations : Dict RuleName Evaluation
-    , resultRules : List RuleName
     , rules : RawRules
+    , results : Maybe Results
     , engineStatus : EngineStatus
     , accordionsState : Dict String Bool
     , onToggleAccordion : String -> msg
@@ -48,126 +50,85 @@ accordionComparisonTableId =
 view : Config msg -> Html msg
 view props =
     let
-        { userEmission, userCost } =
-            Core.Result.getUserValues props.evaluations
+        targetInfos =
+            Maybe.map .target props.results
 
-        computedResults =
-            Core.Result.getComputedResults
-                { resultRules = props.resultRules
-                , evaluations = props.evaluations
-                , rules = props.rules
-                }
-
-        targetGabaritTitle =
-            props.evaluations
-                |> Core.Result.getStringValue Rules.targetGabarit
-                |> Maybe.map
-                    (\gabarit ->
-                        Core.Result.getGabaritTitle gabarit props.rules
-                    )
-                |> Maybe.withDefault ""
-
-        hasChargingStation =
-            props.evaluations
-                |> Core.Result.getBooleanValue Rules.targetChargingStation
-                |> Maybe.withDefault True
-
-        -- Sorts the computed results on the given attribute
-        computedResultsSortedOn attr =
-            computedResults
+        sortedAlternativesOn attr =
+            props.results
+                |> Maybe.map .alternatives
+                |> Maybe.withDefault []
                 |> List.sortWith
-                    (Core.Result.compareWith
-                        (\a b -> Basics.compare (attr a) (attr b))
-                    )
+                    (\a b -> Basics.compare (attr a).value (attr b).value)
 
-        -- Filters the computed results on the given target (size, charging station)
-        filterTarget =
-            List.filter
-                (\result ->
-                    let
-                        ( gabarit, motorisation ) =
-                            case result of
-                                AlternativeCar infos ->
-                                    ( infos.gabarit, infos.motorisation )
+        alternativesSortedOnCost =
+            sortedAlternativesOn .cost
 
-                                CurrentUserCar infos ->
-                                    ( infos.gabarit, infos.motorisation )
-                    in
-                    -- Only keep the results with the same target gabarit
-                    -- TODO: use a +1/-1 comparison to be more flexible?
-                    (gabarit == targetGabaritTitle)
-                        && -- Only keep the results with a charging station if the user has an electric car
-                           -- FIXME: "électrique" is hardcoded
-                           (hasChargingStation || motorisation /= "Électrique")
-                )
-
-        computedResultsSortedOnCost =
-            computedResultsSortedOn .cost
-
-        computedResultsSortedOnEmission =
-            computedResultsSortedOn .emission
+        alternativesSortedOnEmission =
+            sortedAlternativesOn .emissions
 
         cheapest =
-            List.head computedResultsSortedOnCost
+            List.head alternativesSortedOnCost
 
         greenest =
-            List.head computedResultsSortedOnEmission
+            List.head alternativesSortedOnEmission
 
-        targetCheapest =
-            computedResultsSortedOnCost
-                |> filterTarget
-                |> List.head
-
-        targetGreenest =
-            computedResultsSortedOnEmission
-                |> filterTarget
-                |> List.head
-
-        viewAlternative : Icons.IconName -> String -> Core.Result.ComputedResult -> Html msg
-        viewAlternative icon title computedResult =
-            case props.engineStatus of
-                EngineStatus.Evaluating ->
-                    Components.LoadingCard.view
-
-                _ ->
+        viewAlternative :
+            (CarInfos -> RuleValue comparable)
+            -> Icons.IconName
+            -> String
+            -> CarInfos
+            -> Html msg
+        viewAlternative attr icon title infos =
+            case ( props.engineStatus, props.results ) of
+                ( EngineStatus.Done, Just { user } ) ->
+                    let
+                        alternativeIsBetter =
+                            (user.size /= infos.size)
+                                || (Basics.compare (attr user).value (attr infos).value == GT)
+                    in
                     div []
                         [ h4 [ class "flex gap-2 items-center" ]
                             [ Icons.iconMD icon
                             , text title
                             ]
-                        , case computedResult of
-                            AlternativeCar infos ->
-                                TotalCard.new
-                                    { title = infos.title
-                                    , cost = infos.cost
-                                    , emission = infos.emission
+                        , if alternativeIsBetter then
+                            TotalCard.new
+                                { title = Maybe.withDefault "" infos.title
+                                , cost = infos.cost.value
+                                , emission = infos.emissions.value
+                                }
+                                |> -- NOTE: maybe not relevant as information is already in the title
+                                   TotalCard.withContext
+                                    ([ RuleValue.title infos.size
+                                     , RuleValue.title infos.motorisation
+                                     , infos.fuel
+                                        |> Maybe.map RuleValue.title
+                                        |> Maybe.withDefault ""
+                                     ]
+                                        |> List.filterMap
+                                            (\value ->
+                                                if String.isEmpty value then
+                                                    Nothing
+
+                                                else
+                                                    Just { value = value, unit = Nothing }
+                                            )
+                                    )
+                                |> TotalCard.withComparison
+                                    { costToCompare = user.cost.value
+                                    , emissionToCompare = user.emissions.value
                                     }
-                                    |> TotalCard.withContext
-                                        ([ infos.gabarit
-                                         , infos.motorisation
-                                         , Maybe.withDefault "" infos.carburant
-                                         ]
-                                            |> List.filterMap
-                                                (\value ->
-                                                    if String.isEmpty value then
-                                                        Nothing
+                                |> TotalCard.view
 
-                                                    else
-                                                        Just { value = value, unit = Nothing }
-                                                )
-                                        )
-                                    |> TotalCard.withComparison
-                                        { costToCompare = userCost
-                                        , emissionToCompare = userEmission
-                                        }
-                                    |> TotalCard.view
-
-                            CurrentUserCar _ ->
-                                div [ class "flex gap-2 items-center font-medium rounded-md fr-my-4v fr-p-4v outline outline-1 outline-[var(--border-plain-success)] text-[var(--text-default-success)]" ]
-                                    [ Icons.iconMD Icons.system.successLine
-                                    , text "Vous avez déjà la meilleure alternative !"
-                                    ]
+                          else
+                            div [ class "flex gap-2 items-center font-medium rounded-md fr-my-4v fr-p-4v outline outline-1 outline-[var(--border-plain-success)] text-[var(--text-default-success)]" ]
+                                [ Icons.iconMD Icons.system.successLine
+                                , text "Vous avez déjà la meilleure alternative !"
+                                ]
                         ]
+
+                _ ->
+                    Components.LoadingCard.view
 
         viewAlternatives args =
             case ( args.cheapest, args.greenest ) of
@@ -176,8 +137,16 @@ view props =
                         [ h2 [] args.title
                         , p [ class "fr-col-8" ] args.desc
                         , div [ class "grid grid-cols-2 gap-6" ]
-                            [ viewAlternative Icons.finance.moneyEuroCircleLine "La plus économique" cheapestAlternative
-                            , viewAlternative Icons.others.leafLine "La plus écologique" greenestAlternative
+                            [ viewAlternative
+                                .cost
+                                Icons.finance.moneyEuroCircleLine
+                                "La plus économique"
+                                cheapestAlternative
+                            , viewAlternative
+                                .emissions
+                                Icons.others.leafLine
+                                "La plus écologique"
+                                greenestAlternative
                             ]
                         ]
 
@@ -210,13 +179,12 @@ view props =
                         [ text "Récapitulatif de votre situation"
                         ]
                     , div [ class "fr-col-8" ]
-                        [ case props.engineStatus of
-                            EngineStatus.Done ->
+                        [ case ( props.engineStatus, props.results ) of
+                            ( EngineStatus.Done, Just { user } ) ->
                                 Components.Simulateur.UserTotal.view
-                                    { cost = userCost
-                                    , emission = userEmission
-                                    , evaluations = props.evaluations
+                                    { evaluations = props.evaluations
                                     , rules = props.rules
+                                    , user = user
                                     }
 
                             _ ->
@@ -252,29 +220,69 @@ view props =
                         }
                     ]
                 , section [ class "flex flex-col md:gap-20" ]
-                    [ viewAlternatives
-                        { title =
-                            [ text "Les meilleures alternatives pour le gabarit "
-                            , span [ class "fr-px-3v bg-[var(--background-contrast-grey)]" ]
-                                [ text targetGabaritTitle ]
-                            ]
-                        , desc =
-                            [ text "Parmi les véhicules de gabarit "
-                            , span [ class "font-medium fr-px-1v bg-[var(--background-contrast-grey)]" ] [ text targetGabaritTitle ]
-                            , text ", voici les meilleures alternatives pour votre usage."
-                            , text " Sachant que vous "
-                            , span [ class "font-medium fr-px-1v bg-[var(--background-contrast-grey)]" ]
-                                [ if hasChargingStation then
-                                    text "avez"
+                    [ case targetInfos of
+                        Just { size, hasChargingStation } ->
+                            let
+                                -- Filters the alternatives results on the given target (size, charging station)
+                                filterInTarget : List CarInfos -> List CarInfos
+                                filterInTarget =
+                                    case targetInfos of
+                                        Nothing ->
+                                            identity
 
-                                  else
-                                    text "n'avez pas"
-                                , text " la possibilité d'avoir une borne de recharge."
-                                ]
-                            ]
-                        , cheapest = targetCheapest
-                        , greenest = targetGreenest
-                        }
+                                        Just target ->
+                                            List.filter
+                                                (\carInfo ->
+                                                    -- Only keep the results with the same target gabarit
+                                                    -- TODO: use a +1/-1 comparison to be more flexible?
+                                                    let
+                                                        sameSize =
+                                                            target.size == carInfo.size
+
+                                                        elecAndHasChargingStation =
+                                                            target.hasChargingStation.value || carInfo.motorisation.value /= "électrique"
+                                                    in
+                                                    -- Only keep the results with a charging station if the user has an electric car
+                                                    sameSize && elecAndHasChargingStation
+                                                )
+
+                                targetCheapest =
+                                    alternativesSortedOnCost
+                                        |> filterInTarget
+                                        |> List.head
+
+                                targetGreenest =
+                                    alternativesSortedOnEmission
+                                        |> filterInTarget
+                                        |> List.head
+                            in
+                            viewAlternatives
+                                { title =
+                                    [ text "Les meilleures alternatives pour le gabarit "
+                                    , span [ class "fr-px-3v bg-[var(--background-contrast-grey)]" ]
+                                        [ text (RuleValue.title size) ]
+                                    ]
+                                , desc =
+                                    [ text "Parmi les véhicules de gabarit "
+                                    , span [ class "font-medium fr-px-1v bg-[var(--background-contrast-grey)]" ]
+                                        [ text (RuleValue.title size) ]
+                                    , text ", voici les meilleures alternatives pour votre usage."
+                                    , text " Sachant que vous "
+                                    , span [ class "font-medium fr-px-1v bg-[var(--background-contrast-grey)]" ]
+                                        [ if hasChargingStation.value then
+                                            text "avez"
+
+                                          else
+                                            text "n'avez pas"
+                                        , text " la possibilité d'avoir une borne de recharge."
+                                        ]
+                                    ]
+                                , cheapest = targetCheapest
+                                , greenest = targetGreenest
+                                }
+
+                        _ ->
+                            nothing
                     , div []
                         [ viewAlternatives
                             { title = [ text "Les meilleures alternatives toutes catégories confondues" ]
@@ -292,21 +300,9 @@ view props =
                                 Dict.get accordionComparisonTableId props.accordionsState
                                     |> Maybe.withDefault False
                             , content =
-                                case ( userEmission, userCost ) of
-                                    ( Just emission, Just cost ) ->
-                                        case props.engineStatus of
-                                            EngineStatus.Evaluating ->
-                                                Components.LoadingCard.view
-
-                                            _ ->
-                                                Components.Simulateur.ComparisonTable.view
-                                                    { rulesToCompare = computedResults
-                                                    , userEmission = emission
-                                                    , userCost = cost
-                                                    }
-
-                                    _ ->
-                                        Components.LoadingCard.view
+                                props.results
+                                    |> Maybe.map Components.Simulateur.ComparisonTable.view
+                                    |> Maybe.withDefault Components.LoadingCard.view
                             }
                         ]
                     ]

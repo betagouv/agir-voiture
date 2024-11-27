@@ -1,8 +1,7 @@
 module Components.Simulateur.BooleanInput exposing (view)
 
 import BetaGouv.DSFR.Radio
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html, text)
 import Publicodes.NodeValue as NodeValue
 
 

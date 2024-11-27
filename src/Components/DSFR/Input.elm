@@ -1,9 +1,9 @@
 module Components.DSFR.Input exposing
     ( new, view
-    , textArea, date, email, numeric, decimal, password, textDisplay, text, custom
-    , withDisabled, withValid, withError, withHint, withReadonly, withType, withIcon, withInputAttrs, withExtraAttrs
+    , textArea, email, numeric, decimal, password, textDisplay, text
+    , withDisabled, withError, withHint, withInputAttrs
     , Config
-    , withUnit
+    , InputType, MandatoryInputConfig, OptionalInputConfig, withUnit
     )
 
 {-| Base input de `betagouv/elm-dsfr` modifié pour supporter l'affichage des unités.
@@ -16,12 +16,12 @@ module Components.DSFR.Input exposing
 
 # Types de champ de saisie
 
-@docs textArea, date, email, numeric, decimal, password, textDisplay, text, custom
+@docs textArea, email, numeric, decimal, password, textDisplay, text
 
 
 # Configuration
 
-@docs withDisabled, withValid, withError, withHint, withReadonly, withType, withIcon, withInputAttrs, withExtraAttrs
+@docs withDisabled, withError, withHint, withInputAttrs
 
 
 # Type
@@ -392,19 +392,18 @@ view { mandatory, optional } =
                 )
                 optional.unit
             ]
+        , Html.Extra.viewMaybe
+            (Html.p
+                [ Attr.id <| id ++ "-desc-valid"
+                , Attr.class "fr-valid-text"
+                ]
+            )
+            validMsg
+        , Html.Extra.viewMaybe
+            (Html.p
+                [ Attr.id <| id ++ "-desc-error"
+                , Attr.class "fr-error-text"
+                ]
+            )
+            errorMsg
         ]
-            ++ [ Html.Extra.viewMaybe
-                    (Html.p
-                        [ Attr.id <| id ++ "-desc-valid"
-                        , Attr.class "fr-valid-text"
-                        ]
-                    )
-                    validMsg
-               , Html.Extra.viewMaybe
-                    (Html.p
-                        [ Attr.id <| id ++ "-desc-error"
-                        , Attr.class "fr-error-text"
-                        ]
-                    )
-                    errorMsg
-               ]

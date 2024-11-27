@@ -8,15 +8,15 @@ import Components.DSFR.Notice
 import Core.Personas exposing (Personas)
 import Dict
 import Effect exposing (Effect)
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html, a, br, div, p, span, text)
+import Html.Attributes exposing (class, classList, href, id, target)
 import Html.Extra exposing (viewIf)
+import Json.Decode
 import Layout exposing (Layout)
 import Publicodes.Situation exposing (Situation)
 import Route exposing (Route)
 import Shared
 import Shared.Constants
-import Shared.Msg exposing (Msg(..))
 import View exposing (View)
 
 
@@ -108,10 +108,7 @@ view props shared { content, toContentMsg, model } =
             }
             |> Components.DSFR.Header.view
             |> Html.map toContentMsg
-        , Components.DSFR.Notice.view
-            { title = "En cours de développement"
-            , desc = text "Les résultats de ce simulateur ne sont pas stables et sont susceptibles de fortement évoluer."
-            }
+        , viewNotice shared.decodeError
         , viewIf props.showReactRoot viewReactRoot
         , Components.DSFR.Modal.view
             { id = Shared.Constants.personasModalId
@@ -160,3 +157,31 @@ viewPersonas personas =
             |> Button.inline
             |> Button.viewGroup
         ]
+
+
+viewNotice : Maybe Json.Decode.Error -> Html msg
+viewNotice decodeError =
+    case decodeError of
+        Just error ->
+            Components.DSFR.Notice.alert
+                { title = "Erreur lors de la lecture des données"
+                , desc =
+                    span []
+                        [ text "Si le problème persiste après avoir cliqué sur 'Recommencer', vous pouvez ouvrir un ticket sur "
+                        , a [ href "https://github.com/betagouv/agir-voiture/issues/new", target "_blank" ]
+                            [ text "GitHub" ]
+                        , text "."
+                        , p [ class "text-xs fr-mt-2v fr-p-2v w-fit bg-red-50 rounded-md outline outline-1 outline-red-100 text-red-950" ]
+                            [ span [ class "font-semibold fr-mb-1v" ]
+                                [ text "Message d'erreur " ]
+                            , br [] []
+                            , text (Json.Decode.errorToString error)
+                            ]
+                        ]
+                }
+
+        Nothing ->
+            Components.DSFR.Notice.info
+                { title = "En cours de développement"
+                , desc = text "Les résultats de ce simulateur ne sont pas stables et sont susceptibles de fortement évoluer."
+                }

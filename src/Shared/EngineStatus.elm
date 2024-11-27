@@ -1,8 +1,7 @@
 module Shared.EngineStatus exposing (EngineStatus(..), viewError)
 
 import BetaGouv.DSFR.Alert
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html)
 
 
 type EngineStatus

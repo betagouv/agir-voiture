@@ -1,22 +1,20 @@
-module Components.Simulateur.Questions exposing (view)
+module Components.Simulateur.Questions exposing (Config, view)
 
-import BetaGouv.DSFR.Input
 import Components.Select
 import Components.Simulateur.BooleanInput
 import Components.Simulateur.Navigation
 import Components.Simulateur.NumericInput
 import Components.Simulateur.Stepper
+import Core.Evaluation exposing (Evaluation)
 import Core.InputError exposing (InputError)
 import Core.Rules as Rules
 import Core.UI as UI
 import Dict exposing (Dict)
-import FormatNumber.Locales exposing (Decimals(..))
 import Helper exposing (viewMarkdown)
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Extra exposing (nothing, viewMaybe)
-import Markdown
-import Publicodes exposing (Evaluation, Mechanism(..), RawRule, RawRules)
+import Html exposing (Html, div, hr, text)
+import Html.Attributes exposing (class)
+import Html.Extra exposing (nothing, viewIf, viewMaybe)
+import Publicodes exposing (RawRule, RawRules)
 import Publicodes.NodeValue as NodeValue exposing (NodeValue(..))
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
@@ -90,13 +88,12 @@ viewQuestions props =
                     (\name ->
                         Maybe.map2
                             (\rule eval ->
-                                if eval.isApplicable then
-                                    div [ class "fr-col-8" ]
+                                viewIf
+                                    eval.isApplicable
+                                    (div [ class "fr-col-8" ]
                                         [ viewQuestion props ( name, rule )
                                         ]
-
-                                else
-                                    nothing
+                                    )
                             )
                             (Dict.get name props.rules)
                             (Dict.get name props.evaluations)
@@ -120,34 +117,29 @@ viewInput props question ( name, rule ) =
     let
         maybeNodeValue =
             Dict.get name props.evaluations
-                |> Maybe.map .nodeValue
+                |> Maybe.map .value
     in
-    case ( ( rule.formule, rule.unite ), maybeNodeValue ) of
-        ( ( Just (ChainedMechanism { une_possibilite }), _ ), Just nodeValue ) ->
-            case une_possibilite of
-                Just { possibilites } ->
-                    Components.Select.view
-                        { label = question
-                        , options = possibilites
-                        , onInput = \str -> props.onInput name (NodeValue.Str str) Nothing
-                        , toValue = identity
-                        , selected = Rules.getStringFromSituation nodeValue
-                        , hint = rule.description
-                        , toLabel =
-                            \pos ->
-                                text
-                                    (Rules.getOptionTitle
-                                        { rules = props.rules
-                                        , namespace = Just name
-                                        , optionValue = pos
-                                        }
-                                    )
-                        }
+    case ( rule.une_possibilite, maybeNodeValue ) of
+        ( Just { possibilites }, Just nodeValue ) ->
+            Components.Select.view
+                { label = question
+                , options = possibilites
+                , onInput = \str -> props.onInput name (NodeValue.Str str) Nothing
+                , toValue = identity
+                , selected = Rules.getStringFromSituation nodeValue
+                , hint = rule.description
+                , toLabel =
+                    \pos ->
+                        text
+                            (Rules.getOptionTitle
+                                { rules = props.rules
+                                , namespace = Just name
+                                , optionValue = pos
+                                }
+                            )
+                }
 
-                Nothing ->
-                    nothing
-
-        ( _, Just ((Boolean _) as nodeValue) ) ->
+        ( Nothing, Just ((Boolean _) as nodeValue) ) ->
             Components.Simulateur.BooleanInput.view
                 { id = name
                 , label = text question
@@ -156,7 +148,7 @@ viewInput props question ( name, rule ) =
                 , hint = rule.description
                 }
 
-        ( _, Just value ) ->
+        ( Nothing, Just value ) ->
             Components.Simulateur.NumericInput.view
                 { onInput = props.onInput
                 , inputErrors = props.inputErrors
@@ -167,5 +159,5 @@ viewInput props question ( name, rule ) =
                 , value = value
                 }
 
-        _ ->
+        ( _, Nothing ) ->
             nothing

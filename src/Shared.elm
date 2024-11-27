@@ -13,15 +13,16 @@ module Shared exposing
 -}
 
 import Browser.Navigation
+import Core.Evaluation exposing (Evaluation)
 import Core.Personas as Personas exposing (Personas)
-import Core.Result
+import Core.Results
 import Core.Rules
 import Core.UI as UI
 import Dict
 import Effect exposing (Effect)
 import Json.Decode
 import Json.Decode.Pipeline as Decode
-import Publicodes exposing (Evaluation, RawRules)
+import Publicodes exposing (RawRules)
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation as Situation exposing (Situation)
 import Route exposing (Route)
@@ -84,14 +85,12 @@ init flagsResult _ =
                 , ui = flags.ui
                 , personas = flags.personas
                 , orderedCategories = UI.getOrderedCategories flags.ui.categories
-                , resultRules = Core.Result.getResultRules flags.rules
               }
             , Effect.none
             )
 
-        Err _ ->
-            -- TODO: handle error
-            ( emptyModel, Effect.none )
+        Err e ->
+            ( { emptyModel | decodeError = Just e }, Effect.none )
 
 
 
@@ -195,6 +194,12 @@ update _ msg model =
             , Effect.none
             )
 
+        NewResults results ->
+            ( { model | results = Just results }, Effect.none )
+
+        DecodeError err ->
+            ( { model | decodeError = Just err }, Effect.none )
+
 
 {-| Evaluates rules to update according to the current simulation step.
 -}
@@ -219,14 +224,10 @@ evaluate model =
             in
             ( { model | engineStatus = EngineStatus.Evaluating }
             , if model.simulationStep == SimulationStep.Result then
-                [ Core.Rules.userCost
-                , Core.Rules.userEmission
-                , Core.Rules.targetGabarit
-                , Core.Rules.targetChargingStation
-                ]
-                    ++ Core.Rules.userContext
-                    ++ model.resultRules
-                    |> Effect.evaluateAll
+                Effect.batch
+                    [ Effect.evaluateAll Core.Rules.userContext
+                    , Effect.evaluateResults
+                    ]
 
               else
                 currentQuestions
@@ -242,22 +243,49 @@ subscriptions : Route () -> Model -> Sub Msg
 subscriptions _ _ =
     Sub.batch
         [ Effect.onReactLinkClicked Shared.Msg.PushNewPath
+        , Effect.onSituationUpdated (\_ -> Shared.Msg.Evaluate)
+        , Effect.onEngineInitialized (\_ -> Shared.Msg.EngineInitialized)
+        , Effect.onEngineError Shared.Msg.EngineError
         , Effect.onEvaluatedRules
             (\encodedEvaluations ->
-                Shared.Msg.NewEvaluations (decodeEvaluations encodedEvaluations)
+                encodedEvaluations
+                    |> decodeEvaluations
+                    |> decodeErrorOr Shared.Msg.NewEvaluations
             )
-        , Effect.onSituationUpdated (\_ -> Evaluate)
-        , Effect.onEngineInitialized (\_ -> EngineInitialized)
-        , Effect.onEngineError EngineError
+        , Effect.onEvaluatedResults
+            (\encodedResults ->
+                encodedResults
+                    |> Json.Decode.decodeValue Core.Results.decoder
+                    |> decodeErrorOr Shared.Msg.NewResults
+            )
         ]
 
 
-decodeEvaluations : List ( RuleName, Json.Decode.Value ) -> List ( RuleName, Evaluation )
-decodeEvaluations evaluations =
-    List.filterMap
-        (\( ruleName, encodedEvaluation ) ->
-            Json.Decode.decodeValue Publicodes.evaluationDecoder encodedEvaluation
-                |> Result.toMaybe
-                |> Maybe.map (\evaluation -> ( ruleName, evaluation ))
+decodeEvaluations : List ( RuleName, Json.Decode.Value ) -> Result Json.Decode.Error (List ( RuleName, Evaluation ))
+decodeEvaluations encodedEvaluations =
+    List.foldl
+        (\( ruleName, encodedEvaluation ) result ->
+            case result of
+                Err _ ->
+                    result
+
+                Ok evaluations ->
+                    encodedEvaluation
+                        |> Json.Decode.decodeValue Core.Evaluation.decoder
+                        |> Result.map
+                            (\eval ->
+                                ( ruleName, eval ) :: evaluations
+                            )
         )
-        evaluations
+        (Ok [])
+        encodedEvaluations
+
+
+decodeErrorOr : (a -> Msg) -> Result Json.Decode.Error a -> Msg
+decodeErrorOr okMsg result =
+    case result of
+        Ok a ->
+            okMsg a
+
+        Err e ->
+            Shared.Msg.DecodeError e

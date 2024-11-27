@@ -2,7 +2,9 @@ module Shared.Msg exposing (Msg(..))
 
 {-| -}
 
-import Publicodes exposing (Evaluation)
+import Core.Evaluation exposing (Evaluation)
+import Core.Results exposing (Results)
+import Json.Decode
 import Publicodes.NodeValue exposing (NodeValue)
 import Publicodes.RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
@@ -27,5 +29,7 @@ type Msg
     | Evaluate
     | NewInputError { name : RuleName, value : String, msg : String }
     | RemoveInputError RuleName
+    | NewResults Results
+    | DecodeError Json.Decode.Error
     | EngineInitialized
     | EngineError String

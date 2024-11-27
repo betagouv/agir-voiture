@@ -1,4 +1,4 @@
-module Core.Rules exposing (..)
+module Core.Rules exposing (getOptionTitle, getStringFromSituation, userContext, userCost, userEmissions)
 
 {-| This module contains all the helper functions to manipulate the Publicodes rules of
 the [`publicodes-voiture`](https://github.com/betagouv/publicodes-voiture) model.
@@ -7,11 +7,10 @@ It's not intended to be generic to all Publicodes models.
 
 -}
 
-import Dict exposing (Dict)
-import List.Extra
+import Dict
 import Publicodes exposing (RawRules)
 import Publicodes.NodeValue exposing (NodeValue)
-import Publicodes.RuleName exposing (RuleName, namespace, split)
+import Publicodes.RuleName exposing (RuleName)
 import Regex
 
 
@@ -20,36 +19,18 @@ import Regex
 -- to be reused and type checked.
 
 
-{-| The namespace of the rules that corresponds to all the combined
-results in term of carbon emissions.
+{-| The name of the rule that represents the total carbon emissions for the user car.
 -}
-resultNamespaces : List RuleName
-resultNamespaces =
-    [ "empreinte", "coûts" ]
-
-
-{-| The name of the rule that represents the total emission for the user car.
--}
-userEmission : RuleName
-userEmission =
-    "empreinte . voiture"
+userEmissions : RuleName
+userEmissions =
+    "empreinte"
 
 
 {-| The name of the rule that represents the total cost for the user car.
 -}
 userCost : RuleName
 userCost =
-    "coûts . voiture"
-
-
-userGabarit : RuleName
-userGabarit =
-    "voiture . gabarit"
-
-
-userMotorisation : RuleName
-userMotorisation =
-    "voiture . motorisation"
+    "coûts"
 
 
 {-| Returns the user situation to show in the results.
@@ -68,59 +49,6 @@ userContext =
     -- TODO: manage boolean,        "voiture . occasion"
     , "usage . km annuels"
     ]
-
-
-{-| Size of the car considered.
--}
-targetGabarit : RuleName
-targetGabarit =
-    "voiture . cible . gabarit"
-
-
-{-| Ability to have a charging station.
--}
-targetChargingStation : RuleName
-targetChargingStation =
-    "voiture . cible . borne de recharge"
-
-
-getQuestions : RawRules -> List String -> Dict String (List RuleName)
-getQuestions rules categories =
-    Dict.toList rules
-        |> List.filterMap
-            (\( name, rule ) ->
-                Maybe.map (\_ -> name) rule.question
-            )
-        |> List.foldl
-            (\name dict ->
-                let
-                    category =
-                        namespace name
-                in
-                if List.member category categories then
-                    Dict.update category
-                        (\maybeList ->
-                            case maybeList of
-                                Just list ->
-                                    Just (name :: list)
-
-                                Nothing ->
-                                    Just [ name ]
-                        )
-                        dict
-
-                else
-                    dict
-            )
-            Dict.empty
-
-
-isInCategory : RuleName -> RuleName -> Bool
-isInCategory category ruleName =
-    split ruleName
-        |> List.head
-        |> Maybe.withDefault ""
-        |> (\namespace -> namespace == category)
 
 
 getStringFromSituation : NodeValue -> String
@@ -162,17 +90,3 @@ getOptionTitle props =
                 |> Maybe.andThen .titre
                 |> Maybe.withDefault
                     (getOptionTitle { props | namespace = Nothing })
-
-
-{-| Get the string value of a item in a `possibilité` mechanism.
-
-    getOptionValue "voiture . gabarit . moyenne" == "moyenne"
-
-    getOptionValue "gabarit" == "gabarit"
-
--}
-getOptionValue : RuleName -> String
-getOptionValue val =
-    split val
-        |> List.Extra.last
-        |> Maybe.withDefault val

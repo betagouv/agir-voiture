@@ -1,4 +1,4 @@
-module Components.DSFR.Header exposing (new, view)
+module Components.DSFR.Header exposing (Header, new, view)
 
 import Accessibility.Aria as Aria
 import BetaGouv.DSFR.Button as Button
@@ -7,7 +7,6 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Attributes.Extra exposing (role)
 import Html.Events exposing (onClick)
-import Publicodes.NodeValue exposing (NodeValue(..))
 import Route.Path
 
 

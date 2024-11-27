@@ -1,11 +1,11 @@
-module Components.Simulateur.Navigation exposing (view)
+module Components.Simulateur.Navigation exposing (Props, view)
 
 import BetaGouv.DSFR.Button as Button
 import BetaGouv.DSFR.Icons as Icons
 import Core.UI as UI
 import Helper
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html, div)
+import Html.Attributes exposing (class)
 import Html.Extra exposing (nothing)
 import List.Extra
 import Shared.SimulationStep as SimulationStep exposing (SimulationStep)

@@ -2,8 +2,8 @@ module Pages.Home_ exposing (Model, Msg, page)
 
 import BetaGouv.DSFR.Button as Button
 import Effect exposing (Effect)
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (a, div, h1, img, p, span, text)
+import Html.Attributes exposing (alt, class, href, src)
 import Layouts
 import Main.Layouts.Model exposing (Model)
 import Page exposing (Page)

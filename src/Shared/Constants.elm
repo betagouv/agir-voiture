@@ -1,4 +1,4 @@
-module Shared.Constants exposing (..)
+module Shared.Constants exposing (personasModalId)
 
 {-| Contains all the constants used in the application.
 -}

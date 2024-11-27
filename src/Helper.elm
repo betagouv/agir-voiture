@@ -1,4 +1,4 @@
-module Helper exposing (..)
+module Helper exposing (dropUntilNext, viewMarkdown)
 
 {-| -}
 

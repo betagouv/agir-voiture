@@ -1,14 +1,13 @@
-module Components.Simulateur.TotalCard exposing (new, view, withComparison, withContext)
+module Components.Simulateur.TotalCard exposing (Config, new, view, withComparison, withContext)
 
 {-| Component to display the total cost and emission of a car.
 -}
 
-import BetaGouv.DSFR.Icons as Icons
 import Core.Format
-import Core.Result exposing (ResultType(..))
+import Core.Results exposing (ResultType(..))
 import FormatNumber.Locales exposing (Decimals(..))
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html, div, h5, span, text)
+import Html.Attributes exposing (class, classList)
 import Html.Extra exposing (nothing, viewMaybe)
 
 
@@ -44,13 +43,13 @@ withContext context config =
 
 
 withComparison :
-    { costToCompare : Maybe Float, emissionToCompare : Maybe Float }
+    { costToCompare : Float, emissionToCompare : Float }
     -> Config
     -> Config
 withComparison { costToCompare, emissionToCompare } config =
     { config
-        | costToCompare = costToCompare
-        , emissionToCompare = emissionToCompare
+        | costToCompare = Just costToCompare
+        , emissionToCompare = Just emissionToCompare
     }
 
 
@@ -97,7 +96,7 @@ view config =
                             viewDiff
                                 { value = config.emission
                                 , base = baseEmission
-                                , resultType = Emission
+                                , resultType = Emissions
                                 }
                         )
                         config.emissionToCompare
@@ -110,8 +109,8 @@ view config =
 
 type ViewValueSize
     = Small
+      -- | Large
     | Normal
-    | Large
 
 
 viewValue :
@@ -131,7 +130,8 @@ viewValue props =
         [ span
             [ classList
                 [ ( "text-sm", props.size == Small )
-                , ( "fr-text--bold", props.size == Large )
+
+                -- , ( "fr-text--bold", props.size == Large )
                 , ( "font-medium", props.size == Normal )
                 ]
             ]
@@ -140,18 +140,7 @@ viewValue props =
             |> Maybe.map viewUnit
             |> Maybe.withDefault
                 -- FIXME: should not be hardcoded like this
-                (case props.value of
-                    -- "Thermique" ->
-                    --     Icons.iconSM Icons.map.gasStationFill
-                    --
-                    -- "Électrique" ->
-                    --     Icons.iconSM Icons.map.chargingPile2Fill
-                    --
-                    -- "Hybride" ->
-                    --     Icons.iconSM Icons.map.chargingPile2Line
-                    _ ->
-                        nothing
-                )
+                nothing
         ]
 
 
@@ -171,10 +160,10 @@ viewDiff { value, base, resultType } =
 
         unit =
             case resultType of
-                Core.Result.Cost ->
+                Core.Results.Cost ->
                     "€"
 
-                Core.Result.Emission ->
+                Core.Results.Emissions ->
                     "kgCO2e"
     in
     if diff > 0 then
@@ -182,10 +171,10 @@ viewDiff { value, base, resultType } =
             [ span [ class "font-medium inline-flex gap-1 items-baseline" ]
                 [ text formatedDiff, viewUnit unit ]
             , case resultType of
-                Core.Result.Cost ->
+                Core.Results.Cost ->
                     text " d'économie"
 
-                Core.Result.Emission ->
+                Core.Results.Emissions ->
                     text " d'émission évitée"
             ]
 
@@ -194,10 +183,10 @@ viewDiff { value, base, resultType } =
             [ span [ class "font-medium inline-flex gap-1 items-baseline" ]
                 [ text formatedDiff, viewUnit unit ]
             , case resultType of
-                Core.Result.Cost ->
+                Core.Results.Cost ->
                     text " de surcoût"
 
-                Core.Result.Emission ->
+                Core.Results.Emissions ->
                     text " d'émission supplémentaire"
             ]
 

@@ -3,8 +3,8 @@ module Pages.Documentation exposing (Model, Msg, page)
 import Components.DSFR.Card as Card
 import Core.Rules
 import Effect exposing (Effect)
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html, a, div, h1, h2, li, p, section, text, ul)
+import Html.Attributes exposing (class, href, target)
 import Layouts
 import Page exposing (Page)
 import Publicodes exposing (RawRules)
@@ -115,7 +115,7 @@ view shared _ =
                         [ div [ class "fr-col-12 fr-col-md-6" ]
                             [ viewCard Core.Rules.userCost shared.rules ]
                         , div [ class "fr-col-12 fr-col-md-6" ]
-                            [ viewCard Core.Rules.userEmission shared.rules ]
+                            [ viewCard Core.Rules.userEmissions shared.rules ]
                         ]
                     ]
                 , section [ class "fr-mt-12v" ]

@@ -6,7 +6,7 @@ port module Effect exposing
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
     , map, toCmd
-    , closePersonasModal, evaluate, evaluateAll, newInputError, onEngineError, onEngineInitialized, onEvaluatedRules, onReactLinkClicked, onSituationUpdated, openPersonasModal, removeInputError, resetSimulation, restartEngine, scrollToTop, setSimulationStep, setSituation, updateSituation
+    , closePersonasModal, evaluate, evaluateAll, evaluateResults, newInputError, onEngineError, onEngineInitialized, onEvaluatedResults, onEvaluatedRules, onReactLinkClicked, onSituationUpdated, openPersonasModal, removeInputError, resetSimulation, restartEngine, scrollToTop, setSimulationStep, setSituation, updateSituation
     )
 
 {-|
@@ -110,6 +110,14 @@ evaluateAll ruleNames =
         }
 
 
+evaluateResults : Effect msg
+evaluateResults =
+    SendToJs
+        { tag = "EVALUATE_RESULTS"
+        , data = Json.Encode.null
+        }
+
+
 updateSituation : ( RuleName, NodeValue ) -> Effect msg
 updateSituation ( name, value ) =
     batch
@@ -208,6 +216,11 @@ port onEngineInitialized : (() -> msg) -> Sub msg
 {-| The engine threw an error.
 -}
 port onEngineError : (String -> msg) -> Sub msg
+
+
+{-| Received the results from the CarSimulator engine.
+-}
+port onEvaluatedResults : (Json.Encode.Value -> msg) -> Sub msg
 
 
 

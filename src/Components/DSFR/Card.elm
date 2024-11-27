@@ -1,4 +1,4 @@
-module Components.DSFR.Card exposing (card, horizontal, link, linkFull, vertical, view, withArrow, withDescription, withDetails, withExtraAttrs, withImage, withNoTitle)
+module Components.DSFR.Card exposing (CardConfig, Orientation, card, horizontal, linkFull, vertical, view, withArrow, withDescription)
 
 import Accessibility exposing (Attribute, Html, a, decorativeImg, div, h2, p)
 import BetaGouv.DSFR.Typography exposing (fr_h4)
@@ -39,11 +39,6 @@ defaultOptions =
 type Orientation
     = Horizontal
     | Vertical
-
-
-link : String -> CardConfig msg -> CardConfig msg
-link href ( t, o, options ) =
-    ( t, o, { options | href = Just href } )
 
 
 linkFull : String -> CardConfig msg -> CardConfig msg
