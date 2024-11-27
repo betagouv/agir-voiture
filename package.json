@@ -11,7 +11,7 @@
     "review": "elm-review"
   },
   "dependencies": {
-    "@betagouv/publicodes-voiture": "file:../publicodes-voiture/",
+    "@betagouv/publicodes-voiture": "^0.3.0",
     "@gouvfr/dsfr": "^1.12.1",
     "@publicodes/react-ui": "^1.5.4",
     "publicodes": "^1.6.0",

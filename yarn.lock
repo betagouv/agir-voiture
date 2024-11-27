@@ -7,8 +7,10 @@
   resolved "https://registry.yarnpkg.com/@alloc/quick-lru/-/quick-lru-5.2.0.tgz#7bf68b20c0a350f936915fcae06f58e32007ce30"
   integrity sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==
 
-"@betagouv/publicodes-voiture@file:../publicodes-voiture":
-  version "0.3.0-9"
+"@betagouv/publicodes-voiture@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@betagouv/publicodes-voiture/-/publicodes-voiture-0.3.0.tgz#dc36aaa5ea31f9646213949c1d9c6d88b652cdf0"
+  integrity sha512-Cb1fitq3cIyshcjFXLCNCNGs8uuS6yRbZ+GVeKlem8sq1CFU5MsxHOCjQe2pyr0OPE7pZdDN0CqldKn6cN4Yvg==
   dependencies:
     "@incubateur-ademe/nosgestesclimat" "^2.5.6"
     "@incubateur-ademe/publicodes-commun" "^1.1.5"
