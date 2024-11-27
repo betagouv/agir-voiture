@@ -81,12 +81,17 @@ view props =
         viewAlternative attr icon title infos =
             case ( props.engineStatus, props.results ) of
                 ( EngineStatus.Done, Just { user } ) ->
+                    let
+                        alternativeIsBetter =
+                            (user.size /= infos.size)
+                                || (Basics.compare (attr user).value (attr infos).value == GT)
+                    in
                     div []
                         [ h4 [ class "flex gap-2 items-center" ]
                             [ Icons.iconMD icon
                             , text title
                             ]
-                        , if Basics.compare (attr user).value (attr infos).value == GT then
+                        , if alternativeIsBetter then
                             TotalCard.new
                                 { title = Maybe.withDefault "" infos.title
                                 , cost = infos.cost.value
