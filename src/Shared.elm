@@ -248,21 +248,15 @@ subscriptions _ _ =
         , Effect.onEngineError Shared.Msg.EngineError
         , Effect.onEvaluatedRules
             (\encodedEvaluations ->
-                case decodeEvaluations encodedEvaluations of
-                    Ok evaluations ->
-                        Shared.Msg.NewEvaluations evaluations
-
-                    Err e ->
-                        Shared.Msg.DecodeError e
+                encodedEvaluations
+                    |> decodeEvaluations
+                    |> decodeErrorOr Shared.Msg.NewEvaluations
             )
         , Effect.onEvaluatedResults
             (\encodedResults ->
-                case Json.Decode.decodeValue Core.Results.decoder encodedResults of
-                    Ok results ->
-                        Shared.Msg.NewResults results
-
-                    Err e ->
-                        Shared.Msg.DecodeError e
+                encodedResults
+                    |> Json.Decode.decodeValue Core.Results.decoder
+                    |> decodeErrorOr Shared.Msg.NewResults
             )
         ]
 
@@ -285,3 +279,13 @@ decodeEvaluations encodedEvaluations =
         )
         (Ok [])
         encodedEvaluations
+
+
+decodeErrorOr : (a -> Msg) -> Result Json.Decode.Error a -> Msg
+decodeErrorOr okMsg result =
+    case result of
+        Ok a ->
+            okMsg a
+
+        Err e ->
+            Shared.Msg.DecodeError e
