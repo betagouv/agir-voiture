@@ -1,7 +1,7 @@
 {
   "name": "agir-voiture",
   "version": "0.1.0",
-  "description": "Agir - Simulateur voiture",
+  "description": "Mes options de mobilité durable - J'agis",
   "main": "index.js",
   "license": "MIT",
   "type": "module",

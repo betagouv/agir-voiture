@@ -343,8 +343,8 @@ view props =
                         ]
                     , p [] [ text "Découvrez une sélection pour continuer votre engagement." ]
                     , div [ class "fr-grid-row fr-grid-row--gutters fr-grid-row--center" ]
-                        ([ ( "Agir !"
-                           , "https://agir.beta.gouv.fr"
+                        ([ ( "J'agis !"
+                           , "https://jagis.beta.gouv.fr"
                            , "Faite vous accompagner pour réduire votre empreinte carbone à travers des actions concrètes."
                            )
                          , ( "Nos Gestes Climat"

@@ -10,7 +10,7 @@
         "html": { "lang": "fr" },
         "head": {}
       },
-      "title": "Quel véhicule pour remplacer le mien ?",
+      "title": "Mes options de mobilité durable",
       "meta": [
         { "charset": "UTF-8" },
         { "http-equiv": "X-UA-Compatible", "content": "IE=edge" },
@@ -19,20 +19,20 @@
           "content": "width=device-width, initial-scale=1.0"
         },
         {
-          "name": "description",
-          "content": "Découvrez les coûts et les alternatives à votre véhicule actuel."
+          "name": "og:title",
+          "content": "Mes options de mobilité durable"
         },
         {
-          "name": "og:title",
-          "content": "Quel véhicule pour remplacer le mien ?"
+          "name": "description",
+          "content": "Estimez les coûts et les émissions de votre véhicule actuel et comparez-les à des alternatives économiques et écologiques."
         },
         {
           "name": "og:description",
-          "content": "Découvrez les coûts et les alternatives à votre véhicule actuel."
+          "content": "Estimez les coûts et les émissions de votre véhicule actuel et comparez-les à des alternatives économiques et écologiques."
         },
         { "name": "og:type", "content": "website" }
       ],
-      "link": [{ "rel": "icon", "href": "/favicon.png" }]
+      "link": [{ "rel": "icon", "href": "/favicon-96x96.png" }]
     },
     "router": {
       "useHashRouting": false

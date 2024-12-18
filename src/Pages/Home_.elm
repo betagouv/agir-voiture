@@ -74,7 +74,7 @@ subscriptions _ =
 
 view : Shared.Model -> Model -> View Msg
 view shared _ =
-    { title = "Accueil - Quelle voiture choisir ?"
+    { title = "Accueil - Mes options de mobilité durable - J'agis"
     , body =
         let
             ctaLabel =
@@ -88,17 +88,20 @@ view shared _ =
                     Result ->
                         "Voir mes résultats"
         in
-        [ div [ class "fr-container bg-[var(--background-default-grey)] py-16 md:py-32" ]
+        [ div [ class "fr-container bg-[var(--background-default-grey)] fr-py-16 md:pt-24 md:pb-32" ]
             [ div [ class "fr-grid-row fr-grid-row--gutters fr-grid-row--center" ]
                 [ div [ class "fr-col-md-6" ]
-                    [ h1 [] [ text "Comparer les coûts et les émissions de votre voiture" ]
+                    [ h1 [] [ text "Quelle est la meilleure option pour vous ?" ]
                     , p [ class "fr-text--lg" ]
                         [ text "En "
                         , span [ class "fr-text--bold text-[var(--text-default-info)]" ] [ text "moins de 5 minutes" ]
-                        , text """, découvrez les coûts et
-                    les émissions de votre voiture et comparez-les aux
-                    alternatives afin de faire un choix éclairé pour une mobilité plus durable.
-                    """
+                        , text ", estimez "
+                        , span [ class "fr-text--bold" ] [ text "les coûts et les émissions" ]
+                        , text " de votre voiture et "
+                        , span [ class "fr-text--bold" ] [ text "comparez-les à des alternatives" ]
+                        , text " économiques et écologiques pour une "
+                        , span [ class "fr-text--bold" ] [ text "mobilité plus durable" ]
+                        , text "."
                         ]
                     , Button.new
                         { label = ctaLabel

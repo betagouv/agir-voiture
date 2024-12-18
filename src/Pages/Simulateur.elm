@@ -150,7 +150,7 @@ view shared model =
                 _ ->
                     False
     in
-    { title = "Simulation - Quelle voiture choisir ?"
+    { title = "Simulateur - Mes options de mobilité durable - J'agis"
     , body =
         [ div [ class "fr-container" ]
             [ div [ class "fr-grid-row fr-grid-row--center" ]
