@@ -18,7 +18,7 @@ import Core.UI as UI
 import Dict exposing (Dict)
 import Html exposing (Html, a, div, h2, h3, h4, p, section, span, text)
 import Html.Attributes exposing (class, href, target)
-import Html.Extra exposing (nothing)
+import Html.Extra exposing (nothing, viewMaybe)
 import Publicodes exposing (RawRules)
 import Publicodes.RuleName exposing (RuleName)
 import Shared.EngineStatus as EngineStatus exposing (EngineStatus)
@@ -51,7 +51,7 @@ view : Config msg -> Html msg
 view props =
     let
         targetInfos =
-            Maybe.map .target props.results
+            Maybe.andThen .target props.results
 
         sortedAlternativesOn attr =
             props.results
@@ -153,6 +153,90 @@ view props =
                 _ ->
                     nothing
 
+        viewAlternativesSection { size, hasChargingStation } =
+            let
+                -- Filters the alternatives results on the given target (size, charging station)
+                filterInTarget : List CarInfos -> List CarInfos
+                filterInTarget =
+                    case targetInfos of
+                        Nothing ->
+                            identity
+
+                        Just target ->
+                            List.filter
+                                (\carInfo ->
+                                    -- Only keep the results with the same target gabarit
+                                    -- TODO: use a +1/-1 comparison to be more flexible?
+                                    let
+                                        sameSize =
+                                            target.size == carInfo.size
+
+                                        elecAndHasChargingStation =
+                                            target.hasChargingStation.value || carInfo.motorisation.value /= "électrique"
+                                    in
+                                    -- Only keep the results with a charging station if the user has an electric car
+                                    sameSize && elecAndHasChargingStation
+                                )
+
+                targetCheapest =
+                    alternativesSortedOnCost
+                        |> filterInTarget
+                        |> List.head
+
+                targetGreenest =
+                    alternativesSortedOnEmission
+                        |> filterInTarget
+                        |> List.head
+            in
+            section [ class "flex flex-col md:gap-20" ]
+                [ viewAlternatives
+                    { title =
+                        [ text "Les meilleures alternatives pour le gabarit "
+                        , span [ class "fr-px-3v bg-[var(--background-contrast-grey)]" ]
+                            [ text (RuleValue.title size) ]
+                        ]
+                    , desc =
+                        [ text "Parmi les véhicules de gabarit "
+                        , span [ class "font-medium fr-px-1v bg-[var(--background-contrast-grey)]" ]
+                            [ text (RuleValue.title size) ]
+                        , text ", voici les meilleures alternatives pour votre usage."
+                        , text " Sachant que vous "
+                        , span [ class "font-medium fr-px-1v bg-[var(--background-contrast-grey)]" ]
+                            [ if hasChargingStation.value then
+                                text "avez"
+
+                              else
+                                text "n'avez pas"
+                            , text " la possibilité d'avoir une borne de recharge."
+                            ]
+                        ]
+                    , cheapest = targetCheapest
+                    , greenest = targetGreenest
+                    }
+                , div []
+                    [ viewAlternatives
+                        { title = [ text "Les meilleures alternatives toutes catégories confondues" ]
+                        , desc =
+                            [ text "Parmi toutes les alternatives, voici les meilleures pour votre usage."
+                            ]
+                        , cheapest = cheapest
+                        , greenest = greenest
+                        }
+                    , Accordion.single
+                        { header = text "Voir toutes les alternatives"
+                        , id = accordionComparisonTableId
+                        , onClick = props.onToggleAccordion accordionComparisonTableId
+                        , open =
+                            Dict.get accordionComparisonTableId props.accordionsState
+                                |> Maybe.withDefault False
+                        , content =
+                            props.results
+                                |> Maybe.map Components.Simulateur.ComparisonTable.view
+                                |> Maybe.withDefault Components.LoadingCard.view
+                        }
+                    ]
+                ]
+
         viewCard ( title, link, desc ) =
             Card.card
                 (text title)
@@ -219,93 +303,7 @@ view props =
                                 ]
                         }
                     ]
-                , section [ class "flex flex-col md:gap-20" ]
-                    [ case targetInfos of
-                        Just { size, hasChargingStation } ->
-                            let
-                                -- Filters the alternatives results on the given target (size, charging station)
-                                filterInTarget : List CarInfos -> List CarInfos
-                                filterInTarget =
-                                    case targetInfos of
-                                        Nothing ->
-                                            identity
-
-                                        Just target ->
-                                            List.filter
-                                                (\carInfo ->
-                                                    -- Only keep the results with the same target gabarit
-                                                    -- TODO: use a +1/-1 comparison to be more flexible?
-                                                    let
-                                                        sameSize =
-                                                            target.size == carInfo.size
-
-                                                        elecAndHasChargingStation =
-                                                            target.hasChargingStation.value || carInfo.motorisation.value /= "électrique"
-                                                    in
-                                                    -- Only keep the results with a charging station if the user has an electric car
-                                                    sameSize && elecAndHasChargingStation
-                                                )
-
-                                targetCheapest =
-                                    alternativesSortedOnCost
-                                        |> filterInTarget
-                                        |> List.head
-
-                                targetGreenest =
-                                    alternativesSortedOnEmission
-                                        |> filterInTarget
-                                        |> List.head
-                            in
-                            viewAlternatives
-                                { title =
-                                    [ text "Les meilleures alternatives pour le gabarit "
-                                    , span [ class "fr-px-3v bg-[var(--background-contrast-grey)]" ]
-                                        [ text (RuleValue.title size) ]
-                                    ]
-                                , desc =
-                                    [ text "Parmi les véhicules de gabarit "
-                                    , span [ class "font-medium fr-px-1v bg-[var(--background-contrast-grey)]" ]
-                                        [ text (RuleValue.title size) ]
-                                    , text ", voici les meilleures alternatives pour votre usage."
-                                    , text " Sachant que vous "
-                                    , span [ class "font-medium fr-px-1v bg-[var(--background-contrast-grey)]" ]
-                                        [ if hasChargingStation.value then
-                                            text "avez"
-
-                                          else
-                                            text "n'avez pas"
-                                        , text " la possibilité d'avoir une borne de recharge."
-                                        ]
-                                    ]
-                                , cheapest = targetCheapest
-                                , greenest = targetGreenest
-                                }
-
-                        _ ->
-                            nothing
-                    , div []
-                        [ viewAlternatives
-                            { title = [ text "Les meilleures alternatives toutes catégories confondues" ]
-                            , desc =
-                                [ text "Parmi toutes les alternatives, voici les meilleures pour votre usage."
-                                ]
-                            , cheapest = cheapest
-                            , greenest = greenest
-                            }
-                        , Accordion.single
-                            { header = text "Voir toutes les alternatives"
-                            , id = accordionComparisonTableId
-                            , onClick = props.onToggleAccordion accordionComparisonTableId
-                            , open =
-                                Dict.get accordionComparisonTableId props.accordionsState
-                                    |> Maybe.withDefault False
-                            , content =
-                                props.results
-                                    |> Maybe.map Components.Simulateur.ComparisonTable.view
-                                    |> Maybe.withDefault Components.LoadingCard.view
-                            }
-                        ]
-                    ]
+                , viewMaybe viewAlternativesSection targetInfos
                 , section [ class "fr-col-8" ]
                     [ h2 [] [ text "Les aides financières" ]
                     , p []
