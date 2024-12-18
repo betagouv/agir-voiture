@@ -91,7 +91,7 @@ view shared _ =
         [ div [ class "fr-container bg-[var(--background-default-grey)] fr-py-16 md:pt-24 md:pb-32" ]
             [ div [ class "fr-grid-row fr-grid-row--gutters fr-grid-row--center" ]
                 [ div [ class "fr-col-md-6" ]
-                    [ h1 [] [ text "Quelle est la meilleure option pour vous ?" ]
+                    [ h1 [] [ text "Quelle est la meilleure option pour votre situation ?" ]
                     , p [ class "fr-text--lg" ]
                         [ text "En "
                         , span [ class "fr-text--bold text-[var(--text-default-info)]" ] [ text "moins de 5 minutes" ]
