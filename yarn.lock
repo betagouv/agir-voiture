@@ -7,14 +7,14 @@
   resolved "https://registry.yarnpkg.com/@alloc/quick-lru/-/quick-lru-5.2.0.tgz#7bf68b20c0a350f936915fcae06f58e32007ce30"
   integrity sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==
 
-"@betagouv/publicodes-voiture@^0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@betagouv/publicodes-voiture/-/publicodes-voiture-0.3.0.tgz#dc36aaa5ea31f9646213949c1d9c6d88b652cdf0"
-  integrity sha512-Cb1fitq3cIyshcjFXLCNCNGs8uuS6yRbZ+GVeKlem8sq1CFU5MsxHOCjQe2pyr0OPE7pZdDN0CqldKn6cN4Yvg==
+"@betagouv/publicodes-voiture@^0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@betagouv/publicodes-voiture/-/publicodes-voiture-0.3.1.tgz#543526667868165127efd91752f04157fb5eb19a"
+  integrity sha512-zLi0AoNsfdbrsTc8D5gIifSQm2LBlQnXTPXp1Vt7ZH1RBdhXPE3rsaXCv8dTvKdm08otY5JrcXI/LLCQg0bokQ==
   dependencies:
-    "@incubateur-ademe/nosgestesclimat" "^2.5.6"
+    "@incubateur-ademe/nosgestesclimat" "^3.3.4"
     "@incubateur-ademe/publicodes-commun" "^1.1.5"
-    publicodes "^1.6.0"
+    publicodes "^1.6.1"
 
 "@elm_binaries/darwin_arm64@0.19.1-0":
   version "0.19.1-0"
@@ -173,10 +173,10 @@
   resolved "https://registry.yarnpkg.com/@gouvfr/dsfr/-/dsfr-1.12.1.tgz#c25df1df5d3bacc4b847a1856c1d7f22219304a8"
   integrity sha512-2zXBHSDjjlaNcxGtqbPQN/vyjJQKIRUP3CKOYoodj2/45pAWM1AXo3kCwXFLUo5kQOltShZUquQ7hSeVg4RRtA==
 
-"@incubateur-ademe/nosgestesclimat@^2.5.6":
-  version "2.5.6"
-  resolved "https://registry.yarnpkg.com/@incubateur-ademe/nosgestesclimat/-/nosgestesclimat-2.5.6.tgz#30c45bf00cbf9e92acb959f385d42bb431f691bd"
-  integrity sha512-wVN4J2rSl6/lbsIdQq8gMP0IfsYiqINzgNAshAWfKPkYlg2kOttOm76biI5LaHG9XV6fF3Y1tsK8qLQSz/nW+g==
+"@incubateur-ademe/nosgestesclimat@^3.3.4":
+  version "3.3.4"
+  resolved "https://registry.yarnpkg.com/@incubateur-ademe/nosgestesclimat/-/nosgestesclimat-3.3.4.tgz#16b93cb534407ef510d48120791fd0a2cc2d9ae5"
+  integrity sha512-VdQuG+TP9D0cZVipPHgW/J7boa36rFad62fzgSdMBz5895O9kWlNtmlEGHcQOv2joIDxUZxWWDSlJp73/m+JfQ==
 
 "@incubateur-ademe/publicodes-commun@^1.1.5":
   version "1.1.5"
@@ -2666,14 +2666,6 @@ property-information@^6.0.0:
   version "6.5.0"
   resolved "https://registry.yarnpkg.com/property-information/-/property-information-6.5.0.tgz#6212fbb52ba757e92ef4fb9d657563b933b7ffec"
   integrity sha512-PgTgs/BlvHxOu8QuEN7wi5A0OmXaBcHpmCSTehcs6Uuu9IkDIEo13Hy7n898RHfrQ49vKCoGeWZSaAK01nwVig==
-
-publicodes@^1.6.0:
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/publicodes/-/publicodes-1.6.0.tgz#f10821909e791f86eeebd83969c3f66164bcb73a"
-  integrity sha512-xko1LN0UFvFyMcGeFN9Ma+oigWhs1pf6bfVoKrg9T2yWrTcSMVkF9Gpfs6ELykxYXZ2hdqoBqID6G4oN3xVdDA==
-  dependencies:
-    moo "^0.5.2"
-    nearley "^2.20.1"
 
 publicodes@^1.6.1:
   version "1.6.1"

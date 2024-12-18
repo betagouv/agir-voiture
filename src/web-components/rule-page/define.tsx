@@ -1,12 +1,13 @@
 import React, { Suspense } from "react";
 import { Root, createRoot } from "react-dom/client";
 import Engine from "publicodes";
+import { RuleName } from "@betagouv/publicodes-voiture";
 
 const RulePage = React.lazy(() => import("./RulePage.js"));
 
 const reactRootId = "react-root";
 
-export function defineCustomElementWith(engine: Engine, app: any) {
+export function defineCustomElementWith(engine: Engine<RuleName>, app: any) {
   window.customElements.define(
     "publicodes-rule-page",
     class extends HTMLElement {
