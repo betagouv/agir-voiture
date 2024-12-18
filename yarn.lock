@@ -2675,6 +2675,14 @@ publicodes@^1.6.0:
     moo "^0.5.2"
     nearley "^2.20.1"
 
+publicodes@^1.6.1:
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/publicodes/-/publicodes-1.6.1.tgz#362ebe75de54ade3a81643b730c5a76dea3445b2"
+  integrity sha512-oCi9SMIUYgQzIL/9Txz+agl2/V0pJc6+q+0XxfcHv4evkCojdJ6VsubgiL/MLxiE0B7e1BLTUobkTPYHvgOMnw==
+  dependencies:
+    moo "^0.5.2"
+    nearley "^2.20.1"
+
 pump@^3.0.0:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/pump/-/pump-3.0.2.tgz#836f3edd6bc2ee599256c924ffe0d88573ddcbf8"
