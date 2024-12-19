@@ -6,3 +6,7 @@ node_modules
 build
 .elm-land
 dist
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

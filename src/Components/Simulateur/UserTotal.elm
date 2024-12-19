@@ -76,6 +76,7 @@ view { rules, evaluations, user } =
         { title = "Votre voiture"
         , cost = user.cost.value
         , emission = user.emissions.value
+        , id = "user-car"
         }
         |> TotalCard.withContext contextValues
         |> TotalCard.view

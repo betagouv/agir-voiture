@@ -7,12 +7,13 @@ import Core.Format
 import Core.Results exposing (ResultType(..))
 import FormatNumber.Locales exposing (Decimals(..))
 import Html exposing (Html, div, h5, span, text)
-import Html.Attributes exposing (class, classList)
+import Html.Attributes exposing (class, classList, id)
 import Html.Extra exposing (nothing, viewMaybe)
 
 
 type alias Config =
-    { title : String
+    { id : String
+    , title : String
     , cost : Float
     , emission : Float
     , costToCompare : Maybe Float
@@ -21,9 +22,10 @@ type alias Config =
     }
 
 
-new : { title : String, cost : Float, emission : Float } -> Config
+new : { id : String, title : String, cost : Float, emission : Float } -> Config
 new props =
-    { title = props.title
+    { id = props.id
+    , title = props.title
     , cost = props.cost
     , emission = props.emission
     , costToCompare = Nothing
@@ -63,7 +65,8 @@ view config =
                     [ div [ class "flex gap-2 h-fit items-center" ]
                         [ text "Coût annuel estimé :"
                         , viewValue
-                            { value = Core.Format.floatToFrenchLocale (Max 0) config.cost
+                            { id = config.id ++ "-cost"
+                            , value = Core.Format.floatToFrenchLocale (Max 0) config.cost
                             , unit = Just "€"
                             , bgColor = "bg-[var(--background-alt-purple-glycine)]"
                             , textColor = "text-[var(--text-label-purple-glycine)]"
@@ -84,7 +87,8 @@ view config =
                     [ div [ class "flex gap-2 h-fit items-center" ]
                         [ text "Émissions annuelles estimées :"
                         , viewValue
-                            { value = Core.Format.floatToFrenchLocale (Max 0) config.emission
+                            { id = config.id ++ "-emissions"
+                            , value = Core.Format.floatToFrenchLocale (Max 0) config.emission
                             , unit = Just "kgCO2e"
                             , bgColor = "bg-[var(--background-alt-green-bourgeon)]"
                             , textColor = "text-[var(--text-label-green-bourgeon)]"
@@ -114,7 +118,8 @@ type ViewValueSize
 
 
 viewValue :
-    { value : String
+    { id : String
+    , value : String
     , unit : Maybe String
     , bgColor : String
     , textColor : String
@@ -126,6 +131,7 @@ viewValue props =
         [ class "rounded rounded-full fr-px-3v fr-py-1v flex gap-1 items-baseline "
         , class props.bgColor
         , class props.textColor
+        , id props.id
         ]
         [ span
             [ classList
@@ -205,7 +211,8 @@ viewContext contextValues =
                 |> List.map
                     (\{ value, unit } ->
                         viewValue
-                            { value = value
+                            { id = ""
+                            , value = value
                             , bgColor = "bg-[var(--background-default-grey)]"
                             , textColor = "text-slate-600"
                             , size = Small
