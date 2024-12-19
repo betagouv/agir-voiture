@@ -98,4 +98,8 @@ TODO: express constant strings in a more type-safe way
 -}
 toConstantString : String -> String
 toConstantString str =
-    "'" ++ str ++ "'"
+    if String.startsWith "'" str && String.endsWith "'" str then
+        str
+
+    else
+        "'" ++ str ++ "'"

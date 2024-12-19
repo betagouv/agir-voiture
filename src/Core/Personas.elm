@@ -11,8 +11,8 @@ pre-filled simulation.
 -}
 
 import Dict exposing (Dict)
-import Json.Decode as Decode exposing (Decoder, string)
-import Json.Decode.Pipeline exposing (required)
+import Json.Decode as Decode exposing (Decoder, nullable, string)
+import Json.Decode.Pipeline exposing (optional, required)
 import Publicodes.Situation as Situation exposing (Situation)
 
 
@@ -27,7 +27,7 @@ personasDecoder =
 
 type alias Persona =
     { titre : String
-    , description : String
+    , description : Maybe String
     , situation : Situation
     }
 
@@ -36,5 +36,5 @@ personaDecoder : Decoder Persona
 personaDecoder =
     Decode.succeed Persona
         |> required "titre" string
-        |> required "description" string
+        |> optional "description" (nullable string) Nothing
         |> required "situation" Situation.decoder

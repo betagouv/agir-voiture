@@ -48,16 +48,21 @@ view (Settings settings) =
                 [ div [ class "fr-header__body-row" ]
                     [ div [ class "fr-header__brand fr-enlarge-link" ]
                         [ div [ class "fr-header__brand-top" ]
-                            [ div [ class "fr-header__operator" ]
-                                [ a [ href "/" ]
-                                    [ img
-                                        [ class "fr-responsive-img"
-                                        , style "max-width" "9.0625rem;"
-                                        , src "/logo.svg"
-                                        , alt "Revenir à la page d'accueil"
-                                        ]
-                                        []
+                            [ div [ class "fr-header__logo" ]
+                                [ p [ class "fr-logo" ]
+                                    [ text "République"
+                                    , br [] []
+                                    , text "Française"
                                     ]
+                                ]
+                            , div [ class "fr-header__operator" ]
+                                [ img
+                                    [ class "fr-responsive-img"
+                                    , style "max-width" "5rem"
+                                    , src "/logo.svg"
+                                    , alt "Logo J'agis"
+                                    ]
+                                    []
                                 ]
                             , div [ class "fr-header__navbar" ]
                                 [ button
@@ -71,13 +76,15 @@ view (Settings settings) =
                                 ]
                             ]
                         , div [ class "fr-header__service" ]
-                            [ a [ href "/", title "Accueil - Comparateur Voiture - Agir" ]
+                            [ a [ href "/", title "Accueil - Mes options de mobilité durable - J'agis" ]
                                 [ p [ class "fr-header__service-title" ]
-                                    [ text "Quel véhicule pour remplacer le mien ?"
+                                    [ text "Mes options de mobilité durable"
+                                    , span [ class "fr-badge fr-badge--success fr-badge--no-icon fr-badge--sm fr-" ]
+                                        [ text "Bêta" ]
                                     ]
                                 ]
                             , p [ class "fr-header__service-description" ]
-                                [ text "Estimer les coûts de votre voiture"
+                                [ text "Comparez les coûts et les émissions de votre voiture"
                                 ]
                             ]
                         ]
