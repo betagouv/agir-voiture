@@ -99,7 +99,11 @@ export const onReady = ({ app }: { app: any }) => {
             app.ports.onEvaluatedResults.send({
               user: objUndefinedToNull(user),
               alternatives: alternatives.map(objUndefinedToNull),
-              target: objUndefinedToNull(target),
+              target:
+                target.hasChargingStation.value === null ||
+                target.size.value === null
+                  ? null
+                  : objUndefinedToNull(target),
             });
             break;
           }

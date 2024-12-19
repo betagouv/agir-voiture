@@ -79,7 +79,7 @@ subscriptions _ =
 
 view : Shared.Model -> Model -> View Msg
 view shared _ =
-    { title = "Documentation - Quelle voiture choisir ?"
+    { title = "Documentation - Mes options de mobilité durable - J'agis"
     , body =
         [ -- TODO: extract this in a layout?
           div [ class "fr-container fr-py-18v flex justify-center" ]
@@ -97,17 +97,17 @@ view shared _ =
                                 , text "."
                                 ]
                             , li []
-                                [ text "un calcul du coût d'un véhicule insipiré du modèle de calcul de "
+                                [ text "un calcul des coûts d'un véhicule inspiré du modèle de calcul de "
                                 , a [ href "https://futur.eco", target "_blank" ] [ text "futur.eco" ]
-                                , text " adapté pour le calcul de coût annuel et non du coût d'un trajet."
+                                , text " adapté pour calculer les coûts annuels et non par trajet."
                                 ]
                             ]
                         ]
                     , p []
                         [ text """
                         Vous pouvez explorer le détail du calcul en parcourant
-                        la documentation intéractive (si vous avez déjà répondu
-                        aux questions, les réponses seront reflétées dans la
+                        la documentation interactive (si vous avez déjà répondu
+                        aux questions, les réponses seront prises en compte dans la
                         documentation).
                         """
                         ]
@@ -126,15 +126,8 @@ view shared _ =
                         , text "."
                         ]
                     , p []
-                        [ text """
-                    Ce choix a été fait pour d'une part permettre de facilement
-                    réutiliser des briques de calculs existantes et d'autre
-                    part pour bénéficier de la documentation intéractive
-                    générée automatiquement. 
-                    Cela nous semble être le minimum pour garantir la
-                    transparence du calcul et permettre à chacun de comprendre
-                    les hypothèses ainsi que les valeurs utilisées.
-                    """
+                        [ text "Ce choix a été fait dans le but de faciliter la réutilisation des briques de calcul existantes et de profiter de la documentation interactive générée automatiquement."
+                        , text " Cela nous semble être le minimum pour garantir la transparence du calcul et permettre à toustes de comprendre les hypothèses ainsi que les valeurs utilisées."
                         ]
                     ]
                 ]

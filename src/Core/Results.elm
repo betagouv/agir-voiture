@@ -11,7 +11,7 @@ type alias Results =
     , -- TODO: must be refactored with a more generic type when other
       -- alternatives will be introduced
       alternatives : List CarInfos
-    , target : TargetInfos
+    , target : Maybe TargetInfos
     }
 
 
@@ -20,7 +20,7 @@ decoder =
     Decode.succeed Results
         |> required "user" CarInfos.decoder
         |> required "alternatives" (Decode.list CarInfos.decoder)
-        |> required "target" TargetInfos.decoder
+        |> required "target" (Decode.nullable TargetInfos.decoder)
 
 
 type ResultType

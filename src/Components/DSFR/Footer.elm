@@ -30,8 +30,8 @@ view =
                 , div [ class "fr-footer__content" ]
                     [ p [ class "fr-footer__content-desc" ]
                         [ text "Ce site est développé dans le câdre du projet "
-                        , a [ href "https://agir.beta.gouv.fr", target "_blank", rel "noopener external" ]
-                            [ text "France Nation Verte / Agir" ]
+                        , a [ href "https://jagis.beta.gouv.fr", target "_blank", rel "noopener external" ]
+                            [ text "France Nation Verte / J'agis" ]
                         , text " au sein de "
                         , a [ href "https://beta.gouv.fr/incubateurs/dinum", target "_blank", rel "noopener external" ]
                             [ text "L'Incubateur du Service Numérique (DINUM)" ]

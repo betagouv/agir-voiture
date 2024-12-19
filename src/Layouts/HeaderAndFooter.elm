@@ -145,13 +145,17 @@ viewPersonas personas =
     div [ class "" ]
         [ personas
             |> Dict.toList
-            |> List.map
+            |> List.filterMap
                 (\( _, persona ) ->
-                    Button.new
-                        { label = persona.titre
-                        , onClick = Just (SetPersonasSituation persona.situation)
-                        }
-                        |> Button.secondary
+                    Maybe.map
+                        (\_ ->
+                            Button.new
+                                { label = persona.titre
+                                , onClick = Just (SetPersonasSituation persona.situation)
+                                }
+                                |> Button.secondary
+                        )
+                        persona.description
                 )
             |> Button.group
             |> Button.inline

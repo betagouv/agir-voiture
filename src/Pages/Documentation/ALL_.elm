@@ -95,7 +95,7 @@ view shared model =
         ruleTitle =
             Publicodes.Helpers.getTitle model.rule shared.rules
     in
-    { title = ruleTitle ++ " | Documentation"
+    { title = ruleTitle ++ " - Documentation - Mes options de mobilité durable - J'agis"
     , body =
         [ node "publicodes-rule-page"
             [ attribute "rule" model.rule
