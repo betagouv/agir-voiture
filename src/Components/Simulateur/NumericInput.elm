@@ -6,13 +6,14 @@ import Core.InputError as InputError exposing (InputError)
 import Dict exposing (Dict)
 import FormatNumber.Locales exposing (Decimals(..))
 import Html exposing (Html, text)
-import Html.Attributes exposing (placeholder)
+import Html.Attributes exposing (placeholder, property)
 import Html.Extra exposing (viewMaybe)
+import Json.Encode
 import Maybe.Extra
 import Publicodes exposing (RawRule)
 import Publicodes.Helpers
 import Publicodes.NodeValue as NodeValue exposing (NodeValue)
-import Publicodes.RuleName exposing (RuleName)
+import Publicodes.RuleName as RuleName exposing (RuleName)
 import Publicodes.Situation exposing (Situation)
 
 

@@ -93,7 +93,8 @@ view props =
                             ]
                         , if alternativeIsBetter then
                             TotalCard.new
-                                { title = Maybe.withDefault "" infos.title
+                                { id = "alternative-" ++ title
+                                , title = Maybe.withDefault "" infos.title
                                 , cost = infos.cost.value
                                 , emission = infos.emissions.value
                                 }

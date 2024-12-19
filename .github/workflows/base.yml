@@ -2,6 +2,10 @@ name: Review and build
 
 on:
   push:
+    branches:
+      - main
+      - develop
+  pull_request:
 
 jobs:
   build:
@@ -23,3 +27,11 @@ jobs:
 
       - name: Elm Review
         run: yarn review
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        run: yarn test
+        env:
+          CI: true

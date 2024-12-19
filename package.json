@@ -7,6 +7,7 @@
   "type": "module",
   "scripts": {
     "start": "elm-land server",
+    "test": "playwright test",
     "build": "elm-land build",
     "review": "elm-review"
   },
@@ -21,6 +22,7 @@
     "remark-gfm": "^4.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.1",
     "@tailwindcss/typography": "^0.5.14",
     "@types/node": "^22.2.0",
     "@types/react": "^18.3.3",

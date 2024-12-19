@@ -122,7 +122,8 @@ viewInput props question ( name, rule ) =
     case ( rule.une_possibilite, maybeNodeValue ) of
         ( Just { possibilites }, Just nodeValue ) ->
             Components.Select.view
-                { label = question
+                { id = "select-" ++ name
+                , label = question
                 , options = possibilites
                 , onInput = \str -> props.onInput name (NodeValue.Str str) Nothing
                 , toValue = identity
@@ -141,7 +142,7 @@ viewInput props question ( name, rule ) =
 
         ( Nothing, Just ((Boolean _) as nodeValue) ) ->
             Components.Simulateur.BooleanInput.view
-                { id = name
+                { id = "radio-" ++ name
                 , label = text question
                 , current = nodeValue
                 , onChecked = \value -> props.onInput name value Nothing
