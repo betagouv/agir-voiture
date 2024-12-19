@@ -3,18 +3,15 @@ import personas from "@betagouv/publicodes-voiture/personas";
 import rules from "@betagouv/publicodes-voiture/rules";
 import { Persona, Situation } from "@betagouv/publicodes-voiture";
 
-const BASE_URL =
-  process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:1234";
-
 test.describe("Simulate personas", () => {
   Object.values(personas).forEach((persona: Persona) => {
     test(persona.titre, async ({ page }) => {
-      await page.goto(BASE_URL);
+      await page.goto("/");
       expect(await page.title()).toEqual(
         "Accueil - Mes options de mobilité durable - J'agis",
       );
       await page.click('text="Démarrer"');
-      expect(page.url()).toEqual(`${BASE_URL}/simulateur`);
+      expect(page.url()).toMatch(/.*\/simulateur/);
 
       await expect(page.getByRole("heading")).toHaveText(
         "Informations sur la voiture",
