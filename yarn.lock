@@ -168,10 +168,10 @@
   resolved "https://registry.yarnpkg.com/@esbuild/win32-x64/-/win32-x64-0.20.2.tgz#9c907b21e30a52db959ba4f80bb01a0cc403d5cc"
   integrity sha512-N49X4lJX27+l9jbLKSqZ6bKNjzQvHaT8IIFUy+YIqmXQdjYCToGWwOItDrfby14c78aDd5NHQl29xingXfCdLQ==
 
-"@gouvfr/dsfr@^1.12.1":
-  version "1.12.1"
-  resolved "https://registry.yarnpkg.com/@gouvfr/dsfr/-/dsfr-1.12.1.tgz#c25df1df5d3bacc4b847a1856c1d7f22219304a8"
-  integrity sha512-2zXBHSDjjlaNcxGtqbPQN/vyjJQKIRUP3CKOYoodj2/45pAWM1AXo3kCwXFLUo5kQOltShZUquQ7hSeVg4RRtA==
+"@gouvfr/dsfr@^1.13.0":
+  version "1.13.0"
+  resolved "https://registry.yarnpkg.com/@gouvfr/dsfr/-/dsfr-1.13.0.tgz#5f9661d3093acea8fd4fa9154ad948f051ad5998"
+  integrity sha512-I6JLYfE63dogk5qOx69gMfW/bKsm+daFgfx2QX75isbKBy5khlJdVxOD0A6ohvywvUJlEcZTmVK8rNHeVvGmgw==
 
 "@incubateur-ademe/nosgestesclimat@^3.3.4":
   version "3.3.4"
