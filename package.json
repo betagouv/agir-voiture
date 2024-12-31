@@ -7,11 +7,12 @@
   "type": "module",
   "scripts": {
     "start": "elm-land server",
+    "test": "playwright test",
     "build": "elm-land build",
     "review": "elm-review"
   },
   "dependencies": {
-    "@betagouv/publicodes-voiture": "^0.3.1",
+    "@betagouv/publicodes-voiture": "^0.3.2",
     "@gouvfr/dsfr": "^1.13.0",
     "@publicodes/react-ui": "^1.5.4",
     "publicodes": "^1.6.1",
@@ -21,6 +22,7 @@
     "remark-gfm": "^4.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.1",
     "@tailwindcss/typography": "^0.5.14",
     "@types/node": "^22.2.0",
     "@types/react": "^18.3.3",
