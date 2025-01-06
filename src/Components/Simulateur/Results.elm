@@ -12,6 +12,7 @@ import Components.Simulateur.TotalCard as TotalCard
 import Components.Simulateur.UserTotal
 import Core.Evaluation exposing (Evaluation)
 import Core.Results exposing (Results)
+import Core.Results.Alternative as Alternative exposing (Alternative(..))
 import Core.Results.CarInfos exposing (CarInfos)
 import Core.Results.RuleValue as RuleValue exposing (RuleValue)
 import Core.UI as UI
@@ -58,7 +59,20 @@ view props =
                 |> Maybe.map .alternatives
                 |> Maybe.withDefault []
                 |> List.sortWith
-                    (\a b -> Basics.compare (attr a).value (attr b).value)
+                    (\a b ->
+                        case ( a, b ) of
+                            ( BuyNewCar aInfos, BuyNewCar bInfos ) ->
+                                Basics.compare (attr aInfos).value (attr bInfos).value
+
+                            ( KeepCurrentCar aInfos, KeepCurrentCar bInfos ) ->
+                                Basics.compare (attr aInfos).value (attr bInfos).value
+
+                            ( BuyNewCar aInfos, KeepCurrentCar bInfos ) ->
+                                Basics.compare (attr aInfos).value (attr bInfos).value
+
+                            ( KeepCurrentCar aInfos, BuyNewCar bInfos ) ->
+                                Basics.compare (attr aInfos).value (attr bInfos).value
+                    )
 
         alternativesSortedOnCost =
             sortedAlternativesOn .cost
@@ -76,9 +90,13 @@ view props =
             (CarInfos -> RuleValue comparable)
             -> Icons.IconName
             -> String
-            -> CarInfos
+            -> Alternative
             -> Html msg
-        viewAlternative attr icon title infos =
+        viewAlternative attr icon title alternative =
+            let
+                infos =
+                    Alternative.getCarInfos alternative
+            in
             case ( props.engineStatus, props.results ) of
                 ( EngineStatus.Done, Just { user } ) ->
                     let
@@ -157,7 +175,7 @@ view props =
         viewAlternativesSection { size, hasChargingStation } =
             let
                 -- Filters the alternatives results on the given target (size, charging station)
-                filterInTarget : List CarInfos -> List CarInfos
+                filterInTarget : List Alternative -> List Alternative
                 filterInTarget =
                     case targetInfos of
                         Nothing ->
@@ -165,18 +183,23 @@ view props =
 
                         Just target ->
                             List.filter
-                                (\carInfo ->
-                                    -- Only keep the results with the same target gabarit
-                                    -- TODO: use a +1/-1 comparison to be more flexible?
-                                    let
-                                        sameSize =
-                                            target.size == carInfo.size
+                                (\alternative ->
+                                    case alternative of
+                                        BuyNewCar carInfo ->
+                                            -- Only keep the results with the same target gabarit
+                                            -- TODO: use a +1/-1 comparison to be more flexible?
+                                            let
+                                                sameSize =
+                                                    target.size == carInfo.size
 
-                                        elecAndHasChargingStation =
-                                            target.hasChargingStation.value || carInfo.motorisation.value /= "électrique"
-                                    in
-                                    -- Only keep the results with a charging station if the user has an electric car
-                                    sameSize && elecAndHasChargingStation
+                                                elecAndHasChargingStation =
+                                                    target.hasChargingStation.value || carInfo.motorisation.value /= "électrique"
+                                            in
+                                            -- Only keep the results with a charging station if the user has an electric car
+                                            sameSize && elecAndHasChargingStation
+
+                                        _ ->
+                                            False
                                 )
 
                 targetCheapest =

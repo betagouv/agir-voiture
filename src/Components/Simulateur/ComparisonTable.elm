@@ -3,6 +3,7 @@ module Components.Simulateur.ComparisonTable exposing (view)
 import Components.DSFR.Table
 import Core.Format
 import Core.Results exposing (Results)
+import Core.Results.Alternative exposing (Alternative(..))
 import Core.Results.CarInfos exposing (CarInfos)
 import Core.Results.RuleValue as RuleValue
 import FormatNumber.Locales exposing (Decimals(..))
@@ -11,13 +12,26 @@ import Html.Attributes exposing (class, title)
 import Html.Extra exposing (nothing)
 
 
+{-| Displays a table comparing all alternatives (only BuyNewCar for now)
+
+TODO: support all alternatives
+
+-}
 view : Results -> Html msg
 view { alternatives, user } =
     let
         rows =
             alternatives
-                |> List.sortWith
-                    (\a b -> compareCarInfos a b)
+                |> List.filterMap
+                    (\alternative ->
+                        case alternative of
+                            BuyNewCar infos ->
+                                Just infos
+
+                            _ ->
+                                Nothing
+                    )
+                |> List.sortWith (\a b -> compareCarInfos a b)
                 |> List.map
                     (\infos ->
                         [ text (RuleValue.title infos.motorisation)
@@ -32,15 +46,6 @@ view { alternatives, user } =
                             "kgCO2e"
                         , viewValuePlusDiff infos.cost.value user.cost.value "€"
                         ]
-                     -- TODO: case where the user car is the best option
-                     -- CurrentUserCar { emission, cost } ->
-                     --     [ span [ class "italic" ]
-                     --         [ text "Votre voiture actuelle" ]
-                     --     , span [ class "italic" ]
-                     --         [ viewValuePlusDiff emission userEmission "kgCO2e" ]
-                     --     , span [ class "italic" ]
-                     --         [ viewValuePlusDiff cost userCost "€" ]
-                     --     ]
                     )
     in
     Components.DSFR.Table.view
