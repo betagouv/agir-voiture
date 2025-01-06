@@ -7,10 +7,17 @@
   resolved "https://registry.yarnpkg.com/@alloc/quick-lru/-/quick-lru-5.2.0.tgz#7bf68b20c0a350f936915fcae06f58e32007ce30"
   integrity sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==
 
-"@betagouv/publicodes-voiture@^0.3.2":
+"@betagouv/publicodes-voiture@https://pkg.pr.new/betagouv/publicodes-voiture/@betagouv/publicodes-voiture@12":
   version "0.3.2"
-  resolved "https://registry.yarnpkg.com/@betagouv/publicodes-voiture/-/publicodes-voiture-0.3.2.tgz#69db5a1ab38ddab657d7247ce9cfddad5d3b515f"
-  integrity sha512-An3mT6XA/+gHVn6tJFffBKiG4GW1zfAw9JQ8+6tR8RmjaEBcSo1ZZmWrPo10Yhxk7/aq25gQY59CcN+abWH9Ew==
+  resolved "https://pkg.pr.new/betagouv/publicodes-voiture/@betagouv/publicodes-voiture@12#5dcc1fd1f294dc5ea6f368cfd2f579565549c5cc"
+  dependencies:
+    "@incubateur-ademe/nosgestesclimat" "^3.3.4"
+    "@incubateur-ademe/publicodes-commun" "^1.1.5"
+    publicodes "^1.6.1"
+
+"@betagouv/publicodes-voiture@https://pkg.pr.new/betagouv/publicodes-voiture/@betagouv/publicodes-voiture@12.tgz":
+  version "0.3.2"
+  resolved "https://pkg.pr.new/betagouv/publicodes-voiture/@betagouv/publicodes-voiture@12.tgz#542a4ea201461c8d1eb4d09a35c47472ee09943f"
   dependencies:
     "@incubateur-ademe/nosgestesclimat" "^3.3.4"
     "@incubateur-ademe/publicodes-commun" "^1.1.5"

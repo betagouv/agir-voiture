@@ -12,7 +12,7 @@
     "review": "elm-review"
   },
   "dependencies": {
-    "@betagouv/publicodes-voiture": "^0.3.2",
+    "@betagouv/publicodes-voiture": "https://pkg.pr.new/betagouv/publicodes-voiture/@betagouv/publicodes-voiture@12.tgz",
     "@gouvfr/dsfr": "^1.13.0",
     "@publicodes/react-ui": "^1.5.4",
     "publicodes": "^1.6.1",
