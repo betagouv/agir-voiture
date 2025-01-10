@@ -6,7 +6,7 @@ port module Effect exposing
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
     , map, toCmd
-    , closePersonasModal, evaluate, evaluateAll, evaluateResults, newInputError, onEngineError, onEngineInitialized, onEvaluatedResults, onEvaluatedRules, onReactLinkClicked, onSituationUpdated, openPersonasModal, removeInputError, resetSimulation, restartEngine, scrollToTop, setSimulationStep, setSituation, updateSituation
+    , closePersonasModal, evaluate, evaluateAll, evaluateAlternatives, evaluateResults, evaluateTargetCar, evaluateUserCar, newInputError, onEngineError, onEngineInitialized, onEvaluatedAlternatives, onEvaluatedResults, onEvaluatedRules, onEvaluatedTargetCar, onEvaluatedUserCar, onReactLinkClicked, onSituationUpdated, openPersonasModal, removeInputError, resetSimulation, restartEngine, scrollToTop, setSimulationStep, setSituation, updateSituation
     )
 
 {-|
@@ -118,6 +118,30 @@ evaluateResults =
         }
 
 
+evaluateUserCar : Effect msg
+evaluateUserCar =
+    SendToJs
+        { tag = "EVALUATE_USER_CAR"
+        , data = Json.Encode.null
+        }
+
+
+evaluateAlternatives : Effect msg
+evaluateAlternatives =
+    SendToJs
+        { tag = "EVALUATE_ALTERNATIVES"
+        , data = Json.Encode.null
+        }
+
+
+evaluateTargetCar : Effect msg
+evaluateTargetCar =
+    SendToJs
+        { tag = "EVALUATE_TARGET_CAR"
+        , data = Json.Encode.null
+        }
+
+
 updateSituation : ( RuleName, NodeValue ) -> Effect msg
 updateSituation ( name, value ) =
     batch
@@ -221,6 +245,15 @@ port onEngineError : (String -> msg) -> Sub msg
 {-| Received the results from the CarSimulator engine.
 -}
 port onEvaluatedResults : (Json.Encode.Value -> msg) -> Sub msg
+
+
+port onEvaluatedUserCar : (Json.Encode.Value -> msg) -> Sub msg
+
+
+port onEvaluatedAlternatives : (Json.Encode.Value -> msg) -> Sub msg
+
+
+port onEvaluatedTargetCar : (Json.Encode.Value -> msg) -> Sub msg
 
 
 

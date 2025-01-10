@@ -5,6 +5,7 @@ import "./ffi/dsfr";
 
 // Import publicodes model
 import {
+  Alternative,
   CarSimulator,
   RuleName,
   Situation,
@@ -83,27 +84,40 @@ export const onReady = ({ app }: { app: any }) => {
             localStorage.setItem("simulationStep", data);
             break;
           }
-          case "EVALUATE_RESULTS": {
+          case "EVALUATE_USER_CAR": {
             console.time("[publicodes:evaluateCar]");
             const user = simulator.evaluateCar();
             console.timeEnd("[publicodes:evaluateCar]");
+            console.log("User car: ", user);
 
-            console.time("[publicodes:evaluateAlternatives]");
-            const alternatives = simulator.evaluateAlternatives();
-            console.timeEnd("[publicodes:evaluateAlternatives]");
-
+            app.ports.onEvaluatedUserCar.send(objUndefinedToNull(user));
+            break;
+          }
+          case "EVALUATE_TARGET_CAR": {
             console.time("[publicodes:evaluateTarget]");
             const target = simulator.evaluateTargetCar();
             console.timeEnd("[publicodes:evaluateTarget]");
 
-            app.ports.onEvaluatedResults.send({
-              user: objUndefinedToNull(user),
-              alternatives: alternatives.map(objUndefinedToNull),
-              target:
-                target.hasChargingStation.value === null ||
+            app.ports.onEvaluatedTargetCar.send(
+              target.hasChargingStation.value === null ||
                 target.size.value === null
-                  ? null
-                  : objUndefinedToNull(target),
+                ? null
+                : objUndefinedToNull(target),
+            );
+            break;
+          }
+          case "EVALUATE_ALTERNATIVES": {
+            new Promise((resolve) => {
+              console.time("[publicodes:evaluateAlternatives]");
+              const alternatives = simulator.evaluateAlternatives();
+              console.timeEnd("[publicodes:evaluateAlternatives]");
+              resolve(alternatives);
+            }).then((alternatives: Alternative[]) => {
+              console.log("Alternatives: ", alternatives);
+
+              app.ports.onEvaluatedAlternatives.send(
+                alternatives.map(objUndefinedToNull),
+              );
             });
             break;
           }
@@ -111,26 +125,37 @@ export const onReady = ({ app }: { app: any }) => {
             if (!simulator) {
               return;
             }
-            try {
-              const evaluatedRules = data.map((rule: RuleName) => {
-                const evaluation = Object.fromEntries(
-                  Object.entries(simulator.evaluateRule(rule)).map(
-                    ([key, value]) => [
-                      key,
-                      // NOTE: needed to convert undefined to null to be able
-                      // to correctly deserialize the value in Elm (maybe a
-                      // cleaner solution should be implemented).
-                      undefinedToNull(value),
-                    ],
-                  ),
-                );
+            new Promise((resolve, reject) => {
+              try {
+                console.log("startevaluating all rules");
+                const evaluatedRules = data.map((rule: RuleName) => {
+                  const evaluation = Object.fromEntries(
+                    Object.entries(simulator.evaluateRule(rule)).map(
+                      ([key, value]) => [
+                        key,
+                        // NOTE: needed to convert undefined to null to be able
+                        // to correctly deserialize the value in Elm (maybe a
+                        // cleaner solution should be implemented).
+                        undefinedToNull(value),
+                      ],
+                    ),
+                  );
 
-                return [rule, evaluation];
+                  return [rule, evaluation];
+                });
+                resolve(evaluatedRules);
+                // app.ports.onEvaluatedRules.send(evaluatedRules);
+              } catch (error) {
+                reject(error);
+                // app.ports.onEngineError.send(error.message);
+              }
+            })
+              .then((evaluatedRules) => {
+                app.ports.onEvaluatedRules.send(evaluatedRules);
+              })
+              .catch((error) => {
+                app.ports.onEngineError.send(error.message);
               });
-              app.ports.onEvaluatedRules.send(evaluatedRules);
-            } catch (error) {
-              app.ports.onEngineError.send(error.message);
-            }
             break;
           }
 

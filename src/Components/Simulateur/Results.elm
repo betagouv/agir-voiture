@@ -11,9 +11,9 @@ import Components.Simulateur.Navigation
 import Components.Simulateur.TotalCard as TotalCard
 import Components.Simulateur.UserTotal
 import Core.Evaluation exposing (Evaluation)
-import Core.Results exposing (Results)
 import Core.Results.CarInfos exposing (CarInfos)
 import Core.Results.RuleValue as RuleValue exposing (RuleValue)
+import Core.Results.TargetInfos exposing (TargetInfos)
 import Core.UI as UI
 import Dict exposing (Dict)
 import Html exposing (Html, a, div, h2, h3, p, section, span, text)
@@ -30,7 +30,9 @@ type alias Config msg =
     , onNewStep : SimulationStep -> msg
     , evaluations : Dict RuleName Evaluation
     , rules : RawRules
-    , results : Maybe Results
+    , userCar : Maybe CarInfos
+    , alternatives : Maybe (List CarInfos)
+    , targetInfos : Maybe TargetInfos
     , engineStatus : EngineStatus
     , accordionsState : Dict String Bool
     , onToggleAccordion : String -> msg
@@ -50,12 +52,8 @@ accordionComparisonTableId =
 view : Config msg -> Html msg
 view props =
     let
-        targetInfos =
-            Maybe.andThen .target props.results
-
         sortedAlternativesOn attr =
-            props.results
-                |> Maybe.map .alternatives
+            props.alternatives
                 |> Maybe.withDefault []
                 |> List.sortWith
                     (\a b -> Basics.compare (attr a).value (attr b).value)
@@ -78,8 +76,8 @@ view props =
             -> CarInfos
             -> Html msg
         viewAlternative attr tag infos =
-            case ( props.engineStatus, props.results ) of
-                ( EngineStatus.Done, Just { user } ) ->
+            case ( props.engineStatus, props.userCar ) of
+                ( EngineStatus.Done, Just user ) ->
                     let
                         alternativeIsBetter =
                             (user.size /= infos.size)
@@ -148,7 +146,7 @@ view props =
                 -- Filters the alternatives results on the given target (size, charging station)
                 filterInTarget : List CarInfos -> List CarInfos
                 filterInTarget =
-                    case targetInfos of
+                    case props.targetInfos of
                         Nothing ->
                             identity
 
@@ -222,8 +220,10 @@ view props =
                             Dict.get accordionComparisonTableId props.accordionsState
                                 |> Maybe.withDefault False
                         , content =
-                            props.results
-                                |> Maybe.map Components.Simulateur.ComparisonTable.view
+                            Maybe.map2
+                                Components.Simulateur.ComparisonTable.view
+                                props.userCar
+                                props.alternatives
                                 |> Maybe.withDefault Components.LoadingCard.view
                         }
                     ]
@@ -239,12 +239,10 @@ view props =
                 }
             , div [ class "flex flex-col gap-8 md:gap-20" ]
                 [ section []
-                    [ h2 []
-                        [ text "Récapitulatif de votre situation"
-                        ]
+                    [ h2 [] [ text "Récapitulatif de votre situation" ]
                     , div [ class "fr-col-8" ]
-                        [ case ( props.engineStatus, props.results ) of
-                            ( EngineStatus.Done, Just { user } ) ->
+                        [ case ( props.engineStatus, props.userCar ) of
+                            ( _, Just user ) ->
                                 Components.Simulateur.UserTotal.view
                                     { evaluations = props.evaluations
                                     , rules = props.rules
@@ -264,7 +262,7 @@ view props =
                         , content = carbonExplanation
                         }
                     ]
-                , viewMaybe viewAlternativesSection targetInfos
+                , viewMaybe viewAlternativesSection props.targetInfos
                 , viewSurveyCTA
                 , viewAidesSection
                 , viewRessourcesSection
