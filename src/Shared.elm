@@ -119,7 +119,14 @@ update _ msg model =
             )
 
         SetSituation newSituation ->
-            ( { model | situation = newSituation }, Effect.none )
+            ( { model
+                | situation = newSituation
+                , userCar = Nothing
+                , alternatives = Nothing
+                , targetInfos = Nothing
+              }
+            , Effect.none
+            )
 
         SetSimulationStep newStep ->
             evaluate { model | simulationStep = newStep }
@@ -157,7 +164,14 @@ update _ msg model =
                 newSituation =
                     Dict.insert name value model.situation
             in
-            ( { model | situation = newSituation }, Effect.none )
+            ( { model
+                | situation = newSituation
+                , userCar = Nothing
+                , alternatives = Nothing
+                , targetInfos = Nothing
+              }
+            , Effect.none
+            )
 
         Evaluate ->
             evaluate model
@@ -203,8 +217,8 @@ update _ msg model =
         NewUserCar car ->
             ( { model | userCar = Just car }, Effect.evaluateTargetCar )
 
-        NewAlternatives cars ->
-            ( { model | alternatives = Just cars }, Effect.none )
+        NewAlternatives alternatives ->
+            ( { model | alternatives = Just alternatives }, Effect.none )
 
         NewTargetInfos target ->
             ( { model | targetInfos = Just target }, Effect.evaluateAlternatives )

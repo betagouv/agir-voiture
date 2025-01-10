@@ -186,10 +186,6 @@ view shared model =
                                             nothing
 
                                 SimulationStep.Result ->
-                                    let
-                                        _ =
-                                            Debug.log "rendering simulateur page" ()
-                                    in
                                     Components.Simulateur.Results.view
                                         { categories = shared.orderedCategories
                                         , onNewStep = \step -> NewStep step
