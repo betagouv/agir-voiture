@@ -237,18 +237,6 @@ view props =
                         }
                     ]
                 ]
-
-        viewCard ( title, link, desc ) =
-            Card.card
-                (text title)
-                Card.vertical
-                |> Card.linkFull link
-                |> Card.withDescription
-                    (Just
-                        (text desc)
-                    )
-                |> Card.withArrow True
-                |> Card.view
     in
     div [ class "" ]
         [ div [ class "flex flex-col gap-8 mb-6 opacity-100" ]
@@ -282,85 +270,131 @@ view props =
                         , open =
                             Dict.get accordionCarbonId props.accordionsState
                                 |> Maybe.withDefault False
-                        , content =
-                            div []
-                                [ h3 []
-                                    [ text "L'objectif des 2 tonnes" ]
-                                , p []
-                                    [ text """
+                        , content = carbonExplanation
+                        }
+                    ]
+                , viewMaybe viewAlternativesSection targetInfos
+                , viewSurveyCTA
+                , viewAidesSection
+                , viewRessourcesSection
+                ]
+            ]
+        ]
+
+
+carbonExplanation : Html msg
+carbonExplanation =
+    div []
+        [ h3 []
+            [ text "L'objectif des 2 tonnes" ]
+        , p []
+            [ text """
                             Pour essayer de maintenir l'augmentation
                             de la température moyenne de la planète en
                             dessous de 2 °C par rapport aux niveaux
                             préindustriels, il faudrait arriver à atteindre la """
-                                    , a [ href "https://fr.wikipedia.org/wiki/Neutralit%C3%A9_carbone", target "_blank" ] [ text "neutralité carbone" ]
-                                    , text "."
-                                    ]
-                                , p []
-                                    [ text "Pour cela, un objectif de 2 tonnes de CO2e par an et par personne a été fixé pour 2050 ("
-                                    , a [ href "https://nosgestesclimat.fr/empreinte-climat", target "_blank" ]
-                                        [ text "en savoir plus" ]
-                                    , text ")."
-                                    ]
-                                ]
-                        }
+            , a [ href "https://fr.wikipedia.org/wiki/Neutralit%C3%A9_carbone", target "_blank" ] [ text "neutralité carbone" ]
+            , text "."
+            ]
+        , p []
+            [ text "Pour cela, un objectif de 2 tonnes de CO2e par an et par personne a été fixé pour 2050 ("
+            , a [ href "https://nosgestesclimat.fr/empreinte-climat", target "_blank" ]
+                [ text "en savoir plus" ]
+            , text ")."
+            ]
+        ]
+
+
+viewAidesSection : Html msg
+viewAidesSection =
+    section []
+        [ h2 [] [ text "Les aides financières" ]
+        , p []
+            [ text "Afin d'aider les particuliers à passer à des véhicules plus propres, il existe des aides financières mis en place par l'État et les collectivités locales."
+            ]
+        , div [ class "fr-col-10" ]
+            [ CallOut.callout ""
+                (span []
+                    [ text "Au niveau national par exemple, avec le "
+                    , a [ href "https://www.economie.gouv.fr/particuliers/bonus-ecologique", target "_blank" ]
+                        [ text "bonus écologique" ]
+                    , text ", vous pouvez bénéficier d'une aide allant jusqu'à "
+                    , span [ class "text-[var(--text-default-info)]" ] [ text "4 000 €" ]
+                    , text " pour l'achat d'un véhicule électrique."
                     ]
-                , viewMaybe viewAlternativesSection targetInfos
-                , section [ class "fr-col-8" ]
-                    [ h2 [] [ text "Les aides financières" ]
-                    , p []
-                        [ text """
-                            Afin d'aider les particuliers à passer à des véhicules plus propres, il existe des aides financières
-                            mis en place par l'État et les collectivités locales."""
-                        ]
-                    , CallOut.callout ""
-                        (span []
-                            [ text "Au niveau national par exemple, avec le "
-                            , a [ href "https://www.economie.gouv.fr/particuliers/bonus-ecologique", target "_blank" ]
-                                [ text "bonus écologique" ]
-                            , text ", vous pouvez bénéficier d'une aide allant jusqu'à "
-                            , span [ class "text-[var(--text-default-info)]" ] [ text "7 000 €" ]
-                            , text " pour l'achat d'un véhicule électrique. Et avec la "
-                            , a [ href "https://www.service-public.fr/particuliers/vosdroits/F36848", target "_blank" ]
-                                [ text "prime à la conversion" ]
-                            , text ", vous pouvez bénéficier d'une aide allant jusqu'à "
-                            , span [ class "text-[var(--text-default-info)]" ] [ text "3 000 €" ]
-                            , text "."
-                            ]
-                        )
-                    , p []
-                        [ text "Il existe également des aides locales auxquelles vous pouvez être éligible."
-                        ]
-                    , Button.new
-                        { onClick = Nothing
-                        , label = "Découvrir toutes les aides"
-                        }
-                        |> Button.linkButton "https://agir.beta.gouv.fr"
-                        |> Button.rightIcon Icons.system.arrowRightFill
-                        |> Button.view
+                )
+            ]
+        , p []
+            [ text "Il existe également des aides locales auxquelles vous pouvez être éligible."
+            ]
+        , Button.new
+            { onClick = Nothing
+            , label = "Découvrir toutes les aides"
+            }
+            |> Button.linkButton "https://jagis.beta.gouv.fr"
+            |> Button.rightIcon Icons.system.arrowRightFill
+            |> Button.secondary
+            |> Button.view
+        ]
+
+
+viewRessourcesSection : Html msg
+viewRessourcesSection =
+    let
+        viewCard ( title, link, desc ) =
+            Card.card
+                (text title)
+                Card.vertical
+                |> Card.linkFull link
+                |> Card.withDescription (Just (text desc))
+                |> Card.withArrow True
+                |> Card.view
+    in
+    section []
+        [ h2 []
+            [ text "Les ressources pour aller plus loin"
+            ]
+        , p [] [ text "Découvrez une sélection pour continuer votre engagement." ]
+        , div [ class "fr-grid-row fr-grid-row--gutters fr-grid-row--center" ]
+            ([ ( "J'agis !"
+               , "https://jagis.beta.gouv.fr"
+               , "Faite vous accompagner pour réduire votre empreinte carbone à travers des actions concrètes."
+               )
+             , ( "Nos Gestes Climat"
+               , "https://nosgestesclimat.fr"
+               , "Calculez votre empreinte carbone individuelle et découvrez des gestes pour la réduire."
+               )
+             , ( "Impact CO2"
+               , "https://impactCO2.fr"
+               , "Comprendre les ordres de grandeur et les équivalences des émissions de CO2e."
+               )
+             ]
+                |> List.map viewCard
+                |> List.map (\card -> div [ class "fr-col-md-4" ] [ card ])
+            )
+        ]
+
+
+viewSurveyCTA : Html msg
+viewSurveyCTA =
+    section [ class "fr-col-14 py-12 flex justify-center bg-[var(--background-contrast-info)] mx-[-3rem]" ]
+        [ div [ class "bg-white py-6 rounded border border-[var(--border-plain-info)] fr-col-8" ]
+            [ div [ class "fr-container" ]
+                [ h3 [ class "text-[var(--text-contrast-info)]" ]
+                    [ text "👋 Donnez-nous votre avis !"
                     ]
-                , section []
-                    [ h2 []
-                        [ text "Les ressources pour aller plus loin"
-                        ]
-                    , p [] [ text "Découvrez une sélection pour continuer votre engagement." ]
-                    , div [ class "fr-grid-row fr-grid-row--gutters fr-grid-row--center" ]
-                        ([ ( "J'agis !"
-                           , "https://jagis.beta.gouv.fr"
-                           , "Faite vous accompagner pour réduire votre empreinte carbone à travers des actions concrètes."
-                           )
-                         , ( "Nos Gestes Climat"
-                           , "https://nosgestesclimat.fr"
-                           , "Calculez votre empreinte carbone individuelle et découvrez des gestes pour la réduire."
-                           )
-                         , ( "Impact CO2"
-                           , "https://impactCO2.fr"
-                           , "Comprendre les ordres de grandeur et les équivalences des émissions de CO2e."
-                           )
-                         ]
-                            |> List.map viewCard
-                            |> List.map (\card -> div [ class "fr-col-md-4" ] [ card ])
-                        )
+                , p [ class "text-[var(--text-constrat-info)]" ]
+                    [ text "Cet outil étant en construction, vous pouvez nous aider à l'améliorer en "
+                    , span [ class "fr-text--bold text-[var(--text-default-info)]" ] [ text "moins de 2 minutes" ]
+                    , text " en répondant à notre questionnaire."
                     ]
+                , Button.new
+                    { onClick = Nothing
+                    , label = "Répondre au questionnaire"
+                    }
+                    |> Button.linkButton "https://jagis.beta.gouv.fr"
+                    |> Button.rightIcon Icons.system.arrowRightFill
+                    |> Button.view
                 ]
             ]
         ]

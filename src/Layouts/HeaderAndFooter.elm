@@ -1,6 +1,7 @@
 module Layouts.HeaderAndFooter exposing (Model, Msg, Props, layout)
 
 import BetaGouv.DSFR.Button as Button
+import BetaGouv.DSFR.Icons as Icons
 import Components.DSFR.Footer
 import Components.DSFR.Header
 import Components.DSFR.Modal
@@ -171,9 +172,9 @@ viewNotice decodeError =
                 { title = "Erreur lors de la lecture des données"
                 , desc =
                     span []
-                        [ text "Si le problème persiste après avoir cliqué sur 'Recommencer', vous pouvez ouvrir un ticket sur "
-                        , a [ href "https://github.com/betagouv/agir-voiture/issues/new", target "_blank" ]
-                            [ text "GitHub" ]
+                        [ text "Si le problème persiste après avoir cliqué sur 'Recommencer', vous pouvez "
+                        , a [ href "mailto:emile.rolley@beta.gouv.fr", target "_blank" ]
+                            [ text "nous contacter" ]
                         , text "."
                         , p [ class "text-xs fr-mt-2v fr-p-2v w-fit bg-red-50 rounded-md outline outline-1 outline-red-100 text-red-950" ]
                             [ span [ class "font-semibold fr-mb-1v" ]
@@ -187,5 +188,12 @@ viewNotice decodeError =
         Nothing ->
             Components.DSFR.Notice.info
                 { title = "En cours de développement"
-                , desc = text "Les résultats de ce simulateur ne sont pas stables et sont susceptibles de fortement évoluer."
+                , desc =
+                    span []
+                        [ text "Les résultats de ce simulateur ne sont pas stables et sont susceptibles de fortement évoluer."
+                        , text " Si vous rencontrez un problème ou avez des suggestions, "
+                        , a [ href "mailto:emile.rolley@beta.gouv.fr", target "_blank" ]
+                            [ text "contactez-nous" ]
+                        , text "."
+                        ]
                 }
