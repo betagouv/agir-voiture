@@ -16,7 +16,7 @@ import Core.Results.CarInfos exposing (CarInfos)
 import Core.Results.RuleValue as RuleValue exposing (RuleValue)
 import Core.UI as UI
 import Dict exposing (Dict)
-import Html exposing (Html, a, div, h2, h3, h4, p, section, span, text)
+import Html exposing (Html, a, div, h2, h3, p, section, span, text)
 import Html.Attributes exposing (class, href, target)
 import Html.Extra exposing (nothing, viewMaybe)
 import Publicodes exposing (RawRules)
@@ -74,11 +74,10 @@ view props =
 
         viewAlternative :
             (CarInfos -> RuleValue comparable)
-            -> Icons.IconName
-            -> String
+            -> TotalCard.KindTag
             -> CarInfos
             -> Html msg
-        viewAlternative attr icon title infos =
+        viewAlternative attr tag infos =
             case ( props.engineStatus, props.results ) of
                 ( EngineStatus.Done, Just { user } ) ->
                     let
@@ -87,13 +86,10 @@ view props =
                                 || (Basics.compare (attr user).value (attr infos).value == GT)
                     in
                     div []
-                        [ h4 [ class "flex gap-2 items-center" ]
-                            [ Icons.iconMD icon
-                            , text title
-                            ]
-                        , if alternativeIsBetter then
+                        [ if alternativeIsBetter then
                             TotalCard.new
-                                { id = "alternative-" ++ title
+                                { -- TODO: better id
+                                  id = "alternative-" ++ RuleValue.title infos.size ++ "-" ++ RuleValue.title infos.motorisation ++ (Maybe.map RuleValue.title infos.fuel |> Maybe.withDefault "")
                                 , title = Maybe.withDefault "" infos.title
                                 , cost = infos.cost.value
                                 , emission = infos.emissions.value
@@ -119,6 +115,7 @@ view props =
                                     { costToCompare = user.cost.value
                                     , emissionToCompare = user.emissions.value
                                     }
+                                |> TotalCard.withTag tag
                                 |> TotalCard.view
 
                           else
@@ -137,17 +134,9 @@ view props =
                     section []
                         [ h2 [] args.title
                         , p [ class "fr-col-8" ] args.desc
-                        , div [ class "grid grid-cols-2 gap-6" ]
-                            [ viewAlternative
-                                .cost
-                                Icons.finance.moneyEuroCircleLine
-                                "La plus économique"
-                                cheapestAlternative
-                            , viewAlternative
-                                .emissions
-                                Icons.others.leafLine
-                                "La plus écologique"
-                                greenestAlternative
+                        , div [ class "grid grid-cols-2 gap-12" ]
+                            [ viewAlternative .cost TotalCard.Cheapest cheapestAlternative
+                            , viewAlternative .emissions TotalCard.Greenest greenestAlternative
                             ]
                         ]
 
@@ -193,16 +182,18 @@ view props =
                 [ viewAlternatives
                     { title =
                         [ text "Les meilleures alternatives pour le gabarit "
-                        , span [ class "fr-px-3v bg-[var(--background-contrast-grey)]" ]
+
+                        -- , span [ class "fr-px-3v bg-[var(--background-alt-blue-france)]" ]
+                        , span [ class "text-[var(--text-label-blue-france)]" ]
                             [ text (RuleValue.title size) ]
                         ]
                     , desc =
                         [ text "Parmi les véhicules de gabarit "
-                        , span [ class "font-medium fr-px-1v bg-[var(--background-contrast-grey)]" ]
+                        , span [ class "font-medium text-[var(--text-label-blue-france)]" ]
                             [ text (RuleValue.title size) ]
                         , text ", voici les meilleures alternatives pour votre usage."
                         , text " Sachant que vous "
-                        , span [ class "font-medium fr-px-1v bg-[var(--background-contrast-grey)]" ]
+                        , span [ class "font-medium text-[var(--text-label-blue-france)]" ]
                             [ if hasChargingStation.value then
                                 text "avez"
 
@@ -312,7 +303,7 @@ viewAidesSection =
         , p []
             [ text "Afin d'aider les particuliers à passer à des véhicules plus propres, il existe des aides financières mis en place par l'État et les collectivités locales."
             ]
-        , div [ class "fr-col-10" ]
+        , div [ class "" ]
             [ CallOut.callout ""
                 (span []
                     [ text "Au niveau national par exemple, avec le "
@@ -377,8 +368,8 @@ viewRessourcesSection =
 
 viewSurveyCTA : Html msg
 viewSurveyCTA =
-    section [ class "fr-col-14 py-12 flex justify-center bg-[var(--background-contrast-info)] mx-[-3rem]" ]
-        [ div [ class "bg-white py-6 rounded border border-[var(--border-plain-info)] fr-col-8" ]
+    section [ class "fr-col-14 py-12 flex justify-center bg-[var(--background-alt-blue-france)] mx-[-3rem]" ]
+        [ div [ class "bg-white py-6 rounded-xl border border-[var(--border-action-low-blue-france)] fr-col-8" ]
             [ div [ class "fr-container" ]
                 [ h3 [ class "text-[var(--text-contrast-info)]" ]
                     [ text "👋 Donnez-nous votre avis !"

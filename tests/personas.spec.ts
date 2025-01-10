@@ -31,10 +31,14 @@ test.describe("Simulate personas", () => {
         "Récapitulatif de votre situation",
       );
       await expect(page.locator("#user-car-cost")).toHaveText(
-        Math.round(persona.coûts).toLocaleString("fr-FR") + "€",
+        "Coût annuel :" +
+          Math.round(persona.coûts).toLocaleString("fr-FR") +
+          "€",
       );
       await expect(page.locator("#user-car-emissions")).toHaveText(
-        Math.round(persona.empreinte).toLocaleString("fr-FR") + "kgCO2e",
+        "Émissions annuelles :" +
+          Math.round(persona.empreinte).toLocaleString("fr-FR") +
+          "kgCO2e",
       );
     });
   });

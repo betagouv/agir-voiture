@@ -1,7 +1,6 @@
 module Layouts.HeaderAndFooter exposing (Model, Msg, Props, layout)
 
 import BetaGouv.DSFR.Button as Button
-import BetaGouv.DSFR.Icons as Icons
 import Components.DSFR.Footer
 import Components.DSFR.Header
 import Components.DSFR.Modal

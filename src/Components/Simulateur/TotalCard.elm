@@ -1,8 +1,9 @@
-module Components.Simulateur.TotalCard exposing (Config, new, view, withComparison, withContext)
+module Components.Simulateur.TotalCard exposing (Config, KindTag(..), new, view, withComparison, withContext, withTag)
 
 {-| Component to display the total cost and emission of a car.
 -}
 
+import BetaGouv.DSFR.Icons as Icons
 import Core.Format
 import Core.Results exposing (ResultType(..))
 import FormatNumber.Locales exposing (Decimals(..))
@@ -19,7 +20,14 @@ type alias Config =
     , costToCompare : Maybe Float
     , emissionToCompare : Maybe Float
     , contextToShow : Maybe (List { value : String, unit : Maybe String })
+    , tag : KindTag
     }
+
+
+type KindTag
+    = Cheapest
+    | Greenest
+    | None
 
 
 new : { id : String, title : String, cost : Float, emission : Float } -> Config
@@ -31,6 +39,7 @@ new props =
     , costToCompare = Nothing
     , emissionToCompare = Nothing
     , contextToShow = Nothing
+    , tag = None
     }
 
 
@@ -55,55 +64,51 @@ withComparison { costToCompare, emissionToCompare } config =
     }
 
 
+withTag : KindTag -> Config -> Config
+withTag tag config =
+    { config | tag = tag }
+
+
 view : Config -> Html msg
 view config =
-    div [ class "rounded-md fr-my-4v outline outline-1 outline-[var(--border-plain-info)]" ]
+    div [ class "rounded-xl fr-my-4v border border-[var(--border-contrast-grey)]" ]
         [ div [ class "fr-p-4v flex flex-col gap-2" ]
-            [ h5 [ class "m-0" ] [ text config.title ]
+            [ viewTag config.tag
+            , h5 [ class "mt-2 mb-0" ] [ text config.title ]
             , div [ class "flex flex-col gap-2" ]
-                [ div [ class "flex flex-col" ]
-                    [ div [ class "flex gap-2 h-fit items-center" ]
-                        [ text "Coût annuel estimé :"
-                        , viewValue
-                            { id = config.id ++ "-cost"
-                            , value = Core.Format.floatToFrenchLocale (Max 0) config.cost
-                            , unit = Just "€"
-                            , bgColor = "bg-[var(--background-alt-purple-glycine)]"
-                            , textColor = "text-[var(--text-label-purple-glycine)]"
-                            , size = Normal
-                            }
+                [ div [ id (config.id ++ "-cost"), class "flex items-center" ]
+                    [ span [ class "mr-2" ] [ text "Coût annuel :" ]
+                    , span [ class "flex gap-1 items-center h-min" ]
+                        [ span [ class "text-lg font-semibold" ]
+                            [ text <| Core.Format.humanReadable config.cost ]
+                        , span [ class "" ] [ text "€" ]
+                        , viewMaybe
+                            (\baseCost ->
+                                viewDiff
+                                    { value = config.cost
+                                    , base = baseCost
+                                    , resultType = Cost
+                                    }
+                            )
+                            config.costToCompare
                         ]
-                    , viewMaybe
-                        (\baseCost ->
-                            viewDiff
-                                { value = config.cost
-                                , base = baseCost
-                                , resultType = Cost
-                                }
-                        )
-                        config.costToCompare
                     ]
-                , div [ class "flex flex-col" ]
-                    [ div [ class "flex gap-2 h-fit items-center" ]
-                        [ text "Émissions annuelles estimées :"
-                        , viewValue
-                            { id = config.id ++ "-emissions"
-                            , value = Core.Format.floatToFrenchLocale (Max 0) config.emission
-                            , unit = Just "kgCO2e"
-                            , bgColor = "bg-[var(--background-alt-green-bourgeon)]"
-                            , textColor = "text-[var(--text-label-green-bourgeon)]"
-                            , size = Normal
-                            }
+                , div [ id (config.id ++ "-emissions"), class "flex items-center" ]
+                    [ span [ class "mr-2" ] [ text "Émissions annuelles :" ]
+                    , span [ class "flex gap-1 items-center h-min" ]
+                        [ span [ class "text-lg font-semibold" ]
+                            [ text <| Core.Format.humanReadable config.emission ]
+                        , span [ class "" ] [ text "kgCO2e" ]
+                        , viewMaybe
+                            (\baseEmission ->
+                                viewDiff
+                                    { value = config.emission
+                                    , base = baseEmission
+                                    , resultType = Emissions
+                                    }
+                            )
+                            config.emissionToCompare
                         ]
-                    , viewMaybe
-                        (\baseEmission ->
-                            viewDiff
-                                { value = config.emission
-                                , base = baseEmission
-                                , resultType = Emissions
-                                }
-                        )
-                        config.emissionToCompare
                     ]
                 ]
             ]
@@ -113,8 +118,11 @@ view config =
 
 type ViewValueSize
     = Small
-      -- | Large
-    | Normal
+
+
+
+-- | Large
+-- | Normal
 
 
 viewValue :
@@ -138,7 +146,7 @@ viewValue props =
                 [ ( "text-sm", props.size == Small )
 
                 -- , ( "fr-text--bold", props.size == Large )
-                , ( "font-medium", props.size == Normal )
+                -- , ( "font-medium", props.size == Normal )
                 ]
             ]
             [ text props.value ]
@@ -161,8 +169,26 @@ viewDiff { value, base, resultType } =
         diff =
             base - value
 
+        sign =
+            if diff > 0 then
+                "-"
+
+            else
+                "+"
+
         formatedDiff =
-            "~" ++ Core.Format.floatToFrenchLocale (Max 0) (Basics.abs diff)
+            sign
+                ++ (case resultType of
+                        Core.Results.Cost ->
+                            Core.Format.floatToFrenchLocale (Max 0) (Basics.abs diff)
+
+                        Core.Results.Emissions ->
+                            let
+                                percentGain =
+                                    100 - (value * 100 / base)
+                            in
+                            Core.Format.withPrecision (Max 0) (Basics.abs percentGain)
+                   )
 
         unit =
             case resultType of
@@ -170,30 +196,18 @@ viewDiff { value, base, resultType } =
                     "€"
 
                 Core.Results.Emissions ->
-                    "kgCO2e"
+                    "%"
     in
     if diff > 0 then
-        span [ class "fr-my-1v fr-px-1v bg-[var(--background-contrast-info)] text-[var(--text-default-info)] w-fit outline outline-1 rounded-sm outline-[var(--border-plain-info)]" ]
+        span [ class "fr-my-1v fr-px-2v bg-[var(--background-contrast-success)] text-[var(--text-default-success)] w-fit rounded-full" ]
             [ span [ class "font-medium inline-flex gap-1 items-baseline" ]
                 [ text formatedDiff, viewUnit unit ]
-            , case resultType of
-                Core.Results.Cost ->
-                    text " d'économie"
-
-                Core.Results.Emissions ->
-                    text " d'émission évitée"
             ]
 
     else if diff < 0 then
-        span [ class "fr-my-1v fr-px-1v bg-[var(--background-contrast-warning)] text-[var(--text-default-warning)] w-fit outline outline-1 rounded-sm outline-[var(--border-plain-warning)]" ]
+        span [ class "fr-my-1v fr-px-2v bg-[var(--background-contrast-warning)] text-[var(--text-default-warning)] w-fit rounded-full" ]
             [ span [ class "font-medium inline-flex gap-1 items-baseline" ]
                 [ text formatedDiff, viewUnit unit ]
-            , case resultType of
-                Core.Results.Cost ->
-                    text " de surcoût"
-
-                Core.Results.Emissions ->
-                    text " d'émission supplémentaire"
             ]
 
     else
@@ -204,20 +218,36 @@ viewContext :
     List { value : String, unit : Maybe String }
     -> Html msg
 viewContext contextValues =
-    div [ class "flex flex-col fr-px-4v fr-pt-2v fr-pb-4v gap-2 bg-[var(--background-contrast-info)]" ]
-        [ span [ class "font-semibold" ] [ text "Contexte" ]
-        , div [ class "flex gap-2 flex-wrap" ]
-            (contextValues
-                |> List.map
-                    (\{ value, unit } ->
-                        viewValue
-                            { id = ""
-                            , value = value
-                            , bgColor = "bg-[var(--background-default-grey)]"
-                            , textColor = "text-slate-600"
-                            , size = Small
-                            , unit = unit
-                            }
-                    )
-            )
-        ]
+    div [ class "flex gap-2 flex-wrap p-4 gap-2 border-t border-[var(--border-default-grey)]" ]
+        (contextValues
+            |> List.map
+                (\{ value, unit } ->
+                    viewValue
+                        { id = ""
+                        , value = value
+                        , bgColor = "bg-[var(--background-alt-blue-france)]"
+                        , textColor = "text-[var(--text-label-blue-france)]"
+                        , size = Small
+                        , unit = unit
+                        }
+                )
+        )
+
+
+viewTag : KindTag -> Html msg
+viewTag tag =
+    case tag of
+        Cheapest ->
+            span [ class "flex justify-center w-fit font-medium fr-px-3v fr-py-1v bg-amber-100 text-amber-700 rounded-full" ]
+                [ Icons.iconSM Icons.finance.moneyEuroCircleFill
+                , span [ class "fr-pl-1v" ] [ text "La plus économique" ]
+                ]
+
+        Greenest ->
+            span [ class "flex justify-center w-fit font-medium fr-px-3v fr-py-1v bg-green-100 text-green-700 rounded-full" ]
+                [ Icons.iconSM Icons.others.leafFill
+                , span [ class "fr-pl-1v" ] [ text "La plus écologique" ]
+                ]
+
+        None ->
+            nothing
