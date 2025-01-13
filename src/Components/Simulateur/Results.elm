@@ -262,14 +262,14 @@ view props =
                                 _ ->
                                     Components.LoadingCard.view
                             ]
-                        , div [ class "" ]
-                            [ p [ class "fr-text--sm" ]
+                        , div []
+                            [ p []
                                 [ text "Le coût annuel inclut les dépenses liées à l'utilisation (essence, stationnement, péages, etc.), ainsi que les dépenses de possession (frais d'achat amortis sur la durée de détention, assurance, entretien, etc.)."
                                 ]
-                            , p [ class "fr-text--sm" ]
+                            , p []
                                 [ text "Les émissions de CO2e sont calculées en prenant en compte les émissions liées à l'utilisation du véhicule (carburant, électricité, etc.) ainsi que les émissions liées à la fabrication et à la fin de vie du véhicule."
                                 ]
-                            , p [ class "fr-text--sm" ]
+                            , p []
                                 [ text "Le détail des calculs est disponible dans la "
                                 , a [ href "/documentation" ] [ text "documentation" ]
                                 , text "."

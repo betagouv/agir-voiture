@@ -1,6 +1,7 @@
 module Layouts.HeaderAndFooter exposing (Model, Msg, Props, layout)
 
 import BetaGouv.DSFR.Button as Button
+import BetaGouv.DSFR.Icons as Icons
 import Components.DSFR.Footer
 import Components.DSFR.Header
 import Components.DSFR.Modal
@@ -8,15 +9,16 @@ import Components.DSFR.Notice
 import Core.Personas exposing (Personas)
 import Dict
 import Effect exposing (Effect)
-import Html exposing (Html, a, br, div, p, span, text)
+import Html exposing (Html, a, br, div, p, section, span, text)
 import Html.Attributes exposing (class, classList, href, id, target)
-import Html.Extra exposing (viewIf)
+import Html.Extra exposing (nothing, viewIf)
 import Json.Decode
 import Layout exposing (Layout)
 import Publicodes.Situation exposing (Situation)
 import Route exposing (Route)
 import Shared
 import Shared.Constants
+import Shared.SimulationStep
 import View exposing (View)
 
 
@@ -127,6 +129,30 @@ view props shared { content, toContentMsg, model } =
                 ]
             ]
             content.body
+        , case shared.simulationStep of
+            Shared.SimulationStep.Result ->
+                section [ class "sticky bottom-0 w-full flex justify-center fr-py-4v bg-[var(--background-alt-blue-france)] border-t-2 border-[var(--border-default-blue-france)] z-50" ]
+                    [ div [ class "fr-container flex items-center p-0 gap-4" ]
+                        [ p [ class "m-0 text-[var(--text-constrat-info)] flex-1" ]
+                            [ span [ class "fr-text--lg fr-text--bold text-[var(--text-label-blue-france)]" ]
+                                [ text "👋 Donnez-nous votre avis !" ]
+                            , text " Cet outil étant en construction, vous pouvez nous aider à l'améliorer en "
+                            , span [ class "fr-text--bold text-[var(--text-label-blue-france)]" ]
+                                [ text "moins de 2 minutes" ]
+                            , text " en répondant à notre questionnaire."
+                            ]
+                        , Button.new
+                            { onClick = Nothing
+                            , label = "Répondre au questionnaire"
+                            }
+                            |> Button.linkButton "https://jagis.beta.gouv.fr"
+                            |> Button.rightIcon Icons.system.arrowRightFill
+                            |> Button.view
+                        ]
+                    ]
+
+            _ ->
+                nothing
         , Components.DSFR.Footer.view
         ]
     }
