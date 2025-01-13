@@ -209,13 +209,11 @@ update _ msg model =
             , Effect.none
             )
 
-        -- NewResults results ->
-        --     ( { model | results = Just results }, Effect.none )
         DecodeError err ->
             ( { model | decodeError = Just err }, Effect.none )
 
         NewUserCar car ->
-            ( { model | userCar = Just car }, Effect.evaluateTargetCar )
+            ( { model | userCar = Just car }, Effect.none )
 
         NewAlternatives alternatives ->
             ( { model | alternatives = Just alternatives }, Effect.none )
@@ -250,9 +248,7 @@ evaluate model =
                 Effect.batch
                     [ Effect.evaluateAll Core.Rules.userContext
                     , Effect.evaluateUserCar
-
-                    -- , Effect.evaluateAlternatives
-                    -- , Effect.evaluateTargetCar
+                    , Effect.evaluateTargetCar
                     ]
 
               else

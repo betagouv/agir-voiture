@@ -107,55 +107,40 @@ export const onReady = ({ app }: { app: any }) => {
             break;
           }
           case "EVALUATE_ALTERNATIVES": {
-            new Promise((resolve) => {
-              console.time("[publicodes:evaluateAlternatives]");
-              const alternatives = simulator.evaluateAlternatives();
-              console.timeEnd("[publicodes:evaluateAlternatives]");
-              resolve(alternatives);
-            }).then((alternatives: Alternative[]) => {
-              console.log("Alternatives: ", alternatives);
+            console.time("[publicodes:evaluateAlternatives]");
+            const alternatives = simulator.evaluateAlternatives();
+            console.timeEnd("[publicodes:evaluateAlternatives]");
 
-              app.ports.onEvaluatedAlternatives.send(
-                alternatives.map(objUndefinedToNull),
-              );
-            });
+            app.ports.onEvaluatedAlternatives.send(
+              alternatives.map(objUndefinedToNull),
+            );
             break;
           }
           case "EVALUATE_ALL": {
             if (!simulator) {
               return;
             }
-            new Promise((resolve, reject) => {
-              try {
-                console.log("startevaluating all rules");
-                const evaluatedRules = data.map((rule: RuleName) => {
-                  const evaluation = Object.fromEntries(
-                    Object.entries(simulator.evaluateRule(rule)).map(
-                      ([key, value]) => [
-                        key,
-                        // NOTE: needed to convert undefined to null to be able
-                        // to correctly deserialize the value in Elm (maybe a
-                        // cleaner solution should be implemented).
-                        undefinedToNull(value),
-                      ],
-                    ),
-                  );
+            try {
+              console.log("startevaluating all rules");
+              const evaluatedRules = data.map((rule: RuleName) => {
+                const evaluation = Object.fromEntries(
+                  Object.entries(simulator.evaluateRule(rule)).map(
+                    ([key, value]) => [
+                      key,
+                      // NOTE: needed to convert undefined to null to be able
+                      // to correctly deserialize the value in Elm (maybe a
+                      // cleaner solution should be implemented).
+                      undefinedToNull(value),
+                    ],
+                  ),
+                );
 
-                  return [rule, evaluation];
-                });
-                resolve(evaluatedRules);
-                // app.ports.onEvaluatedRules.send(evaluatedRules);
-              } catch (error) {
-                reject(error);
-                // app.ports.onEngineError.send(error.message);
-              }
-            })
-              .then((evaluatedRules) => {
-                app.ports.onEvaluatedRules.send(evaluatedRules);
-              })
-              .catch((error) => {
-                app.ports.onEngineError.send(error.message);
+                return [rule, evaluation];
               });
+              app.ports.onEvaluatedRules.send(evaluatedRules);
+            } catch (error) {
+              app.ports.onEngineError.send(error.message);
+            }
             break;
           }
 

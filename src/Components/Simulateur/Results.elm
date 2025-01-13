@@ -18,7 +18,7 @@ import Core.UI as UI
 import Dict exposing (Dict)
 import Html exposing (Html, a, div, h2, h3, p, section, span, text)
 import Html.Attributes exposing (class, href, target)
-import Html.Extra exposing (nothing, viewMaybe)
+import Html.Extra exposing (viewMaybe)
 import Publicodes exposing (RawRules)
 import Publicodes.RuleName exposing (RuleName)
 import Shared.EngineStatus as EngineStatus exposing (EngineStatus)
@@ -119,7 +119,15 @@ view props =
                           else
                             div [ class "flex gap-2 items-center font-medium rounded-md fr-my-4v fr-p-4v outline outline-1 outline-[var(--border-plain-success)] text-[var(--text-default-success)]" ]
                                 [ Icons.iconMD Icons.system.successLine
-                                , text "Vous avez déjà la meilleure alternative !"
+                                , case tag of
+                                    TotalCard.Cheapest ->
+                                        text "Votre voiture est déjà la moins chère !"
+
+                                    TotalCard.Greenest ->
+                                        text "Votre voiture est déjà la plus écologique !"
+
+                                    _ ->
+                                        text "Vous avez déjà la meilleure alternative !"
                                 ]
                         ]
 
@@ -127,19 +135,20 @@ view props =
                     Components.LoadingCard.view
 
         viewAlternatives args =
-            case ( args.cheapest, args.greenest ) of
-                ( Just cheapestAlternative, Just greenestAlternative ) ->
-                    section []
-                        [ h2 [] args.title
-                        , p [ class "fr-col-8" ] args.desc
-                        , div [ class "grid grid-cols-2 gap-12" ]
+            section []
+                [ h2 [] args.title
+                , p [ class "fr-col-8" ] args.desc
+                , div [ class "grid grid-cols-2 gap-12" ]
+                    (case ( args.cheapest, args.greenest ) of
+                        ( Just cheapestAlternative, Just greenestAlternative ) ->
                             [ viewAlternative .cost TotalCard.Cheapest cheapestAlternative
                             , viewAlternative .emissions TotalCard.Greenest greenestAlternative
                             ]
-                        ]
 
-                _ ->
-                    nothing
+                        _ ->
+                            [ Components.LoadingCard.view, Components.LoadingCard.view ]
+                    )
+                ]
 
         viewAlternativesSection { size, hasChargingStation } =
             let
@@ -180,8 +189,6 @@ view props =
                 [ viewAlternatives
                     { title =
                         [ text "Les meilleures alternatives pour le gabarit "
-
-                        -- , span [ class "fr-px-3v bg-[var(--background-alt-blue-france)]" ]
                         , span [ class "text-[var(--text-label-blue-france)]" ]
                             [ text (RuleValue.title size) ]
                         ]
@@ -374,7 +381,7 @@ viewSurveyCTA =
                     ]
                 , p [ class "text-[var(--text-constrat-info)]" ]
                     [ text "Cet outil étant en construction, vous pouvez nous aider à l'améliorer en "
-                    , span [ class "fr-text--bold text-[var(--text-default-info)]" ] [ text "moins de 2 minutes" ]
+                    , span [ class "fr-text--bold text-[var(--text-label-blue-france)]" ] [ text "moins de 2 minutes" ]
                     , text " en répondant à notre questionnaire."
                     ]
                 , Button.new
