@@ -71,7 +71,7 @@ withTag tag config =
 
 view : Config -> Html msg
 view config =
-    div [ class "rounded-xl fr-my-4v border border-[var(--border-contrast-grey)]" ]
+    div [ class "rounded-xl border border-[var(--border-contrast-grey)]" ]
         [ div [ class "fr-p-4v flex flex-col gap-2" ]
             [ viewTag config.tag
             , h5 [ class "mt-2 mb-0" ] [ text config.title ]

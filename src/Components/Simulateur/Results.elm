@@ -117,7 +117,7 @@ view props =
                                 |> TotalCard.view
 
                           else
-                            div [ class "flex gap-2 items-center font-medium rounded-md fr-my-4v fr-p-4v outline outline-1 outline-[var(--border-plain-success)] text-[var(--text-default-success)]" ]
+                            div [ class "flex gap-2 items-center font-medium rounded-md  fr-p-4v outline outline-1 outline-[var(--border-plain-success)] text-[var(--text-default-success)]" ]
                                 [ Icons.iconMD Icons.system.successLine
                                 , case tag of
                                     TotalCard.Cheapest ->
@@ -219,20 +219,22 @@ view props =
                         , cheapest = cheapest
                         , greenest = greenest
                         }
-                    , Accordion.single
-                        { header = text "Voir toutes les alternatives"
-                        , id = accordionComparisonTableId
-                        , onClick = props.onToggleAccordion accordionComparisonTableId
-                        , open =
-                            Dict.get accordionComparisonTableId props.accordionsState
-                                |> Maybe.withDefault False
-                        , content =
-                            Maybe.map2
-                                Components.Simulateur.ComparisonTable.view
-                                props.userCar
-                                props.alternatives
-                                |> Maybe.withDefault Components.LoadingCard.view
-                        }
+                    , div [ class "fr-mt-4v" ]
+                        [ Accordion.single
+                            { header = text "Voir toutes les alternatives"
+                            , id = accordionComparisonTableId
+                            , onClick = props.onToggleAccordion accordionComparisonTableId
+                            , open =
+                                Dict.get accordionComparisonTableId props.accordionsState
+                                    |> Maybe.withDefault False
+                            , content =
+                                Maybe.map2
+                                    Components.Simulateur.ComparisonTable.view
+                                    props.userCar
+                                    props.alternatives
+                                    |> Maybe.withDefault Components.LoadingCard.view
+                            }
+                        ]
                     ]
                 ]
     in
@@ -247,17 +249,32 @@ view props =
             , div [ class "flex flex-col gap-8 md:gap-20" ]
                 [ section []
                     [ h2 [] [ text "Récapitulatif de votre situation" ]
-                    , div [ class "fr-col-8" ]
-                        [ case ( props.engineStatus, props.userCar ) of
-                            ( _, Just user ) ->
-                                Components.Simulateur.UserTotal.view
-                                    { evaluations = props.evaluations
-                                    , rules = props.rules
-                                    , user = user
-                                    }
+                    , div [ class "fr-mb-4v grid grid-cols-1 md:grid-cols-2 gap-12" ]
+                        [ div [ class "" ]
+                            [ case ( props.engineStatus, props.userCar ) of
+                                ( _, Just user ) ->
+                                    Components.Simulateur.UserTotal.view
+                                        { evaluations = props.evaluations
+                                        , rules = props.rules
+                                        , user = user
+                                        }
 
-                            _ ->
-                                Components.LoadingCard.view
+                                _ ->
+                                    Components.LoadingCard.view
+                            ]
+                        , div [ class "" ]
+                            [ p [ class "fr-text--sm" ]
+                                [ text "Le coût annuel inclut les dépenses liées à l'utilisation (essence, stationnement, péages, etc.), ainsi que les dépenses de possession (frais d'achat amortis sur la durée de détention, assurance, entretien, etc.)."
+                                ]
+                            , p [ class "fr-text--sm" ]
+                                [ text "Les émissions de CO2e sont calculées en prenant en compte les émissions liées à l'utilisation du véhicule (carburant, électricité, etc.) ainsi que les émissions liées à la fabrication et à la fin de vie du véhicule."
+                                ]
+                            , p [ class "fr-text--sm" ]
+                                [ text "Le détail des calculs est disponible dans la "
+                                , a [ href "/documentation" ] [ text "documentation" ]
+                                , text "."
+                                ]
+                            ]
                         ]
                     , Accordion.single
                         { id = accordionCarbonId
