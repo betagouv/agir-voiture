@@ -15,7 +15,8 @@ module Shared exposing
 import Browser.Navigation
 import Core.Evaluation exposing (Evaluation)
 import Core.Personas as Personas exposing (Personas)
-import Core.Results
+import Core.Results.CarInfos
+import Core.Results.TargetInfos
 import Core.Rules
 import Core.UI as UI
 import Dict
@@ -118,7 +119,14 @@ update _ msg model =
             )
 
         SetSituation newSituation ->
-            ( { model | situation = newSituation }, Effect.none )
+            ( { model
+                | situation = newSituation
+                , userCar = Nothing
+                , alternatives = Nothing
+                , targetInfos = Nothing
+              }
+            , Effect.none
+            )
 
         SetSimulationStep newStep ->
             evaluate { model | simulationStep = newStep }
@@ -156,7 +164,14 @@ update _ msg model =
                 newSituation =
                     Dict.insert name value model.situation
             in
-            ( { model | situation = newSituation }, Effect.none )
+            ( { model
+                | situation = newSituation
+                , userCar = Nothing
+                , alternatives = Nothing
+                , targetInfos = Nothing
+              }
+            , Effect.none
+            )
 
         Evaluate ->
             evaluate model
@@ -194,11 +209,17 @@ update _ msg model =
             , Effect.none
             )
 
-        NewResults results ->
-            ( { model | results = Just results }, Effect.none )
-
         DecodeError err ->
             ( { model | decodeError = Just err }, Effect.none )
+
+        NewUserCar car ->
+            ( { model | userCar = Just car }, Effect.none )
+
+        NewAlternatives alternatives ->
+            ( { model | alternatives = Just alternatives }, Effect.none )
+
+        NewTargetInfos target ->
+            ( { model | targetInfos = Just target }, Effect.evaluateAlternatives )
 
 
 {-| Evaluates rules to update according to the current simulation step.
@@ -226,7 +247,8 @@ evaluate model =
             , if model.simulationStep == SimulationStep.Result then
                 Effect.batch
                     [ Effect.evaluateAll Core.Rules.userContext
-                    , Effect.evaluateResults
+                    , Effect.evaluateUserCar
+                    , Effect.evaluateTargetCar
                     ]
 
               else
@@ -252,11 +274,23 @@ subscriptions _ _ =
                     |> decodeEvaluations
                     |> decodeErrorOr Shared.Msg.NewEvaluations
             )
-        , Effect.onEvaluatedResults
-            (\encodedResults ->
-                encodedResults
-                    |> Json.Decode.decodeValue Core.Results.decoder
-                    |> decodeErrorOr Shared.Msg.NewResults
+        , Effect.onEvaluatedUserCar
+            (\encodedCar ->
+                encodedCar
+                    |> Json.Decode.decodeValue Core.Results.CarInfos.decoder
+                    |> decodeErrorOr Shared.Msg.NewUserCar
+            )
+        , Effect.onEvaluatedTargetCar
+            (\encodedCar ->
+                encodedCar
+                    |> Json.Decode.decodeValue Core.Results.TargetInfos.decoder
+                    |> decodeErrorOr Shared.Msg.NewTargetInfos
+            )
+        , Effect.onEvaluatedAlternatives
+            (\encodedCars ->
+                encodedCars
+                    |> Json.Decode.decodeValue (Json.Decode.list Core.Results.CarInfos.decoder)
+                    |> decodeErrorOr Shared.Msg.NewAlternatives
             )
         ]
 
