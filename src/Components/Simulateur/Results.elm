@@ -10,6 +10,7 @@ import Components.Simulateur.ComparisonTable
 import Components.Simulateur.Navigation
 import Components.Simulateur.TotalCard as TotalCard
 import Components.Simulateur.UserTotal
+import Components.SurveyButton
 import Core.Evaluation exposing (Evaluation)
 import Core.Results.CarInfos exposing (CarInfos)
 import Core.Results.RuleValue as RuleValue exposing (RuleValue)
@@ -401,13 +402,7 @@ viewSurveyCTA =
                     , span [ class "fr-text--bold text-[var(--text-label-blue-france)]" ] [ text "moins de 2 minutes" ]
                     , text " en répondant à notre questionnaire."
                     ]
-                , Button.new
-                    { onClick = Nothing
-                    , label = "Répondre au questionnaire"
-                    }
-                    |> Button.linkButton "https://jagis.beta.gouv.fr"
-                    |> Button.rightIcon Icons.system.arrowRightFill
-                    |> Button.view
+                , Components.SurveyButton.view
                 ]
             ]
         ]

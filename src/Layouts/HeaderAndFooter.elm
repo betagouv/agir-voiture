@@ -6,6 +6,7 @@ import Components.DSFR.Footer
 import Components.DSFR.Header
 import Components.DSFR.Modal
 import Components.DSFR.Notice
+import Components.SurveyButton
 import Core.Personas exposing (Personas)
 import Dict
 import Effect exposing (Effect)
@@ -141,13 +142,7 @@ view props shared { content, toContentMsg, model } =
                                 [ text "moins de 2 minutes" ]
                             , text " en répondant à notre questionnaire."
                             ]
-                        , Button.new
-                            { onClick = Nothing
-                            , label = "Répondre au questionnaire"
-                            }
-                            |> Button.linkButton "https://jagis.beta.gouv.fr"
-                            |> Button.rightIcon Icons.system.arrowRightFill
-                            |> Button.view
+                        , Components.SurveyButton.view
                         ]
                     ]
 
