@@ -247,6 +247,7 @@ evaluate model =
             , if model.simulationStep == SimulationStep.Result then
                 Effect.batch
                     [ Effect.evaluateAll Core.Rules.userContext
+                    , Effect.downloadSituation
                     , Effect.evaluateUserCar
                     , Effect.evaluateTargetCar
                     ]
