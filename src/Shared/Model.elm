@@ -40,6 +40,9 @@ type alias Model =
     , engineStatus : EngineStatus
     , inputErrors : Dict RuleName { msg : String, value : String }
     , decodeError : Maybe Json.Decode.Error
+
+    -- Allow to download the situation only when the inputs are modified
+    , newInput : Bool
     }
 
 
@@ -58,4 +61,5 @@ empty =
     , userCar = Nothing
     , alternatives = Nothing
     , targetInfos = Nothing
+    , newInput = True
     }

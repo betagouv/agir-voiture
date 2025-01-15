@@ -124,6 +124,7 @@ update _ msg model =
                 , userCar = Nothing
                 , alternatives = Nothing
                 , targetInfos = Nothing
+                , newInput = True
               }
             , Effect.none
             )
@@ -132,7 +133,7 @@ update _ msg model =
             evaluate { model | simulationStep = newStep }
 
         ResetSimulation ->
-            ( { model | inputErrors = Dict.empty }
+            ( { model | inputErrors = Dict.empty, newInput = True }
             , Effect.batch
                 [ Effect.setSituation Dict.empty
                 , Effect.setSimulationStep SimulationStep.NotStarted
@@ -169,6 +170,7 @@ update _ msg model =
                 , userCar = Nothing
                 , alternatives = Nothing
                 , targetInfos = Nothing
+                , newInput = True
               }
             , Effect.none
             )
@@ -243,19 +245,28 @@ evaluate model =
                         _ ->
                             []
             in
-            ( { model | engineStatus = EngineStatus.Evaluating }
-            , if model.simulationStep == SimulationStep.Result then
-                Effect.batch
+            if model.simulationStep == SimulationStep.Result then
+                ( { model
+                    | engineStatus = EngineStatus.Evaluating
+                    , newInput = False
+                  }
+                , Effect.batch
                     [ Effect.evaluateAll Core.Rules.userContext
-                    , Effect.downloadSituation
+                    , if model.newInput then
+                        Effect.downloadSituation
+
+                      else
+                        Effect.none
                     , Effect.evaluateUserCar
                     , Effect.evaluateTargetCar
                     ]
+                )
 
-              else
-                currentQuestions
+            else
+                ( { model | engineStatus = EngineStatus.Evaluating }
+                , currentQuestions
                     |> Effect.evaluateAll
-            )
+                )
 
 
 
