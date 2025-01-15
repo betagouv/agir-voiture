@@ -152,7 +152,7 @@ export const onReady = ({ app }: { app: any }) => {
             const downloadURL = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = downloadURL;
-            a.download = "réponses-mes-options-de-mobilité-durable.json";
+            a.download = "réponses-mes-options-de-mobilité-durable.txt";
             document.body.appendChild(a);
             a.click();
             URL.revokeObjectURL(downloadURL);
