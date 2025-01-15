@@ -144,6 +144,21 @@ export const onReady = ({ app }: { app: any }) => {
             break;
           }
 
+          case "DOWNLOAD_SITUATION": {
+            const blob = new Blob(
+              [JSON.stringify(simulator.getEngine().getSituation(), null, 2)],
+              { type: "application/json" },
+            );
+            const downloadURL = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = downloadURL;
+            a.download = "réponses-mes-options-de-mobilité-durable.json";
+            document.body.appendChild(a);
+            a.click();
+            URL.revokeObjectURL(downloadURL);
+            break;
+          }
+
           // Modal dialog
           case "OPEN_MODAL": {
             const dialog = document.getElementById(data) as HTMLDialogElement;

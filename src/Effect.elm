@@ -6,7 +6,7 @@ port module Effect exposing
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
     , map, toCmd
-    , closePersonasModal, evaluate, evaluateAll, evaluateAlternatives, evaluateResults, evaluateTargetCar, evaluateUserCar, newInputError, onEngineError, onEngineInitialized, onEvaluatedAlternatives, onEvaluatedResults, onEvaluatedRules, onEvaluatedTargetCar, onEvaluatedUserCar, onReactLinkClicked, onSituationUpdated, openPersonasModal, removeInputError, resetSimulation, restartEngine, scrollToTop, setSimulationStep, setSituation, updateSituation
+    , closePersonasModal, downloadSituation, evaluate, evaluateAll, evaluateAlternatives, evaluateResults, evaluateTargetCar, evaluateUserCar, newInputError, onEngineError, onEngineInitialized, onEvaluatedAlternatives, onEvaluatedResults, onEvaluatedRules, onEvaluatedTargetCar, onEvaluatedUserCar, onReactLinkClicked, onSituationUpdated, openPersonasModal, removeInputError, resetSimulation, restartEngine, scrollToTop, setSimulationStep, setSituation, updateSituation
     )
 
 {-|
@@ -161,6 +161,14 @@ restartEngine : Effect msg
 restartEngine =
     SendToJs
         { tag = "RESTART_ENGINE"
+        , data = Json.Encode.null
+        }
+
+
+downloadSituation : Effect msg
+downloadSituation =
+    SendToJs
+        { tag = "DOWNLOAD_SITUATION"
         , data = Json.Encode.null
         }
 
