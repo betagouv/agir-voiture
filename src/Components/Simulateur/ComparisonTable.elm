@@ -2,7 +2,6 @@ module Components.Simulateur.ComparisonTable exposing (view)
 
 import Components.DSFR.Table
 import Core.Format
-import Core.Results exposing (Results)
 import Core.Results.CarInfos exposing (CarInfos)
 import Core.Results.RuleValue as RuleValue
 import FormatNumber.Locales exposing (Decimals(..))
@@ -11,8 +10,8 @@ import Html.Attributes exposing (class, title)
 import Html.Extra exposing (nothing)
 
 
-view : Results -> Html msg
-view { alternatives, user } =
+view : CarInfos -> List CarInfos -> Html msg
+view user alternatives =
     let
         rows =
             alternatives

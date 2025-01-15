@@ -58,7 +58,7 @@ const QUESTIONS_ORDER: Partial<
     "coûts . coûts d'utilisation . contraventions",
   ],
   "voiture . cible": [
-    "voiture . cible . achat envisagé",
+    // "voiture . cible . achat envisagé",
     "voiture . cible . gabarit",
     "voiture . cible . borne de recharge",
   ],

@@ -21,7 +21,7 @@ view props =
         , toId = NodeValue.toString
         , toLabel = NodeValue.toString >> text
         , current = Just props.current
-        , toValue = NodeValue.toString
+        , toValue = \value -> NodeValue.toString value
         , onChecked = props.onChecked
         }
         |> BetaGouv.DSFR.Radio.withLegendExtra (Maybe.map text props.hint)

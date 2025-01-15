@@ -5,18 +5,20 @@ import Components.DSFR.Footer
 import Components.DSFR.Header
 import Components.DSFR.Modal
 import Components.DSFR.Notice
+import Components.SurveyButton
 import Core.Personas exposing (Personas)
 import Dict
 import Effect exposing (Effect)
-import Html exposing (Html, a, br, div, p, span, text)
+import Html exposing (Html, a, br, div, p, section, span, text)
 import Html.Attributes exposing (class, classList, href, id, target)
-import Html.Extra exposing (viewIf)
+import Html.Extra exposing (nothing, viewIf)
 import Json.Decode
 import Layout exposing (Layout)
 import Publicodes.Situation exposing (Situation)
 import Route exposing (Route)
 import Shared
 import Shared.Constants
+import Shared.SimulationStep
 import View exposing (View)
 
 
@@ -127,6 +129,24 @@ view props shared { content, toContentMsg, model } =
                 ]
             ]
             content.body
+        , case shared.simulationStep of
+            Shared.SimulationStep.Result ->
+                section [ class "sticky bottom-0 w-full flex justify-center fr-py-4v bg-[var(--background-alt-blue-france)] border-t-2 border-[var(--border-default-blue-france)] z-50" ]
+                    [ div [ class "fr-container flex items-center p-0 gap-4" ]
+                        [ p [ class "m-0 text-[var(--text-constrat-info)] flex-1" ]
+                            [ span [ class "fr-text--lg fr-text--bold text-[var(--text-label-blue-france)]" ]
+                                [ text "👋 Donnez-nous votre avis !" ]
+                            , text " Cet outil étant en construction, vous pouvez nous aider à l'améliorer en "
+                            , span [ class "fr-text--bold text-[var(--text-label-blue-france)]" ]
+                                [ text "moins de 2 minutes" ]
+                            , text " en répondant à notre questionnaire."
+                            ]
+                        , Components.SurveyButton.view
+                        ]
+                    ]
+
+            _ ->
+                nothing
         , Components.DSFR.Footer.view
         ]
     }
@@ -171,9 +191,9 @@ viewNotice decodeError =
                 { title = "Erreur lors de la lecture des données"
                 , desc =
                     span []
-                        [ text "Si le problème persiste après avoir cliqué sur 'Recommencer', vous pouvez ouvrir un ticket sur "
-                        , a [ href "https://github.com/betagouv/agir-voiture/issues/new", target "_blank" ]
-                            [ text "GitHub" ]
+                        [ text "Si le problème persiste après avoir cliqué sur 'Recommencer', vous pouvez "
+                        , a [ href "mailto:emile.rolley@beta.gouv.fr", target "_blank" ]
+                            [ text "nous contacter" ]
                         , text "."
                         , p [ class "text-xs fr-mt-2v fr-p-2v w-fit bg-red-50 rounded-md outline outline-1 outline-red-100 text-red-950" ]
                             [ span [ class "font-semibold fr-mb-1v" ]
@@ -187,5 +207,12 @@ viewNotice decodeError =
         Nothing ->
             Components.DSFR.Notice.info
                 { title = "En cours de développement"
-                , desc = text "Les résultats de ce simulateur ne sont pas stables et sont susceptibles de fortement évoluer."
+                , desc =
+                    span []
+                        [ text "Les résultats de ce simulateur ne sont pas stables et sont susceptibles de fortement évoluer."
+                        , text " Si vous rencontrez un problème ou avez des suggestions, "
+                        , a [ href "mailto:emile.rolley@beta.gouv.fr", target "_blank" ]
+                            [ text "contactez-nous" ]
+                        , text "."
+                        ]
                 }

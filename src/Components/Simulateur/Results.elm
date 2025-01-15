@@ -10,15 +10,16 @@ import Components.Simulateur.ComparisonTable
 import Components.Simulateur.Navigation
 import Components.Simulateur.TotalCard as TotalCard
 import Components.Simulateur.UserTotal
+import Components.SurveyButton
 import Core.Evaluation exposing (Evaluation)
-import Core.Results exposing (Results)
 import Core.Results.CarInfos exposing (CarInfos)
 import Core.Results.RuleValue as RuleValue exposing (RuleValue)
+import Core.Results.TargetInfos exposing (TargetInfos)
 import Core.UI as UI
 import Dict exposing (Dict)
-import Html exposing (Html, a, div, h2, h3, h4, p, section, span, text)
+import Html exposing (Html, a, div, h2, h3, p, section, span, text)
 import Html.Attributes exposing (class, href, target)
-import Html.Extra exposing (nothing, viewMaybe)
+import Html.Extra exposing (viewMaybe)
 import Publicodes exposing (RawRules)
 import Publicodes.RuleName exposing (RuleName)
 import Shared.EngineStatus as EngineStatus exposing (EngineStatus)
@@ -30,7 +31,9 @@ type alias Config msg =
     , onNewStep : SimulationStep -> msg
     , evaluations : Dict RuleName Evaluation
     , rules : RawRules
-    , results : Maybe Results
+    , userCar : Maybe CarInfos
+    , alternatives : Maybe (List CarInfos)
+    , targetInfos : Maybe TargetInfos
     , engineStatus : EngineStatus
     , accordionsState : Dict String Bool
     , onToggleAccordion : String -> msg
@@ -50,12 +53,8 @@ accordionComparisonTableId =
 view : Config msg -> Html msg
 view props =
     let
-        targetInfos =
-            Maybe.andThen .target props.results
-
         sortedAlternativesOn attr =
-            props.results
-                |> Maybe.map .alternatives
+            props.alternatives
                 |> Maybe.withDefault []
                 |> List.sortWith
                     (\a b -> Basics.compare (attr a).value (attr b).value)
@@ -74,26 +73,23 @@ view props =
 
         viewAlternative :
             (CarInfos -> RuleValue comparable)
-            -> Icons.IconName
-            -> String
+            -> TotalCard.KindTag
             -> CarInfos
             -> Html msg
-        viewAlternative attr icon title infos =
-            case ( props.engineStatus, props.results ) of
-                ( EngineStatus.Done, Just { user } ) ->
+        viewAlternative attr tag infos =
+            case ( props.engineStatus, props.userCar ) of
+                ( EngineStatus.Done, Just user ) ->
                     let
                         alternativeIsBetter =
                             (user.size /= infos.size)
                                 || (Basics.compare (attr user).value (attr infos).value == GT)
                     in
                     div []
-                        [ h4 [ class "flex gap-2 items-center" ]
-                            [ Icons.iconMD icon
-                            , text title
-                            ]
-                        , if alternativeIsBetter then
+                        [ if alternativeIsBetter then
                             TotalCard.new
-                                { title = Maybe.withDefault "" infos.title
+                                { -- TODO: better id
+                                  id = "alternative-" ++ RuleValue.title infos.size ++ "-" ++ RuleValue.title infos.motorisation ++ (Maybe.map RuleValue.title infos.fuel |> Maybe.withDefault "")
+                                , title = Maybe.withDefault "" infos.title
                                 , cost = infos.cost.value
                                 , emission = infos.emissions.value
                                 }
@@ -118,12 +114,21 @@ view props =
                                     { costToCompare = user.cost.value
                                     , emissionToCompare = user.emissions.value
                                     }
+                                |> TotalCard.withTag tag
                                 |> TotalCard.view
 
                           else
-                            div [ class "flex gap-2 items-center font-medium rounded-md fr-my-4v fr-p-4v outline outline-1 outline-[var(--border-plain-success)] text-[var(--text-default-success)]" ]
+                            div [ class "flex gap-2 items-center font-medium rounded-md  fr-p-4v outline outline-1 outline-[var(--border-plain-success)] text-[var(--text-default-success)]" ]
                                 [ Icons.iconMD Icons.system.successLine
-                                , text "Vous avez déjà la meilleure alternative !"
+                                , case tag of
+                                    TotalCard.Cheapest ->
+                                        text "Votre voiture est déjà la moins chère !"
+
+                                    TotalCard.Greenest ->
+                                        text "Votre voiture est déjà la plus écologique !"
+
+                                    _ ->
+                                        text "Vous avez déjà la meilleure alternative !"
                                 ]
                         ]
 
@@ -131,34 +136,27 @@ view props =
                     Components.LoadingCard.view
 
         viewAlternatives args =
-            case ( args.cheapest, args.greenest ) of
-                ( Just cheapestAlternative, Just greenestAlternative ) ->
-                    section []
-                        [ h2 [] args.title
-                        , p [ class "fr-col-8" ] args.desc
-                        , div [ class "grid grid-cols-2 gap-6" ]
-                            [ viewAlternative
-                                .cost
-                                Icons.finance.moneyEuroCircleLine
-                                "La plus économique"
-                                cheapestAlternative
-                            , viewAlternative
-                                .emissions
-                                Icons.others.leafLine
-                                "La plus écologique"
-                                greenestAlternative
+            section []
+                [ h2 [] args.title
+                , p [ class "fr-col-8" ] args.desc
+                , div [ class "grid grid-cols-2 gap-12" ]
+                    (case ( args.cheapest, args.greenest ) of
+                        ( Just cheapestAlternative, Just greenestAlternative ) ->
+                            [ viewAlternative .cost TotalCard.Cheapest cheapestAlternative
+                            , viewAlternative .emissions TotalCard.Greenest greenestAlternative
                             ]
-                        ]
 
-                _ ->
-                    nothing
+                        _ ->
+                            [ Components.LoadingCard.view, Components.LoadingCard.view ]
+                    )
+                ]
 
         viewAlternativesSection { size, hasChargingStation } =
             let
                 -- Filters the alternatives results on the given target (size, charging station)
                 filterInTarget : List CarInfos -> List CarInfos
                 filterInTarget =
-                    case targetInfos of
+                    case props.targetInfos of
                         Nothing ->
                             identity
 
@@ -192,16 +190,16 @@ view props =
                 [ viewAlternatives
                     { title =
                         [ text "Les meilleures alternatives pour le gabarit "
-                        , span [ class "fr-px-3v bg-[var(--background-contrast-grey)]" ]
+                        , span [ class "text-[var(--text-label-blue-france)]" ]
                             [ text (RuleValue.title size) ]
                         ]
                     , desc =
                         [ text "Parmi les véhicules de gabarit "
-                        , span [ class "font-medium fr-px-1v bg-[var(--background-contrast-grey)]" ]
+                        , span [ class "font-medium text-[var(--text-label-blue-france)]" ]
                             [ text (RuleValue.title size) ]
                         , text ", voici les meilleures alternatives pour votre usage."
                         , text " Sachant que vous "
-                        , span [ class "font-medium fr-px-1v bg-[var(--background-contrast-grey)]" ]
+                        , span [ class "font-medium text-[var(--text-label-blue-france)]" ]
                             [ if hasChargingStation.value then
                                 text "avez"
 
@@ -222,32 +220,24 @@ view props =
                         , cheapest = cheapest
                         , greenest = greenest
                         }
-                    , Accordion.single
-                        { header = text "Voir toutes les alternatives"
-                        , id = accordionComparisonTableId
-                        , onClick = props.onToggleAccordion accordionComparisonTableId
-                        , open =
-                            Dict.get accordionComparisonTableId props.accordionsState
-                                |> Maybe.withDefault False
-                        , content =
-                            props.results
-                                |> Maybe.map Components.Simulateur.ComparisonTable.view
-                                |> Maybe.withDefault Components.LoadingCard.view
-                        }
+                    , div [ class "fr-mt-4v" ]
+                        [ Accordion.single
+                            { header = text "Voir toutes les alternatives"
+                            , id = accordionComparisonTableId
+                            , onClick = props.onToggleAccordion accordionComparisonTableId
+                            , open =
+                                Dict.get accordionComparisonTableId props.accordionsState
+                                    |> Maybe.withDefault False
+                            , content =
+                                Maybe.map2
+                                    Components.Simulateur.ComparisonTable.view
+                                    props.userCar
+                                    props.alternatives
+                                    |> Maybe.withDefault Components.LoadingCard.view
+                            }
+                        ]
                     ]
                 ]
-
-        viewCard ( title, link, desc ) =
-            Card.card
-                (text title)
-                Card.vertical
-                |> Card.linkFull link
-                |> Card.withDescription
-                    (Just
-                        (text desc)
-                    )
-                |> Card.withArrow True
-                |> Card.view
     in
     div [ class "" ]
         [ div [ class "flex flex-col gap-8 mb-6 opacity-100" ]
@@ -259,20 +249,33 @@ view props =
                 }
             , div [ class "flex flex-col gap-8 md:gap-20" ]
                 [ section []
-                    [ h2 []
-                        [ text "Récapitulatif de votre situation"
-                        ]
-                    , div [ class "fr-col-8" ]
-                        [ case ( props.engineStatus, props.results ) of
-                            ( EngineStatus.Done, Just { user } ) ->
-                                Components.Simulateur.UserTotal.view
-                                    { evaluations = props.evaluations
-                                    , rules = props.rules
-                                    , user = user
-                                    }
+                    [ h2 [] [ text "Récapitulatif de votre situation" ]
+                    , div [ class "fr-mb-4v grid grid-cols-1 md:grid-cols-2 gap-12" ]
+                        [ div [ class "" ]
+                            [ case ( props.engineStatus, props.userCar ) of
+                                ( _, Just user ) ->
+                                    Components.Simulateur.UserTotal.view
+                                        { evaluations = props.evaluations
+                                        , rules = props.rules
+                                        , user = user
+                                        }
 
-                            _ ->
-                                Components.LoadingCard.view
+                                _ ->
+                                    Components.LoadingCard.view
+                            ]
+                        , div []
+                            [ p []
+                                [ text "Le coût annuel inclut les dépenses liées à l'utilisation (essence, stationnement, péages, etc.), ainsi que les dépenses de possession (frais d'achat amortis sur la durée de détention, assurance, entretien, etc.)."
+                                ]
+                            , p []
+                                [ text "Les émissions de CO2e sont calculées en prenant en compte les émissions liées à l'utilisation du véhicule (carburant, électricité, etc.) ainsi que les émissions liées à la fabrication et à la fin de vie du véhicule."
+                                ]
+                            , p []
+                                [ text "Le détail des calculs est disponible dans la "
+                                , a [ href "/documentation" ] [ text "documentation" ]
+                                , text "."
+                                ]
+                            ]
                         ]
                     , Accordion.single
                         { id = accordionCarbonId
@@ -281,85 +284,125 @@ view props =
                         , open =
                             Dict.get accordionCarbonId props.accordionsState
                                 |> Maybe.withDefault False
-                        , content =
-                            div []
-                                [ h3 []
-                                    [ text "L'objectif des 2 tonnes" ]
-                                , p []
-                                    [ text """
+                        , content = carbonExplanation
+                        }
+                    ]
+                , viewMaybe viewAlternativesSection props.targetInfos
+                , viewSurveyCTA
+                , viewAidesSection
+                , viewRessourcesSection
+                ]
+            ]
+        ]
+
+
+carbonExplanation : Html msg
+carbonExplanation =
+    div []
+        [ h3 []
+            [ text "L'objectif des 2 tonnes" ]
+        , p []
+            [ text """
                             Pour essayer de maintenir l'augmentation
                             de la température moyenne de la planète en
                             dessous de 2 °C par rapport aux niveaux
                             préindustriels, il faudrait arriver à atteindre la """
-                                    , a [ href "https://fr.wikipedia.org/wiki/Neutralit%C3%A9_carbone", target "_blank" ] [ text "neutralité carbone" ]
-                                    , text "."
-                                    ]
-                                , p []
-                                    [ text "Pour cela, un objectif de 2 tonnes de CO2e par an et par personne a été fixé pour 2050 ("
-                                    , a [ href "https://nosgestesclimat.fr/empreinte-climat", target "_blank" ]
-                                        [ text "en savoir plus" ]
-                                    , text ")."
-                                    ]
-                                ]
-                        }
+            , a [ href "https://fr.wikipedia.org/wiki/Neutralit%C3%A9_carbone", target "_blank" ] [ text "neutralité carbone" ]
+            , text "."
+            ]
+        , p []
+            [ text "Pour cela, un objectif de 2 tonnes de CO2e par an et par personne a été fixé pour 2050 ("
+            , a [ href "https://nosgestesclimat.fr/empreinte-climat", target "_blank" ]
+                [ text "en savoir plus" ]
+            , text ")."
+            ]
+        ]
+
+
+viewAidesSection : Html msg
+viewAidesSection =
+    section []
+        [ h2 [] [ text "Les aides financières" ]
+        , p []
+            [ text "Afin d'aider les particuliers à passer à des véhicules plus propres, il existe des aides financières mis en place par l'État et les collectivités locales."
+            ]
+        , div [ class "" ]
+            [ CallOut.callout ""
+                (span []
+                    [ text "Au niveau national par exemple, avec le "
+                    , a [ href "https://www.economie.gouv.fr/particuliers/bonus-ecologique", target "_blank" ]
+                        [ text "bonus écologique" ]
+                    , text ", vous pouvez bénéficier d'une aide allant jusqu'à "
+                    , span [ class "text-[var(--text-default-info)]" ] [ text "4 000 €" ]
+                    , text " pour l'achat d'un véhicule électrique."
                     ]
-                , viewMaybe viewAlternativesSection targetInfos
-                , section [ class "fr-col-8" ]
-                    [ h2 [] [ text "Les aides financières" ]
-                    , p []
-                        [ text """
-                            Afin d'aider les particuliers à passer à des véhicules plus propres, il existe des aides financières
-                            mis en place par l'État et les collectivités locales."""
-                        ]
-                    , CallOut.callout ""
-                        (span []
-                            [ text "Au niveau national par exemple, avec le "
-                            , a [ href "https://www.economie.gouv.fr/particuliers/bonus-ecologique", target "_blank" ]
-                                [ text "bonus écologique" ]
-                            , text ", vous pouvez bénéficier d'une aide allant jusqu'à "
-                            , span [ class "text-[var(--text-default-info)]" ] [ text "7 000 €" ]
-                            , text " pour l'achat d'un véhicule électrique. Et avec la "
-                            , a [ href "https://www.service-public.fr/particuliers/vosdroits/F36848", target "_blank" ]
-                                [ text "prime à la conversion" ]
-                            , text ", vous pouvez bénéficier d'une aide allant jusqu'à "
-                            , span [ class "text-[var(--text-default-info)]" ] [ text "3 000 €" ]
-                            , text "."
-                            ]
-                        )
-                    , p []
-                        [ text "Il existe également des aides locales auxquelles vous pouvez être éligible."
-                        ]
-                    , Button.new
-                        { onClick = Nothing
-                        , label = "Découvrir toutes les aides"
-                        }
-                        |> Button.linkButton "https://agir.beta.gouv.fr"
-                        |> Button.rightIcon Icons.system.arrowRightFill
-                        |> Button.view
+                )
+            ]
+        , p []
+            [ text "Il existe également des aides locales auxquelles vous pouvez être éligible."
+            ]
+        , Button.new
+            { onClick = Nothing
+            , label = "Découvrir toutes les aides"
+            }
+            |> Button.linkButton "https://jagis.beta.gouv.fr"
+            |> Button.rightIcon Icons.system.arrowRightFill
+            |> Button.secondary
+            |> Button.view
+        ]
+
+
+viewRessourcesSection : Html msg
+viewRessourcesSection =
+    let
+        viewCard ( title, link, desc ) =
+            Card.card
+                (text title)
+                Card.vertical
+                |> Card.linkFull link
+                |> Card.withDescription (Just (text desc))
+                |> Card.withArrow True
+                |> Card.view
+    in
+    section []
+        [ h2 []
+            [ text "Les ressources pour aller plus loin"
+            ]
+        , p [] [ text "Découvrez une sélection pour continuer votre engagement." ]
+        , div [ class "fr-grid-row fr-grid-row--gutters fr-grid-row--center" ]
+            ([ ( "J'agis !"
+               , "https://jagis.beta.gouv.fr"
+               , "Faite vous accompagner pour réduire votre empreinte carbone à travers des actions concrètes."
+               )
+             , ( "Nos Gestes Climat"
+               , "https://nosgestesclimat.fr"
+               , "Calculez votre empreinte carbone individuelle et découvrez des gestes pour la réduire."
+               )
+             , ( "Impact CO2"
+               , "https://impactCO2.fr"
+               , "Comprendre les ordres de grandeur et les équivalences des émissions de CO2e."
+               )
+             ]
+                |> List.map viewCard
+                |> List.map (\card -> div [ class "fr-col-md-4" ] [ card ])
+            )
+        ]
+
+
+viewSurveyCTA : Html msg
+viewSurveyCTA =
+    section [ class "fr-col-14 py-12 flex justify-center bg-[var(--background-alt-blue-france)] mx-[-3rem]" ]
+        [ div [ class "bg-white py-6 rounded-xl border border-[var(--border-action-low-blue-france)] fr-col-8" ]
+            [ div [ class "fr-container" ]
+                [ h3 [ class "text-[var(--text-contrast-info)]" ]
+                    [ text "👋 Donnez-nous votre avis !"
                     ]
-                , section []
-                    [ h2 []
-                        [ text "Les ressources pour aller plus loin"
-                        ]
-                    , p [] [ text "Découvrez une sélection pour continuer votre engagement." ]
-                    , div [ class "fr-grid-row fr-grid-row--gutters fr-grid-row--center" ]
-                        ([ ( "J'agis !"
-                           , "https://jagis.beta.gouv.fr"
-                           , "Faite vous accompagner pour réduire votre empreinte carbone à travers des actions concrètes."
-                           )
-                         , ( "Nos Gestes Climat"
-                           , "https://nosgestesclimat.fr"
-                           , "Calculez votre empreinte carbone individuelle et découvrez des gestes pour la réduire."
-                           )
-                         , ( "Impact CO2"
-                           , "https://impactCO2.fr"
-                           , "Comprendre les ordres de grandeur et les équivalences des émissions de CO2e."
-                           )
-                         ]
-                            |> List.map viewCard
-                            |> List.map (\card -> div [ class "fr-col-md-4" ] [ card ])
-                        )
+                , p [ class "text-[var(--text-constrat-info)]" ]
+                    [ text "Cet outil étant en construction, vous pouvez nous aider à l'améliorer en "
+                    , span [ class "fr-text--bold text-[var(--text-label-blue-france)]" ] [ text "moins de 2 minutes" ]
+                    , text " en répondant à notre questionnaire."
                     ]
+                , Components.SurveyButton.view
                 ]
             ]
         ]

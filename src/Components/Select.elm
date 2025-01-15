@@ -7,7 +7,8 @@ import Html.Extra exposing (viewMaybe)
 
 
 view :
-    { label : String
+    { id : String
+    , label : String
     , onInput : String -> msg
     , options : List option
     , selected : option
@@ -18,7 +19,7 @@ view :
     -> Html msg
 view props =
     div [ class "fr-select-group" ]
-        [ label [ class "fr-label", for "select" ]
+        [ label [ class "fr-label", for props.id ]
             [ text props.label
             , span [ class "fr-hint-text" ]
                 [ viewMaybe text props.hint ]
@@ -26,14 +27,15 @@ view props =
         , select
             [ onInput (\v -> props.onInput v)
             , class "fr-select"
-            , id "select"
+            , id props.id
             , name "select"
             ]
             (props.options
                 |> List.map
                     (\val ->
                         option
-                            [ value (props.toValue val)
+                            [ id (props.id ++ "--" ++ props.toValue val)
+                            , value (props.toValue val)
                             , selected (props.selected == val)
                             ]
                             [ props.toLabel val ]

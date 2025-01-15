@@ -2,7 +2,8 @@ module Shared.Model exposing (Model, empty)
 
 import Core.Evaluation exposing (Evaluation)
 import Core.Personas exposing (Personas)
-import Core.Results exposing (Results)
+import Core.Results.CarInfos exposing (CarInfos)
+import Core.Results.TargetInfos exposing (TargetInfos)
 import Core.UI as UI
 import Dict exposing (Dict)
 import Json.Decode
@@ -33,10 +34,15 @@ type alias Model =
     , simulationStep : SimulationStep
     , evaluations : Dict RuleName Evaluation
     , orderedCategories : List UI.Category
-    , results : Maybe Results
+    , userCar : Maybe CarInfos
+    , alternatives : Maybe (List CarInfos)
+    , targetInfos : Maybe TargetInfos
     , engineStatus : EngineStatus
     , inputErrors : Dict RuleName { msg : String, value : String }
     , decodeError : Maybe Json.Decode.Error
+
+    -- Allow to download the situation only when the inputs are modified
+    , newInput : Bool
     }
 
 
@@ -49,8 +55,11 @@ empty =
     , personas = Dict.empty
     , evaluations = Dict.empty
     , orderedCategories = []
-    , results = Nothing
     , inputErrors = Dict.empty
     , engineStatus = EngineStatus.NotInitialized
     , decodeError = Nothing
+    , userCar = Nothing
+    , alternatives = Nothing
+    , targetInfos = Nothing
+    , newInput = True
     }

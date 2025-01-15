@@ -71,5 +71,6 @@ config =
                 [ "src/Shared.elm"
                 , "src/Shared/Msg.elm"
                 , "src/Effect.elm"
+                , "src/Core/Results.elm"
                 ]
             )
