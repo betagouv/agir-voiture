@@ -252,11 +252,12 @@ evaluate model =
                   }
                 , Effect.batch
                     [ Effect.evaluateAll Core.Rules.userContext
-                    , if model.newInput then
-                        Effect.downloadSituation
 
-                      else
-                        Effect.none
+                    -- , if model.newInput then
+                    --     Effect.downloadSituation
+                    --
+                    --   else
+                    --     Effect.none
                     , Effect.evaluateUserCar
                     , Effect.evaluateTargetCar
                     ]

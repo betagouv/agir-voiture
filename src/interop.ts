@@ -145,17 +145,17 @@ export const onReady = ({ app }: { app: any }) => {
           }
 
           case "DOWNLOAD_SITUATION": {
-            const blob = new Blob(
-              [JSON.stringify(simulator.getEngine().getSituation(), null, 2)],
-              { type: "application/json" },
-            );
-            const downloadURL = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = downloadURL;
-            a.download = "réponses-mes-options-de-mobilité-durable.txt";
-            document.body.appendChild(a);
-            a.click();
-            URL.revokeObjectURL(downloadURL);
+            // const blob = new Blob(
+            //   [JSON.stringify(simulator.getEngine().getSituation(), null, 2)],
+            //   { type: "application/json" },
+            // );
+            // const downloadURL = URL.createObjectURL(blob);
+            // const a = document.createElement("a");
+            // a.href = downloadURL;
+            // a.download = "ma-simulation-pour-mes-options-de-mobilité-durable.txt";
+            // document.body.appendChild(a);
+            // a.click();
+            // URL.revokeObjectURL(downloadURL);
             break;
           }
 
