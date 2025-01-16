@@ -32,7 +32,13 @@
         },
         { "name": "og:type", "content": "website" }
       ],
-      "link": [{ "rel": "icon", "href": "/favicon.png" }]
+      "link": [{ "rel": "icon", "href": "/favicon.png" }],
+      "script": [
+        {
+          "async": true,
+          "src": "https://scripts.simpleanalyticscdn.com/latest.js"
+        }
+      ]
     },
     "router": {
       "useHashRouting": false
