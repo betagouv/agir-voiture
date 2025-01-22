@@ -10,7 +10,6 @@ import Components.Simulateur.ComparisonTable
 import Components.Simulateur.Navigation
 import Components.Simulateur.TotalCard as TotalCard
 import Components.Simulateur.UserTotal
-import Components.SurveyButton
 import Core.Evaluation exposing (Evaluation)
 import Core.Results.CarInfos exposing (CarInfos)
 import Core.Results.RuleValue as RuleValue exposing (RuleValue)
@@ -288,7 +287,6 @@ view props =
                         }
                     ]
                 , viewMaybe viewAlternativesSection props.targetInfos
-                , viewSurveyCTA
                 , viewAidesSection
                 , viewRessourcesSection
                 ]
@@ -386,23 +384,4 @@ viewRessourcesSection =
                 |> List.map viewCard
                 |> List.map (\card -> div [ class "fr-col-md-4" ] [ card ])
             )
-        ]
-
-
-viewSurveyCTA : Html msg
-viewSurveyCTA =
-    section [ class "fr-col-14 py-12 flex justify-center bg-[var(--background-alt-blue-france)] mx-[-3rem]" ]
-        [ div [ class "bg-white py-6 rounded-xl border border-[var(--border-action-low-blue-france)] fr-col-8" ]
-            [ div [ class "fr-container" ]
-                [ h3 [ class "text-[var(--text-contrast-info)]" ]
-                    [ text "👋 Donnez-nous votre avis !"
-                    ]
-                , p [ class "text-[var(--text-constrat-info)]" ]
-                    [ text "Cet outil étant en construction, vous pouvez nous aider à l'améliorer en "
-                    , span [ class "fr-text--bold text-[var(--text-label-blue-france)]" ] [ text "moins de 2 minutes" ]
-                    , text " en répondant à notre questionnaire."
-                    ]
-                , Components.SurveyButton.view
-                ]
-            ]
         ]
