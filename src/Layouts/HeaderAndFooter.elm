@@ -75,7 +75,8 @@ update msg model =
             ( model, Effect.resetSimulation )
 
         PersonasModalOpen ->
-            ( model, Effect.openPersonasModal )
+            -- ( model, Effect.openPersonasModal )
+            ( model, Effect.downloadSituation )
 
         PersonasModalClose ->
             ( model, Effect.closePersonasModal )

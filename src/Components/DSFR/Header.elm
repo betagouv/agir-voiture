@@ -42,6 +42,29 @@ modalMenuMobileTitle =
 
 view : Header msg -> Html msg
 view (Settings settings) =
+    let
+        buttonGroup =
+            Button.group
+                [ Button.new
+                    { label = "Télécharger mes réponses"
+                    , onClick = Just settings.onPersonasModalOpen
+                    }
+                    |> Button.leftIcon Icons.document.fileDownloadLine
+                    |> Button.withAttrs [ Aria.controls [ "personas-modal" ] ]
+                , Button.new
+                    { label = "Recommencer"
+                    , onClick = Just settings.onReset
+                    }
+                    |> Button.leftIcon Icons.system.refreshLine
+                , Button.new
+                    { label = "Comprendre le calcul"
+                    , onClick = Nothing
+                    }
+                    |> Button.linkButton
+                        (Route.Path.toString Route.Path.Documentation)
+                    |> Button.leftIcon Icons.document.fileTextLine
+                ]
+    in
     header [ role "banner", class "fr-header" ]
         [ div [ class "fr-header__body" ]
             [ div [ class "fr-container" ]
@@ -90,27 +113,7 @@ view (Settings settings) =
                         ]
                     , div [ class "fr-header__tools" ]
                         [ div [ class "fr-header__tools-links" ]
-                            [ [ Button.new
-                                    { label = "Choisir un profil type"
-                                    , onClick = Just settings.onPersonasModalOpen
-                                    }
-                                    |> Button.leftIcon Icons.user.accountCircleLine
-                                    |> Button.withAttrs [ Aria.controls [ "personas-modal" ] ]
-                              , Button.new
-                                    { label = "Recommencer"
-                                    , onClick = Just settings.onReset
-                                    }
-                                    |> Button.leftIcon Icons.system.refreshLine
-                              , Button.new
-                                    { label = "Comprendre le calcul"
-                                    , onClick = Nothing
-                                    }
-                                    |> Button.linkButton
-                                        (Route.Path.toString Route.Path.Documentation)
-                                    |> Button.leftIcon Icons.document.fileTextLine
-                              ]
-                                |> Button.group
-                                |> Button.viewGroup
+                            [ Button.viewGroup buttonGroup
                             ]
                         ]
                     ]
@@ -129,30 +132,8 @@ view (Settings settings) =
                     , onClick settings.onToggleHeaderMenu
                     ]
                     [ text "Fermer" ]
-                , div
-                    [ class "fr-header__menu-links"
-                    ]
-                    [ [ Button.new
-                            { label = "Choisir un profil type"
-                            , onClick = Just settings.onPersonasModalOpen
-                            }
-                            |> Button.leftIcon Icons.user.accountCircleLine
-                            |> Button.withAttrs [ Aria.controls [ "personas-modal" ] ]
-                      , Button.new
-                            { label = "Recommencer"
-                            , onClick = Just settings.onReset
-                            }
-                            |> Button.leftIcon Icons.system.refreshLine
-                      , Button.new
-                            { label = "Comprendre le calcul"
-                            , onClick = Nothing
-                            }
-                            |> Button.linkButton
-                                (Route.Path.toString Route.Path.Documentation)
-                            |> Button.leftIcon Icons.document.fileTextLine
-                      ]
-                        |> Button.group
-                        |> Button.viewGroup
+                , div [ class "fr-header__menu-links" ]
+                    [ Button.viewGroup buttonGroup
                     ]
                 ]
             ]
