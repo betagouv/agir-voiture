@@ -16,15 +16,15 @@ test.describe("Simulate personas", () => {
       await expect(page.getByRole("heading")).toHaveText(
         "Informations sur la voiture",
       );
-      await fillInputsWith(page, persona.situation);
+      await fillInputsWith(page, persona.contexte);
       await page.getByRole("button", { name: "Suivant" }).click();
 
       await expect(page.getByRole("heading")).toHaveText("Usage de la voiture");
-      await fillInputsWith(page, persona.situation);
+      await fillInputsWith(page, persona.contexte);
       await page.getByRole("button", { name: "Suivant" }).click();
 
       await expect(page.getByRole("heading")).toHaveText("Voiture envisagée");
-      await fillInputsWith(page, persona.situation);
+      await fillInputsWith(page, persona.contexte);
       await page.getByRole("button", { name: "Voir le résultat" }).click();
 
       await expect(page.getByRole("heading").first()).toHaveText(
