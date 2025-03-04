@@ -120,7 +120,7 @@ viewInput props question ( name, rule ) =
                 |> Maybe.map .value
     in
     case ( rule.une_possibilite, maybeNodeValue ) of
-        ( Just { possibilites }, Just nodeValue ) ->
+        ( Just possibilites, Just nodeValue ) ->
             Components.Select.view
                 { id = "select-" ++ name
                 , label = question

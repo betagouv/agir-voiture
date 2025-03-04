@@ -2,7 +2,6 @@ module Publicodes exposing
     ( ChainedMechanisms
     , Clause
     , Mechanism(..)
-    , PossibiliteNode
     , RawRule
     , RawRules
     , RecalculNode
@@ -30,19 +29,6 @@ clauseDecoder =
         |> optional "si" (nullable mechanismDecoder) Nothing
         |> optional "alors" (nullable mechanismDecoder) Nothing
         |> optional "sinon" (nullable mechanismDecoder) Nothing
-
-
-type alias PossibiliteNode =
-    { choix_obligatoire : Maybe String
-    , possibilites : List String
-    }
-
-
-possibiliteNodeDecoder : Decoder PossibiliteNode
-possibiliteNodeDecoder =
-    Decode.succeed PossibiliteNode
-        |> optional "choix obligatoire" (nullable string) Nothing
-        |> required "possibilités" (list string)
 
 
 type alias RecalculNode =
@@ -141,7 +127,7 @@ type alias RawRule =
     , note : Maybe String
     , plancher : Maybe Mechanism
     , plafond : Maybe Mechanism
-    , une_possibilite : Maybe PossibiliteNode
+    , une_possibilite : Maybe (List String)
     }
 
 
@@ -159,7 +145,7 @@ rawRuleDecoder =
         |> optional "note" (nullable string) Nothing
         |> optional "plancher" (nullable mechanismDecoder) Nothing
         |> optional "plafond" (nullable mechanismDecoder) Nothing
-        |> optional "une possibilité" (nullable possibiliteNodeDecoder) Nothing
+        |> optional "une possibilité" (nullable (list string)) Nothing
 
 
 type alias RawRules =

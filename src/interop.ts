@@ -5,7 +5,6 @@ import "./ffi/dsfr";
 
 // Import publicodes model
 import {
-  Alternative,
   CarSimulator,
   RuleName,
   Situation,

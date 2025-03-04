@@ -37,4 +37,4 @@ personaDecoder =
     Decode.succeed Persona
         |> required "titre" string
         |> optional "description" (nullable string) Nothing
-        |> required "situation" Situation.decoder
+        |> required "contexte" Situation.decoder
